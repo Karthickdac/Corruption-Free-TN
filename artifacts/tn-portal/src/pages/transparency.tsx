@@ -6,6 +6,7 @@ import {
   useGetAnalyticsTrends,
   useGetAnalyticsDepartmentPerformance,
   useGetAnalyticsMapData,
+  useGetAnalyticsOfficerPerformance,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +41,7 @@ export default function Transparency() {
   const { data: trends, isLoading: trendsLoading } = useGetAnalyticsTrends({ granularity: gran });
   const { data: deptPerf, isLoading: deptLoading } = useGetAnalyticsDepartmentPerformance({ limit: 10 });
   const { data: mapData } = useGetAnalyticsMapData();
+  const { data: officerPerf } = useGetAnalyticsOfficerPerformance({ limit: 10 });
 
   if (statsLoading || !stats) {
     return (
@@ -221,7 +223,7 @@ export default function Transparency() {
           <CardTitle className="flex items-center gap-2 uppercase tracking-wider text-xs font-bold text-muted-foreground">
             <Map className="h-4 w-4" /> TN District Complaints Geographic Heat Map
           </CardTitle>
-          <span className="text-xs text-muted-foreground">Click a district to drill down → taluks → complaints</span>
+          <span className="text-xs text-muted-foreground">Click district → taluks → villages → departments → complaints</span>
         </CardHeader>
         <CardContent>
           {mapData && mapData.length > 0 ? (
@@ -276,6 +278,51 @@ export default function Transparency() {
               </table>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Officer Performance Table */}
+      <Card className="mb-6">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle className="uppercase tracking-wider text-xs font-bold text-muted-foreground">Officer Performance</CardTitle>
+          <Link href="/search"><Button variant="ghost" size="sm" className="text-xs">Search complaints →</Button></Link>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  {["Officer","Total","Resolved","Pending","Rate","Avg Days"].map(h => (
+                    <th key={h} className={`py-2 font-bold text-muted-foreground uppercase text-xs tracking-wider ${h==="Officer"?"text-left pr-4":"text-right px-2"}`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {(officerPerf ?? []).map(o => {
+                  const rate = o.total > 0 ? Math.round((o.resolved / o.total) * 100) : 0;
+                  return (
+                    <tr key={o.officerId} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                      <td className="py-2 pr-4 font-medium">{o.officerName ?? "—"}</td>
+                      <td className="py-2 px-2 text-right font-mono">{o.total}</td>
+                      <td className="py-2 px-2 text-right font-mono text-emerald-500">{o.resolved}</td>
+                      <td className="py-2 px-2 text-right font-mono text-amber-500">{o.pending}</td>
+                      <td className="py-2 px-2 text-right">
+                        <Badge variant="secondary" className={rate>=70?"bg-emerald-500/10 text-emerald-600":rate>=40?"bg-amber-500/10 text-amber-600":"bg-red-500/10 text-red-600"}>
+                          {rate}%
+                        </Badge>
+                      </td>
+                      <td className="py-2 pl-2 text-right text-muted-foreground font-mono text-xs">
+                        {o.avgResolutionDays!=null ? `${o.avgResolutionDays.toFixed(1)}d` : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+                {(!officerPerf||officerPerf.length===0) && (
+                  <tr><td colSpan={6} className="py-8 text-center text-muted-foreground text-sm">No officer assignment data yet</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </CardContent>
       </Card>
 

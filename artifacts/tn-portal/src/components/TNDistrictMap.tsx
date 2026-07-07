@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
 import { useListTaluksByDistrict, useListDepartments } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, MapPin, ChevronRight, Building2 } from "lucide-react";
+import { X, MapPin, ChevronRight, Building2, Home } from "lucide-react";
 import { Link } from "wouter";
 
 type DistrictPoint = {
@@ -15,6 +16,9 @@ type DistrictPoint = {
   pending?: number;
   density?: number;
 };
+
+type TalukItem = { id: number; name: string };
+type VillageItem = { village: string; total: number; resolved: number };
 
 type Props = {
   mapData: DistrictPoint[];
@@ -32,6 +36,21 @@ function densityColor(density: number, maxDensity: number): string {
   return "#991b1b";
 }
 
+function useVillages(districtId: number, talukId: number | null) {
+  return useQuery<VillageItem[]>({
+    queryKey: ["analytics-villages", districtId, talukId],
+    enabled: districtId > 0 && talukId !== null,
+    queryFn: async () => {
+      const params = new URLSearchParams({ districtId: String(districtId) });
+      if (talukId) params.set("talukId", String(talukId));
+      const resp = await fetch(`/api/analytics/villages?${params}`);
+      if (!resp.ok) throw new Error("Failed to load village data");
+      return resp.json();
+    },
+    staleTime: 60_000,
+  });
+}
+
 function DrilldownPanel({
   districtPoint,
   onClose,
@@ -39,10 +58,16 @@ function DrilldownPanel({
   districtPoint: DistrictPoint;
   onClose: () => void;
 }) {
+  const [selectedTaluk, setSelectedTaluk] = useState<TalukItem | null>(null);
+
   const { data: taluks, isLoading: taluksLoading } = useListTaluksByDistrict(
     districtPoint.districtId
   );
   const { data: departments } = useListDepartments();
+  const { data: villages, isLoading: villagesLoading } = useVillages(
+    districtPoint.districtId,
+    selectedTaluk ? selectedTaluk.id : null
+  );
 
   const resolved = districtPoint.resolved ?? 0;
   const total = districtPoint.total;
@@ -61,6 +86,15 @@ function DrilldownPanel({
       <div className="flex items-center gap-2 mb-3">
         <MapPin className="h-4 w-4 text-primary" />
         <h4 className="font-bold text-base">{districtPoint.districtName} District</h4>
+        {selectedTaluk && (
+          <>
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium text-primary">{selectedTaluk.name}</span>
+            <button onClick={() => setSelectedTaluk(null)} className="ml-1 p-0.5 rounded hover:bg-muted transition-colors">
+              <X className="h-3 w-3 text-muted-foreground" />
+            </button>
+          </>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-3 mb-4">
@@ -80,63 +114,113 @@ function DrilldownPanel({
         </div>
       </div>
 
-      {taluksLoading ? (
-        <p className="text-xs text-muted-foreground">Loading taluks…</p>
-      ) : taluks && taluks.length > 0 ? (
-        <div className="mb-3">
-          <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2">Taluks</p>
-          <div className="flex flex-wrap gap-2">
-            {taluks.map((taluk) => (
-              <Link
-                key={taluk.id}
-                href={`/search?districtId=${did}&talukId=${taluk.id}`}
-              >
-                <Badge
-                  variant="outline"
-                  className="cursor-pointer hover:bg-primary/10 transition-colors text-xs gap-1"
-                >
-                  {taluk.name}
-                  <ChevronRight className="h-2.5 w-2.5" />
-                </Badge>
-              </Link>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      {!selectedTaluk ? (
+        <>
+          {taluksLoading ? (
+            <p className="text-xs text-muted-foreground mb-3">Loading taluks…</p>
+          ) : taluks && taluks.length > 0 ? (
+            <div className="mb-3">
+              <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2">
+                Taluks — click to see villages
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {taluks.map((taluk) => (
+                  <button
+                    key={taluk.id}
+                    onClick={() => setSelectedTaluk(taluk)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded border border-border text-xs hover:bg-primary/10 transition-colors"
+                  >
+                    {taluk.name}
+                    <ChevronRight className="h-2.5 w-2.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
-      {departments && departments.length > 0 && (
+          {departments && departments.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                <Building2 className="h-3 w-3" /> By Department
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {departments.slice(0, 8).map((dept) => (
+                  <Link
+                    key={dept.id}
+                    href={`/search?districtId=${did}&departmentId=${dept.id}`}
+                  >
+                    <Badge
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-primary/10 transition-colors text-xs gap-1"
+                    >
+                      {dept.name.replace(/\s*Department\s*$/i, "").slice(0, 22)}
+                      <ChevronRight className="h-2.5 w-2.5" />
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      ) : (
         <div className="mb-3">
           <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
-            <Building2 className="h-3 w-3" /> By Department
+            <Home className="h-3 w-3" /> Villages in {selectedTaluk.name}
           </p>
-          <div className="flex flex-wrap gap-2">
-            {departments.slice(0, 8).map((dept) => (
-              <Link
-                key={dept.id}
-                href={`/search?districtId=${did}&departmentId=${dept.id}`}
-              >
-                <Badge
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-primary/10 transition-colors text-xs gap-1"
+          {villagesLoading ? (
+            <p className="text-xs text-muted-foreground">Loading villages…</p>
+          ) : villages && villages.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {villages.map((v) => (
+                <Link
+                  key={v.village}
+                  href={`/search?districtId=${did}&talukId=${selectedTaluk.id}&q=${encodeURIComponent(v.village)}`}
                 >
-                  {dept.name.replace(/\s*Department\s*$/i, "").slice(0, 22)}
-                  <ChevronRight className="h-2.5 w-2.5" />
-                </Badge>
-              </Link>
-            ))}
-          </div>
+                  <Badge
+                    variant="outline"
+                    className="cursor-pointer hover:bg-primary/10 transition-colors text-xs gap-1"
+                  >
+                    {v.village}
+                    <span className="text-muted-foreground">({v.total})</span>
+                    <ChevronRight className="h-2.5 w-2.5" />
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No village data for this taluk yet</p>
+          )}
+
+          {departments && departments.length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+                <Building2 className="h-3 w-3" /> By Department
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {departments.slice(0, 6).map((dept) => (
+                  <Link
+                    key={dept.id}
+                    href={`/search?districtId=${did}&talukId=${selectedTaluk.id}&departmentId=${dept.id}`}
+                  >
+                    <Badge
+                      variant="secondary"
+                      className="cursor-pointer hover:bg-primary/10 transition-colors text-xs gap-1"
+                    >
+                      {dept.name.replace(/\s*Department\s*$/i, "").slice(0, 20)}
+                      <ChevronRight className="h-2.5 w-2.5" />
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
       <div className="mt-3 pt-3 border-t border-border/40 flex gap-2 flex-wrap">
-        <Link href={`/search?districtId=${did}`}>
+        <Link href={selectedTaluk ? `/search?districtId=${did}&talukId=${selectedTaluk.id}` : `/search?districtId=${did}`}>
           <Button variant="outline" size="sm" className="text-xs">
-            All complaints →
-          </Button>
-        </Link>
-        <Link href={`/search?districtId=${did}&q=village`}>
-          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
-            Search by village
+            {selectedTaluk ? `${selectedTaluk.name} complaints →` : "All complaints →"}
           </Button>
         </Link>
       </div>

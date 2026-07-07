@@ -163,7 +163,7 @@ router.get("/analytics/department-performance", async (req, res, next) => {
   }
 });
 
-router.get("/analytics/officer-performance", requireAnyOfficer(), async (req, res, next) => {
+router.get("/analytics/officer-performance", async (req, res, next) => {
   try {
     const { from, to, limit: limitStr } = req.query as Record<string, string | undefined>;
     const dateConds = dateFilter(from, to);
@@ -283,6 +283,41 @@ router.get("/analytics/map-data", async (req, res, next) => {
     }));
 
     res.json(GetAnalyticsMapDataResponse.parse(result));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/analytics/villages", async (req, res, next) => {
+  try {
+    const { districtId, talukId } = req.query as Record<string, string | undefined>;
+    if (!districtId) {
+      res.status(400).json({ error: "districtId is required" });
+      return;
+    }
+    const conds = [
+      eq(complaintsTable.districtId, Number(districtId)),
+      sql`${complaintsTable.village} IS NOT NULL AND ${complaintsTable.village} != ''`,
+    ];
+    if (talukId) conds.push(eq(complaintsTable.talukId, Number(talukId)));
+
+    const rows = await db
+      .select({
+        village: complaintsTable.village,
+        total: count(),
+        resolved: sql<number>`COUNT(*) FILTER (WHERE ${complaintsTable.status} IN ('closed','action_taken'))`,
+      })
+      .from(complaintsTable)
+      .where(and(...conds))
+      .groupBy(complaintsTable.village)
+      .orderBy(desc(count()))
+      .limit(30);
+
+    res.json(rows.map(r => ({
+      village: r.village as string,
+      total: r.total,
+      resolved: Number(r.resolved),
+    })));
   } catch (err) {
     next(err);
   }
