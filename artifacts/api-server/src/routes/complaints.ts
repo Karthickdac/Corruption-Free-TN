@@ -45,7 +45,7 @@ import {
   GetComplaintByIdParams,
   GetComplaintByIdResponse,
 } from "@workspace/api-zod";
-import { ObjectStorageService } from "../lib/objectStorage";
+import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 import { ObjectPermission } from "../lib/objectAcl";
 import { requireAnyOfficer, requireWriteOfficer, isAllowedTransition, canAccessComplaint } from "../middlewares/rbac";
 import { sendEmail } from "../lib/email";
@@ -499,6 +499,21 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
         res.status(403).json({ error: "Access denied" });
         return;
       }
+    }
+
+    // Verify the referenced object actually exists in storage before saving.
+    // A buggy or malicious client could send an objectPath for a file that
+    // never finished uploading, creating a broken evidence reference.
+    try {
+      await objectStorageService.getObjectEntityFile(fileUrl);
+    } catch (storageErr) {
+      if (storageErr instanceof ObjectNotFoundError) {
+        res.status(422).json({
+          error: "The referenced file was not found in storage. The upload may not have completed — please re-upload the file and try again.",
+        });
+        return;
+      }
+      throw storageErr;
     }
 
     const inserted = await db
