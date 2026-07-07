@@ -342,9 +342,10 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
       .where(eq(usersTable.clerkId, auth.userId));
     const localUserId = localUser[0]?.id;
 
-    if (req.localUser) {
+    const isOfficerUser = req.localUser && req.localUser.role !== "citizen";
+    if (isOfficerUser) {
       // Officer path: enforce jurisdiction
-      if (!canAccessComplaint(req.localUser, complaint[0])) {
+      if (!canAccessComplaint(req.localUser!, complaint[0])) {
         res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
         return;
       }
@@ -434,9 +435,10 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       .where(eq(usersTable.clerkId, auth.userId));
     const localUserId = localUser[0]?.id;
 
-    if (req.localUser) {
+    const isOfficerUser = req.localUser && req.localUser.role !== "citizen";
+    if (isOfficerUser) {
       // Officer path: enforce jurisdiction
-      if (!canAccessComplaint(req.localUser, complaint[0])) {
+      if (!canAccessComplaint(req.localUser!, complaint[0])) {
         res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
         return;
       }
