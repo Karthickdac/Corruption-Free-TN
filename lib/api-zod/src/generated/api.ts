@@ -273,6 +273,75 @@ export const CreateComplaintResponse = zod.object({
 
 
 /**
+ * @summary List complaints filed by the authenticated user
+ */
+export const ListMyComplaintsResponseItem = zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListMyComplaintsResponse = zod.array(ListMyComplaintsResponseItem)
+
+
+/**
+ * @summary List evidence files for a complaint
+ */
+export const ListEvidenceParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const ListEvidenceResponseItem = zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "fileUrl": zod.string(),
+  "fileType": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "uploadedAt": zod.string()
+})
+export const ListEvidenceResponse = zod.array(ListEvidenceResponseItem)
+
+
+/**
+ * @summary Record a new evidence file for a complaint (after object storage upload)
+ */
+export const AddEvidenceParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const AddEvidenceBody = zod.object({
+  "fileUrl": zod.string(),
+  "fileType": zod.string().optional(),
+  "description": zod.string().optional()
+})
+
+export const AddEvidenceResponse = zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "fileUrl": zod.string(),
+  "fileType": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "uploadedAt": zod.string()
+})
+
+
+/**
  * @summary Track a complaint by its complaint number
  */
 export const TrackComplaintParams = zod.object({
@@ -301,5 +370,107 @@ export const TrackComplaintResponse = zod.object({
   "incidentDate": zod.string().nullish(),
   "createdAt": zod.string()
 })
+
+
+/**
+ * @summary File a new RTI request
+ */
+export const fileRtiBodySubjectMin = 5;
+
+export const fileRtiBodyDescriptionMin = 10;
+
+
+
+export const FileRtiBody = zod.object({
+  "complaintNumber": zod.string().optional(),
+  "applicantName": zod.string().optional(),
+  "applicantEmail": zod.string().optional(),
+  "subject": zod.string().min(fileRtiBodySubjectMin),
+  "description": zod.string().min(fileRtiBodyDescriptionMin)
+})
+
+export const FileRtiResponse = zod.object({
+  "id": zod.number(),
+  "referenceNumber": zod.string(),
+  "complaintId": zod.number().nullish(),
+  "complaintNumber": zod.string().nullish(),
+  "applicantName": zod.string().nullish(),
+  "applicantEmail": zod.string().nullish(),
+  "subject": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "filedAt": zod.string()
+})
+
+
+/**
+ * @summary Get RTI request by reference number
+ */
+export const GetRtiParams = zod.object({
+  "referenceNumber": zod.coerce.string()
+})
+
+export const GetRtiResponse = zod.object({
+  "id": zod.number(),
+  "referenceNumber": zod.string(),
+  "complaintId": zod.number().nullish(),
+  "complaintNumber": zod.string().nullish(),
+  "applicantName": zod.string().nullish(),
+  "applicantEmail": zod.string().nullish(),
+  "subject": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "filedAt": zod.string()
+})
+
+
+/**
+ * @summary Request a presigned URL for file upload
+ */
+
+
+
+
+
+export const RequestUploadUrlBody = zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+})
+
+
+
+
+
+
+export const RequestUploadUrlResponse = zod.object({
+  "uploadURL": zod.string().url(),
+  "objectPath": zod.string(),
+  "metadata": zod.object({
+  "name": zod.string().min(1),
+  "size": zod.number().min(1),
+  "contentType": zod.string().min(1)
+}).optional()
+})
+
+
+/**
+ * @summary Serve a public asset
+ */
+export const GetPublicObjectParams = zod.object({
+  "filePath": zod.coerce.string()
+})
+
+export const GetPublicObjectResponse = zod.unknown()
+
+
+/**
+ * @summary Serve a private object entity
+ */
+export const GetStorageObjectParams = zod.object({
+  "objectPath": zod.coerce.string()
+})
+
+export const GetStorageObjectResponse = zod.unknown()
 
 

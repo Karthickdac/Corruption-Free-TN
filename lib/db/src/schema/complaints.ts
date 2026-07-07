@@ -79,3 +79,25 @@ export const insertEvidenceSchema = createInsertSchema(evidenceTable).omit({
 });
 export type InsertEvidence = z.infer<typeof insertEvidenceSchema>;
 export type Evidence = typeof evidenceTable.$inferSelect;
+
+export const rtiRequestsTable = pgTable("rti_requests", {
+  id: serial("id").primaryKey(),
+  referenceNumber: text("reference_number").notNull().unique(),
+  complaintId: integer("complaint_id").references(() => complaintsTable.id),
+  complaintNumber: text("complaint_number"),
+  applicantName: text("applicant_name"),
+  applicantEmail: text("applicant_email"),
+  subject: text("subject").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("filed"),
+  filedAt: timestamp("filed_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const insertRtiRequestSchema = createInsertSchema(rtiRequestsTable).omit({
+  id: true,
+  filedAt: true,
+  updatedAt: true,
+});
+export type InsertRtiRequest = z.infer<typeof insertRtiRequestSchema>;
+export type RtiRequest = typeof rtiRequestsTable.$inferSelect;

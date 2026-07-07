@@ -181,6 +181,65 @@ export interface ComplaintInput {
   witnesses?: string;
 }
 
+export interface EvidenceItem {
+  id: number;
+  complaintId: number;
+  fileUrl: string;
+  /** @nullable */
+  fileType?: string | null;
+  /** @nullable */
+  description?: string | null;
+  uploadedAt: string;
+}
+
+export interface EvidenceInput {
+  fileUrl: string;
+  fileType?: string;
+  description?: string;
+}
+
+export interface RtiRequest {
+  id: number;
+  referenceNumber: string;
+  /** @nullable */
+  complaintId?: number | null;
+  /** @nullable */
+  complaintNumber?: string | null;
+  /** @nullable */
+  applicantName?: string | null;
+  /** @nullable */
+  applicantEmail?: string | null;
+  subject: string;
+  description: string;
+  status: string;
+  filedAt: string;
+}
+
+export interface RtiInput {
+  complaintNumber?: string;
+  applicantName?: string;
+  applicantEmail?: string;
+  /** @minLength 5 */
+  subject: string;
+  /** @minLength 10 */
+  description: string;
+}
+
+export interface UploadUrlRequest {
+  /** @minLength 1 */
+  name: string;
+  /** @minimum 1 */
+  size: number;
+  /** @minLength 1 */
+  contentType: string;
+}
+
+export interface UploadUrlResponse {
+  uploadURL: string;
+  objectPath: string;
+  metadata?: UploadUrlRequest;
+}
+
 export type ListTaluksParams = {
 districtId?: number;
 };

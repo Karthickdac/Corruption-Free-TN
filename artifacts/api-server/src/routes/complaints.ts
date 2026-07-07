@@ -13,10 +13,17 @@ import {
 import {
   ListComplaintsResponse,
   ListComplaintsQueryParams,
+  ListMyComplaintsResponse,
   CreateComplaintBody,
   CreateComplaintResponse,
   TrackComplaintResponse,
+  ListEvidenceParams,
+  ListEvidenceResponse,
+  AddEvidenceParams,
+  AddEvidenceBody,
+  AddEvidenceResponse,
 } from "@workspace/api-zod";
+import { evidenceTable } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -213,6 +220,104 @@ router.post("/complaints", async (req, res, next) => {
       return;
     }
     res.status(201).json(CreateComplaintResponse.parse(toApiComplaint(row)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/complaints/mine", async (req, res, next) => {
+  try {
+    const auth = getAuth(req);
+    if (!auth.userId) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+    const localUser = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.clerkId, auth.userId));
+    if (!localUser[0]) {
+      res.json(ListMyComplaintsResponse.parse([]));
+      return;
+    }
+    const userId = localUser[0].id;
+    const rows = await complaintSelection()
+      .where(eq(complaintsTable.userId, userId))
+      .orderBy(desc(complaintsTable.createdAt));
+    res.json(ListMyComplaintsResponse.parse(rows.map(toApiComplaint)));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
+  try {
+    const params = ListEvidenceParams.parse({ complaintId: Number(req.params.complaintId) });
+    const complaint = await db
+      .select({ id: complaintsTable.id })
+      .from(complaintsTable)
+      .where(eq(complaintsTable.id, params.complaintId));
+    if (!complaint[0]) {
+      res.status(404).json({ error: "Complaint not found" });
+      return;
+    }
+    const rows = await db
+      .select()
+      .from(evidenceTable)
+      .where(eq(evidenceTable.complaintId, params.complaintId));
+    res.json(
+      ListEvidenceResponse.parse(
+        rows.map((e) => ({
+          id: e.id,
+          complaintId: e.complaintId,
+          fileUrl: e.fileUrl,
+          fileType: e.fileType,
+          description: e.description,
+          uploadedAt: e.uploadedAt.toISOString(),
+        })),
+      ),
+    );
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
+  try {
+    const params = AddEvidenceParams.parse({ complaintId: Number(req.params.complaintId) });
+    const parsed = AddEvidenceBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
+      return;
+    }
+    const complaint = await db
+      .select({ id: complaintsTable.id })
+      .from(complaintsTable)
+      .where(eq(complaintsTable.id, params.complaintId));
+    if (!complaint[0]) {
+      res.status(404).json({ error: "Complaint not found" });
+      return;
+    }
+    const inserted = await db
+      .insert(evidenceTable)
+      .values({
+        complaintId: params.complaintId,
+        fileUrl: parsed.data.fileUrl,
+        fileType: parsed.data.fileType ?? null,
+        description: parsed.data.description ?? null,
+      })
+      .returning();
+    const e = inserted[0]!;
+    res.status(201).json(
+      AddEvidenceResponse.parse({
+        id: e.id,
+        complaintId: e.complaintId,
+        fileUrl: e.fileUrl,
+        fileType: e.fileType,
+        description: e.description,
+        uploadedAt: e.uploadedAt.toISOString(),
+      }),
+    );
   } catch (err) {
     next(err);
   }

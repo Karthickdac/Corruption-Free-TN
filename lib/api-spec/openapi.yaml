@@ -18,6 +18,10 @@ tags:
     description: Public statistics
   - name: users
     description: User operations
+  - name: rti
+    description: RTI (Right to Information) requests
+  - name: Storage
+    description: Object storage upload and serving endpoints
 paths:
   /health:
     get:
@@ -278,6 +282,81 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /complaints/mine:
+    get:
+      operationId: listMyComplaints
+      tags: [complaints]
+      summary: List complaints filed by the authenticated user
+      responses:
+        "200":
+          description: User's complaints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Complaint"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /complaints/{complaintId}/evidence:
+    get:
+      operationId: listEvidence
+      tags: [complaints]
+      summary: List evidence files for a complaint
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of evidence items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EvidenceItem"
+        "404":
+          description: Complaint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: addEvidence
+      tags: [complaints]
+      summary: Record a new evidence file for a complaint (after object storage upload)
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EvidenceInput"
+      responses:
+        "201":
+          description: Evidence recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EvidenceItem"
+        "404":
+          description: Complaint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /complaints/track/{complaintNumber}:
     get:
       operationId: trackComplaint
@@ -298,6 +377,128 @@ paths:
                 $ref: "#/components/schemas/Complaint"
         "404":
           description: Complaint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rti:
+    post:
+      operationId: fileRti
+      tags: [rti]
+      summary: File a new RTI request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RtiInput"
+      responses:
+        "201":
+          description: RTI request filed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RtiRequest"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /rti/{referenceNumber}:
+    get:
+      operationId: getRti
+      tags: [rti]
+      summary: Get RTI request by reference number
+      parameters:
+        - name: referenceNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: RTI request details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RtiRequest"
+        "404":
+          description: RTI not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /storage/uploads/request-url:
+    post:
+      tags: [Storage]
+      operationId: requestUploadUrl
+      summary: Request a presigned URL for file upload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Presigned upload URL generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "400":
+          description: Invalid fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /storage/public-objects/{filePath}:
+    get:
+      tags: [Storage]
+      operationId: getPublicObject
+      summary: Serve a public asset
+      parameters:
+        - name: filePath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /storage/objects/{objectPath}:
+    get:
+      tags: [Storage]
+      operationId: getStorageObject
+      summary: Serve a private object entity
+      parameters:
+        - name: objectPath
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Object content
+          content:
+            "*/*":
+              schema:
+                type: string
+                format: binary
+        "404":
+          description: Object not found
           content:
             application/json:
               schema:
@@ -577,3 +778,93 @@ components:
         witnesses:
           type: string
       required: [title, description, isAnonymous]
+    EvidenceItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        complaintId:
+          type: integer
+        fileUrl:
+          type: string
+        fileType:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        uploadedAt:
+          type: string
+      required: [id, complaintId, fileUrl, uploadedAt]
+    EvidenceInput:
+      type: object
+      properties:
+        fileUrl:
+          type: string
+        fileType:
+          type: string
+        description:
+          type: string
+      required: [fileUrl]
+    RtiRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+        referenceNumber:
+          type: string
+        complaintId:
+          type: ["integer", "null"]
+        complaintNumber:
+          type: ["string", "null"]
+        applicantName:
+          type: ["string", "null"]
+        applicantEmail:
+          type: ["string", "null"]
+        subject:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        filedAt:
+          type: string
+      required: [id, referenceNumber, subject, description, status, filedAt]
+    RtiInput:
+      type: object
+      properties:
+        complaintNumber:
+          type: string
+        applicantName:
+          type: string
+        applicantEmail:
+          type: string
+        subject:
+          type: string
+          minLength: 5
+        description:
+          type: string
+          minLength: 10
+      required: [subject, description]
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        size:
+          type: integer
+          minimum: 1
+        contentType:
+          type: string
+          minLength: 1
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL:
+          type: string
+          format: uri
+        objectPath:
+          type: string
+        metadata:
+          $ref: "#/components/schemas/UploadUrlRequest"

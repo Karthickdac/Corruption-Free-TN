@@ -17,9 +17,9 @@ export default function Complaints() {
   const { data: districts } = useListDistricts();
   const { data: departments } = useListDepartments();
   const { data: complaints, isLoading } = useListComplaints({
-    districtId: districtId ? parseInt(districtId) : undefined,
-    departmentId: departmentId ? parseInt(departmentId) : undefined,
-    status: status || undefined,
+    districtId: districtId && districtId !== "all" ? parseInt(districtId) : undefined,
+    departmentId: departmentId && departmentId !== "all" ? parseInt(departmentId) : undefined,
+    status: status && status !== "all" ? status : undefined,
   });
 
   const getStatusColor = (status: string) => {

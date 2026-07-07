@@ -24,6 +24,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/complaints", label: t("nav_complaints") },
     { href: "/transparency", label: t("nav_transparency") },
     { href: "/directory", label: t("nav_directory") },
+    { href: "/my-complaints", label: t("nav_my_complaints") },
+    { href: "/rti", label: t("nav_rti") },
   ];
 
   return (
