@@ -511,6 +511,112 @@ export interface UploadUrlResponse {
   metadata?: UploadUrlRequest;
 }
 
+export interface NameCountItem {
+  name: string;
+  count: number;
+}
+
+export interface AnalyticsOverviewResponse {
+  totalComplaints: number;
+  resolved: number;
+  pending: number;
+  underInvestigation: number;
+  /** @nullable */
+  avgResolutionDays: number | null;
+  byStatus: NameCountItem[];
+  byCategory: NameCountItem[];
+  byDistrict: NameCountItem[];
+  byDepartment: NameCountItem[];
+  byPriority?: NameCountItem[];
+}
+
+export interface DepartmentPerformance {
+  departmentId: number;
+  departmentName: string;
+  total: number;
+  resolved: number;
+  pending: number;
+  resolutionRate: number;
+  /** @nullable */
+  avgResolutionDays: number | null;
+}
+
+export interface OfficerPerformance {
+  officerId: number;
+  /** @nullable */
+  officerName: string | null;
+  /** @nullable */
+  officerEmail?: string | null;
+  total: number;
+  resolved: number;
+  pending: number;
+  /** @nullable */
+  avgResolutionDays: number | null;
+}
+
+export interface TrendPoint {
+  period: string;
+  total: number;
+  resolved: number;
+  resolutionRate?: number;
+}
+
+export interface DistrictMapDataPoint {
+  districtId: number;
+  districtName: string;
+  districtCode: string;
+  total: number;
+  resolved?: number;
+  pending?: number;
+  density?: number;
+}
+
+export interface ComplaintSearchPage {
+  results: Complaint[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface AiClassifyInput {
+  /** @minLength 10 */
+  text: string;
+  categories?: string[];
+}
+
+export interface AiCategorySuggestion {
+  categoryName: string;
+  confidence: number;
+  /** @nullable */
+  reasoning?: string | null;
+}
+
+export interface AiClassifyResponse {
+  suggestions: AiCategorySuggestion[];
+  model?: string;
+}
+
+export type AiTranslateInputTargetLang = typeof AiTranslateInputTargetLang[keyof typeof AiTranslateInputTargetLang];
+
+
+export const AiTranslateInputTargetLang = {
+  en: 'en',
+  ta: 'ta',
+} as const;
+
+export interface AiTranslateInput {
+  /** @minLength 1 */
+  text: string;
+  targetLang: AiTranslateInputTargetLang;
+}
+
+export interface TranslateResult {
+  translatedText: string;
+  sourceLang: string;
+  targetLang: string;
+  model?: string;
+}
+
 /**
  * Bad request
  */
@@ -583,4 +689,71 @@ offset?: number;
 export type PostAuthSession200 = {
   ok: boolean;
 };
+
+export type GetAnalyticsOverviewParams = {
+from?: string;
+to?: string;
+};
+
+export type GetAnalyticsDepartmentPerformanceParams = {
+from?: string;
+to?: string;
+limit?: number;
+};
+
+export type GetAnalyticsOfficerPerformanceParams = {
+from?: string;
+to?: string;
+limit?: number;
+};
+
+export type GetAnalyticsTrendsParams = {
+granularity?: GetAnalyticsTrendsGranularity;
+from?: string;
+to?: string;
+};
+
+export type GetAnalyticsTrendsGranularity = typeof GetAnalyticsTrendsGranularity[keyof typeof GetAnalyticsTrendsGranularity];
+
+
+export const GetAnalyticsTrendsGranularity = {
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type SearchComplaintsParams = {
+q?: string;
+complaintNumber?: string;
+status?: string;
+departmentId?: number;
+districtId?: number;
+talukId?: number;
+categoryId?: number;
+priority?: string;
+from?: string;
+to?: string;
+minAmount?: number;
+maxAmount?: number;
+page?: number;
+limit?: number;
+sortBy?: string;
+sortDir?: SearchComplaintsSortDir;
+format?: SearchComplaintsFormat;
+};
+
+export type SearchComplaintsSortDir = typeof SearchComplaintsSortDir[keyof typeof SearchComplaintsSortDir];
+
+
+export const SearchComplaintsSortDir = {
+  asc: 'asc',
+  desc: 'desc',
+} as const;
+
+export type SearchComplaintsFormat = typeof SearchComplaintsFormat[keyof typeof SearchComplaintsFormat];
+
+
+export const SearchComplaintsFormat = {
+  json: 'json',
+  csv: 'csv',
+} as const;
 

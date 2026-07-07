@@ -24,6 +24,10 @@ import type {
   AdminDistrict,
   AdminUser,
   AdminUsersResponse,
+  AiClassifyInput,
+  AiClassifyResponse,
+  AiTranslateInput,
+  AnalyticsOverviewResponse,
   AssignComplaintInput,
   AssignableOfficersResponse,
   AuditLogsResponse,
@@ -35,15 +39,22 @@ import type {
   Complaint,
   ComplaintCategory,
   ComplaintInput,
+  ComplaintSearchPage,
   DashboardComplaintsResponse,
   Department,
   DepartmentInput,
+  DepartmentPerformance,
   District,
   DistrictInput,
+  DistrictMapDataPoint,
   ErrorResponse,
   EvidenceInput,
   EvidenceItem,
   ForbiddenResponse,
+  GetAnalyticsDepartmentPerformanceParams,
+  GetAnalyticsOfficerPerformanceParams,
+  GetAnalyticsOverviewParams,
+  GetAnalyticsTrendsParams,
   GetDashboardComplaintsParams,
   GetDepartmentDashboardParams,
   HealthStatus,
@@ -61,13 +72,17 @@ import type {
   NotificationItem,
   Office,
   OfficerDashboardResponse,
+  OfficerPerformance,
   PostAuthSession200,
   PublicStats,
   RtiInput,
   RtiRequest,
+  SearchComplaintsParams,
   SettingInput,
   SettingItem,
   Taluk,
+  TranslateResult,
+  TrendPoint,
   UpdateStatusInput,
   UpdateUserRoleInput,
   UploadUrlRequest,
@@ -4031,5 +4046,642 @@ export const useMarkNotificationRead = <TError = ErrorType<ErrorResponse>,
         TContext
       > => {
       return useMutation(getMarkNotificationReadMutationOptions(options));
+    }
+
+export const getGetAnalyticsOverviewUrl = (params?: GetAnalyticsOverviewParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/analytics/overview?${stringifiedParams}` : `/api/analytics/overview`
+}
+
+/**
+ * @summary Public analytics overview with charts data
+ */
+export const getAnalyticsOverview = async (params?: GetAnalyticsOverviewParams, options?: RequestInit): Promise<AnalyticsOverviewResponse> => {
+
+  return customFetch<AnalyticsOverviewResponse>(getGetAnalyticsOverviewUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAnalyticsOverviewQueryKey = (params?: GetAnalyticsOverviewParams,) => {
+    return [
+    `/api/analytics/overview`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAnalyticsOverviewQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsOverview>>, TError = ErrorType<unknown>>(params?: GetAnalyticsOverviewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAnalyticsOverviewQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAnalyticsOverview>>> = ({ signal }) => getAnalyticsOverview(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOverview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAnalyticsOverviewQueryResult = NonNullable<Awaited<ReturnType<typeof getAnalyticsOverview>>>
+export type GetAnalyticsOverviewQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Public analytics overview with charts data
+ */
+
+export function useGetAnalyticsOverview<TData = Awaited<ReturnType<typeof getAnalyticsOverview>>, TError = ErrorType<unknown>>(
+ params?: GetAnalyticsOverviewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOverview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAnalyticsOverviewQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAnalyticsDepartmentPerformanceUrl = (params?: GetAnalyticsDepartmentPerformanceParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/analytics/department-performance?${stringifiedParams}` : `/api/analytics/department-performance`
+}
+
+/**
+ * @summary Department performance scorecards
+ */
+export const getAnalyticsDepartmentPerformance = async (params?: GetAnalyticsDepartmentPerformanceParams, options?: RequestInit): Promise<DepartmentPerformance[]> => {
+
+  return customFetch<DepartmentPerformance[]>(getGetAnalyticsDepartmentPerformanceUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAnalyticsDepartmentPerformanceQueryKey = (params?: GetAnalyticsDepartmentPerformanceParams,) => {
+    return [
+    `/api/analytics/department-performance`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAnalyticsDepartmentPerformanceQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>, TError = ErrorType<unknown>>(params?: GetAnalyticsDepartmentPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAnalyticsDepartmentPerformanceQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>> = ({ signal }) => getAnalyticsDepartmentPerformance(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAnalyticsDepartmentPerformanceQueryResult = NonNullable<Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>>
+export type GetAnalyticsDepartmentPerformanceQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Department performance scorecards
+ */
+
+export function useGetAnalyticsDepartmentPerformance<TData = Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>, TError = ErrorType<unknown>>(
+ params?: GetAnalyticsDepartmentPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsDepartmentPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAnalyticsDepartmentPerformanceQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAnalyticsOfficerPerformanceUrl = (params?: GetAnalyticsOfficerPerformanceParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/analytics/officer-performance?${stringifiedParams}` : `/api/analytics/officer-performance`
+}
+
+/**
+ * @summary Officer performance table (admin-only)
+ */
+export const getAnalyticsOfficerPerformance = async (params?: GetAnalyticsOfficerPerformanceParams, options?: RequestInit): Promise<OfficerPerformance[]> => {
+
+  return customFetch<OfficerPerformance[]>(getGetAnalyticsOfficerPerformanceUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAnalyticsOfficerPerformanceQueryKey = (params?: GetAnalyticsOfficerPerformanceParams,) => {
+    return [
+    `/api/analytics/officer-performance`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAnalyticsOfficerPerformanceQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError = ErrorType<ForbiddenResponse>>(params?: GetAnalyticsOfficerPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAnalyticsOfficerPerformanceQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>> = ({ signal }) => getAnalyticsOfficerPerformance(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAnalyticsOfficerPerformanceQueryResult = NonNullable<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>>
+export type GetAnalyticsOfficerPerformanceQueryError = ErrorType<ForbiddenResponse>
+
+
+/**
+ * @summary Officer performance table (admin-only)
+ */
+
+export function useGetAnalyticsOfficerPerformance<TData = Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError = ErrorType<ForbiddenResponse>>(
+ params?: GetAnalyticsOfficerPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAnalyticsOfficerPerformanceQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAnalyticsTrendsUrl = (params?: GetAnalyticsTrendsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/analytics/trends?${stringifiedParams}` : `/api/analytics/trends`
+}
+
+/**
+ * @summary Monthly/yearly complaint volume and resolution trend
+ */
+export const getAnalyticsTrends = async (params?: GetAnalyticsTrendsParams, options?: RequestInit): Promise<TrendPoint[]> => {
+
+  return customFetch<TrendPoint[]>(getGetAnalyticsTrendsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAnalyticsTrendsQueryKey = (params?: GetAnalyticsTrendsParams,) => {
+    return [
+    `/api/analytics/trends`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetAnalyticsTrendsQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsTrends>>, TError = ErrorType<unknown>>(params?: GetAnalyticsTrendsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsTrends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAnalyticsTrendsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAnalyticsTrends>>> = ({ signal }) => getAnalyticsTrends(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsTrends>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAnalyticsTrendsQueryResult = NonNullable<Awaited<ReturnType<typeof getAnalyticsTrends>>>
+export type GetAnalyticsTrendsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Monthly/yearly complaint volume and resolution trend
+ */
+
+export function useGetAnalyticsTrends<TData = Awaited<ReturnType<typeof getAnalyticsTrends>>, TError = ErrorType<unknown>>(
+ params?: GetAnalyticsTrendsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsTrends>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAnalyticsTrendsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetAnalyticsMapDataUrl = () => {
+
+
+
+
+  return `/api/analytics/map-data`
+}
+
+/**
+ * @summary District-level complaint heat-map data
+ */
+export const getAnalyticsMapData = async ( options?: RequestInit): Promise<DistrictMapDataPoint[]> => {
+
+  return customFetch<DistrictMapDataPoint[]>(getGetAnalyticsMapDataUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAnalyticsMapDataQueryKey = () => {
+    return [
+    `/api/analytics/map-data`
+    ] as const;
+    }
+
+
+export const getGetAnalyticsMapDataQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsMapData>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsMapData>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAnalyticsMapDataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAnalyticsMapData>>> = ({ signal }) => getAnalyticsMapData({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsMapData>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAnalyticsMapDataQueryResult = NonNullable<Awaited<ReturnType<typeof getAnalyticsMapData>>>
+export type GetAnalyticsMapDataQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary District-level complaint heat-map data
+ */
+
+export function useGetAnalyticsMapData<TData = Awaited<ReturnType<typeof getAnalyticsMapData>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsMapData>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAnalyticsMapDataQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSearchComplaintsUrl = (params?: SearchComplaintsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/search/complaints?${stringifiedParams}` : `/api/search/complaints`
+}
+
+/**
+ * @summary Advanced complaint search with filters and pagination
+ */
+export const searchComplaints = async (params?: SearchComplaintsParams, options?: RequestInit): Promise<ComplaintSearchPage | string> => {
+
+  return customFetch<ComplaintSearchPage | string>(getSearchComplaintsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getSearchComplaintsQueryKey = (params?: SearchComplaintsParams,) => {
+    return [
+    `/api/search/complaints`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getSearchComplaintsQueryOptions = <TData = Awaited<ReturnType<typeof searchComplaints>>, TError = ErrorType<unknown>>(params?: SearchComplaintsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchComplaints>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getSearchComplaintsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchComplaints>>> = ({ signal }) => searchComplaints(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchComplaints>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type SearchComplaintsQueryResult = NonNullable<Awaited<ReturnType<typeof searchComplaints>>>
+export type SearchComplaintsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Advanced complaint search with filters and pagination
+ */
+
+export function useSearchComplaints<TData = Awaited<ReturnType<typeof searchComplaints>>, TError = ErrorType<unknown>>(
+ params?: SearchComplaintsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchComplaints>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getSearchComplaintsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAiClassifyComplaintUrl = () => {
+
+
+
+
+  return `/api/ai/classify-complaint`
+}
+
+/**
+ * @summary AI-assisted complaint category suggestion
+ */
+export const aiClassifyComplaint = async (aiClassifyInput: AiClassifyInput, options?: RequestInit): Promise<AiClassifyResponse> => {
+
+  return customFetch<AiClassifyResponse>(getAiClassifyComplaintUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(aiClassifyInput)
+  }
+);}
+
+
+
+
+export const getAiClassifyComplaintMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof aiClassifyComplaint>>, TError,{data: BodyType<AiClassifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof aiClassifyComplaint>>, TError,{data: BodyType<AiClassifyInput>}, TContext> => {
+
+const mutationKey = ['aiClassifyComplaint'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof aiClassifyComplaint>>, {data: BodyType<AiClassifyInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  aiClassifyComplaint(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AiClassifyComplaintMutationResult = NonNullable<Awaited<ReturnType<typeof aiClassifyComplaint>>>
+    export type AiClassifyComplaintMutationBody = BodyType<AiClassifyInput>
+    export type AiClassifyComplaintMutationError = ErrorType<unknown>
+
+    /**
+ * @summary AI-assisted complaint category suggestion
+ */
+export const useAiClassifyComplaint = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof aiClassifyComplaint>>, TError,{data: BodyType<AiClassifyInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof aiClassifyComplaint>>,
+        TError,
+        {data: BodyType<AiClassifyInput>},
+        TContext
+      > => {
+      return useMutation(getAiClassifyComplaintMutationOptions(options));
+    }
+
+export const getAiTranslateUrl = () => {
+
+
+
+
+  return `/api/ai/translate`
+}
+
+/**
+ * @summary Translate text between Tamil and English
+ */
+export const aiTranslate = async (aiTranslateInput: AiTranslateInput, options?: RequestInit): Promise<TranslateResult> => {
+
+  return customFetch<TranslateResult>(getAiTranslateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(aiTranslateInput)
+  }
+);}
+
+
+
+
+export const getAiTranslateMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof aiTranslate>>, TError,{data: BodyType<AiTranslateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof aiTranslate>>, TError,{data: BodyType<AiTranslateInput>}, TContext> => {
+
+const mutationKey = ['aiTranslate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof aiTranslate>>, {data: BodyType<AiTranslateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  aiTranslate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AiTranslateMutationResult = NonNullable<Awaited<ReturnType<typeof aiTranslate>>>
+    export type AiTranslateMutationBody = BodyType<AiTranslateInput>
+    export type AiTranslateMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Translate text between Tamil and English
+ */
+export const useAiTranslate = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof aiTranslate>>, TError,{data: BodyType<AiTranslateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof aiTranslate>>,
+        TError,
+        {data: BodyType<AiTranslateInput>},
+        TContext
+      > => {
+      return useMutation(getAiTranslateMutationOptions(options));
     }
 

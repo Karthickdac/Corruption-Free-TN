@@ -10,6 +10,9 @@ import adminRouter from "./admin";
 import dashboardRouter from "./dashboard";
 import notificationsRouter from "./notifications";
 import authRouter from "./auth";
+import analyticsRouter from "./analytics";
+import searchRouter from "./search";
+import aiRouter from "./ai";
 import { loadLocalUser } from "../middlewares/rbac";
 
 const router: IRouter = Router();
@@ -26,5 +29,8 @@ router.use(adminRouter);
 router.use(dashboardRouter);
 router.use(notificationsRouter);
 router.use(authRouter);
+router.use(analyticsRouter);
+router.use(searchRouter);
+router.use(aiRouter);
 
 export default router;

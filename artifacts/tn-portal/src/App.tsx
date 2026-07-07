@@ -23,6 +23,7 @@ import MyComplaints from "@/pages/my-complaints";
 import Rti from "@/pages/rti";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
+import SearchPage from "@/pages/search";
 // Admin pages
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminComplaintDetail from "@/pages/admin/complaint-detail";
@@ -30,6 +31,7 @@ import AdminComplaintsList from "@/pages/admin/complaints-list";
 import AdminUsers from "@/pages/admin/users";
 import AdminAuditLogs from "@/pages/admin/audit-logs";
 import AdminMasterData from "@/pages/admin/master-data";
+import AdminAnalytics from "@/pages/admin/analytics";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +68,7 @@ function Router() {
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/audit-logs" component={AdminAuditLogs} />
       <Route path="/admin/master-data" component={AdminMasterData} />
+      <Route path="/admin/analytics" component={AdminAnalytics} />
       <Route>
         <Layout>
           <Switch>
@@ -77,6 +80,7 @@ function Router() {
             <Route path="/directory" component={Directory} />
             <Route path="/my-complaints" component={MyComplaints} />
             <Route path="/rti" component={Rti} />
+            <Route path="/search" component={SearchPage} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />
             <Route component={NotFound} />

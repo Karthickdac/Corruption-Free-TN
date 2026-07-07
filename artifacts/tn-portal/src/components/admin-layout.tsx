@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Shield,
   AlertCircle,
+  BarChart2,
 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
@@ -49,6 +50,11 @@ const navItems: NavItem[] = [
     label: "Master Data",
     icon: <Settings className="h-4 w-4" />,
     superAdminOnly: true,
+  },
+  {
+    href: "/admin/analytics",
+    label: "Analytics",
+    icon: <BarChart2 className="h-4 w-4" />,
   },
 ];
 

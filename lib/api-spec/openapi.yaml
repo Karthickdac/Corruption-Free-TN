@@ -28,6 +28,12 @@ tags:
     description: Role-scoped dashboard views
   - name: notifications
     description: In-app notifications
+  - name: analytics
+    description: Public analytics and transparency data
+  - name: search
+    description: Advanced complaint search and export
+  - name: ai
+    description: AI-assisted classification and translation
 paths:
   /health:
     get:
@@ -1269,6 +1275,284 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+
+  /analytics/overview:
+    get:
+      operationId: getAnalyticsOverview
+      tags: [analytics]
+      summary: Public analytics overview with charts data
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analytics overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsOverviewResponse"
+
+  /analytics/department-performance:
+    get:
+      operationId: getAnalyticsDepartmentPerformance
+      tags: [analytics]
+      summary: Department performance scorecards
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Department performance list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DepartmentPerformance"
+
+  /analytics/officer-performance:
+    get:
+      operationId: getAnalyticsOfficerPerformance
+      tags: [analytics]
+      summary: Officer performance table (admin-only)
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Officer performance list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfficerPerformance"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /analytics/trends:
+    get:
+      operationId: getAnalyticsTrends
+      tags: [analytics]
+      summary: Monthly/yearly complaint volume and resolution trend
+      parameters:
+        - name: granularity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [monthly, yearly]
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Trend data points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TrendPoint"
+
+  /analytics/map-data:
+    get:
+      operationId: getAnalyticsMapData
+      tags: [analytics]
+      summary: District-level complaint heat-map data
+      responses:
+        "200":
+          description: District complaint density data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DistrictMapDataPoint"
+
+  /search/complaints:
+    get:
+      operationId: searchComplaints
+      tags: [search]
+      summary: Advanced complaint search with filters and pagination
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: complaintNumber
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: departmentId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: districtId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: talukId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: categoryId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: minAmount
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: maxAmount
+          in: query
+          required: false
+          schema:
+            type: number
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: sortBy
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sortDir
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [asc, desc]
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [json, csv]
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplaintSearchPage"
+            text/csv:
+              schema:
+                type: string
+
+  /ai/classify-complaint:
+    post:
+      operationId: aiClassifyComplaint
+      tags: [ai]
+      summary: AI-assisted complaint category suggestion
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiClassifyInput"
+      responses:
+        "200":
+          description: Category suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiClassifyResponse"
+
+  /ai/translate:
+    post:
+      operationId: aiTranslate
+      tags: [ai]
+      summary: Translate text between Tamil and English
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiTranslateInput"
+      responses:
+        "200":
+          description: Translation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TranslateResult"
+
 components:
   responses:
     BadRequest:
@@ -2020,3 +2304,178 @@ components:
           type: string
         metadata:
           $ref: "#/components/schemas/UploadUrlRequest"
+    AnalyticsOverviewResponse:
+      type: object
+      required: [totalComplaints, resolved, pending, underInvestigation, avgResolutionDays, byStatus, byCategory, byDistrict, byDepartment]
+      properties:
+        totalComplaints:
+          type: integer
+        resolved:
+          type: integer
+        pending:
+          type: integer
+        underInvestigation:
+          type: integer
+        avgResolutionDays:
+          type: ["number", "null"]
+        byStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/NameCountItem"
+        byCategory:
+          type: array
+          items:
+            $ref: "#/components/schemas/NameCountItem"
+        byDistrict:
+          type: array
+          items:
+            $ref: "#/components/schemas/NameCountItem"
+        byDepartment:
+          type: array
+          items:
+            $ref: "#/components/schemas/NameCountItem"
+        byPriority:
+          type: array
+          items:
+            $ref: "#/components/schemas/NameCountItem"
+    NameCountItem:
+      type: object
+      required: [name, count]
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+    DepartmentPerformance:
+      type: object
+      required: [departmentId, departmentName, total, resolved, pending, resolutionRate, avgResolutionDays]
+      properties:
+        departmentId:
+          type: integer
+        departmentName:
+          type: string
+        total:
+          type: integer
+        resolved:
+          type: integer
+        pending:
+          type: integer
+        resolutionRate:
+          type: number
+        avgResolutionDays:
+          type: ["number", "null"]
+    OfficerPerformance:
+      type: object
+      required: [officerId, officerName, total, resolved, pending, avgResolutionDays]
+      properties:
+        officerId:
+          type: integer
+        officerName:
+          type: ["string", "null"]
+        officerEmail:
+          type: ["string", "null"]
+        total:
+          type: integer
+        resolved:
+          type: integer
+        pending:
+          type: integer
+        avgResolutionDays:
+          type: ["number", "null"]
+    TrendPoint:
+      type: object
+      required: [period, total, resolved]
+      properties:
+        period:
+          type: string
+        total:
+          type: integer
+        resolved:
+          type: integer
+        resolutionRate:
+          type: number
+    DistrictMapDataPoint:
+      type: object
+      required: [districtId, districtName, districtCode, total]
+      properties:
+        districtId:
+          type: integer
+        districtName:
+          type: string
+        districtCode:
+          type: string
+        total:
+          type: integer
+        resolved:
+          type: integer
+        pending:
+          type: integer
+        density:
+          type: number
+    ComplaintSearchPage:
+      type: object
+      required: [results, total, page, limit]
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/Complaint"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+    AiClassifyInput:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          minLength: 10
+        categories:
+          type: array
+          items:
+            type: string
+    AiClassifyResponse:
+      type: object
+      required: [suggestions]
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AiCategorySuggestion"
+        model:
+          type: string
+    AiCategorySuggestion:
+      type: object
+      required: [categoryName, confidence]
+      properties:
+        categoryName:
+          type: string
+        confidence:
+          type: number
+        reasoning:
+          type: ["string", "null"]
+    AiTranslateInput:
+      type: object
+      required: [text, targetLang]
+      properties:
+        text:
+          type: string
+          minLength: 1
+        targetLang:
+          type: string
+          enum: [en, ta]
+    TranslateResult:
+      type: object
+      required: [translatedText, sourceLang, targetLang]
+      properties:
+        translatedText:
+          type: string
+        sourceLang:
+          type: string
+        targetLang:
+          type: string
+        model:
+          type: string

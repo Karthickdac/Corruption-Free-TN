@@ -1418,3 +1418,233 @@ export const MarkNotificationReadResponse = zod.object({
 })
 
 
+/**
+ * @summary Public analytics overview with charts data
+ */
+export const GetAnalyticsOverviewQueryParams = zod.object({
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional()
+})
+
+export const GetAnalyticsOverviewResponse = zod.object({
+  "totalComplaints": zod.number(),
+  "resolved": zod.number(),
+  "pending": zod.number(),
+  "underInvestigation": zod.number(),
+  "avgResolutionDays": zod.number().nullable(),
+  "byStatus": zod.array(zod.object({
+  "name": zod.string(),
+  "count": zod.number()
+})),
+  "byCategory": zod.array(zod.object({
+  "name": zod.string(),
+  "count": zod.number()
+})),
+  "byDistrict": zod.array(zod.object({
+  "name": zod.string(),
+  "count": zod.number()
+})),
+  "byDepartment": zod.array(zod.object({
+  "name": zod.string(),
+  "count": zod.number()
+})),
+  "byPriority": zod.array(zod.object({
+  "name": zod.string(),
+  "count": zod.number()
+})).optional()
+})
+
+
+/**
+ * @summary Department performance scorecards
+ */
+export const GetAnalyticsDepartmentPerformanceQueryParams = zod.object({
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const GetAnalyticsDepartmentPerformanceResponseItem = zod.object({
+  "departmentId": zod.number(),
+  "departmentName": zod.string(),
+  "total": zod.number(),
+  "resolved": zod.number(),
+  "pending": zod.number(),
+  "resolutionRate": zod.number(),
+  "avgResolutionDays": zod.number().nullable()
+})
+export const GetAnalyticsDepartmentPerformanceResponse = zod.array(GetAnalyticsDepartmentPerformanceResponseItem)
+
+
+/**
+ * @summary Officer performance table (admin-only)
+ */
+export const GetAnalyticsOfficerPerformanceQueryParams = zod.object({
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const GetAnalyticsOfficerPerformanceResponseItem = zod.object({
+  "officerId": zod.number(),
+  "officerName": zod.string().nullable(),
+  "officerEmail": zod.string().nullish(),
+  "total": zod.number(),
+  "resolved": zod.number(),
+  "pending": zod.number(),
+  "avgResolutionDays": zod.number().nullable()
+})
+export const GetAnalyticsOfficerPerformanceResponse = zod.array(GetAnalyticsOfficerPerformanceResponseItem)
+
+
+/**
+ * @summary Monthly/yearly complaint volume and resolution trend
+ */
+export const GetAnalyticsTrendsQueryParams = zod.object({
+  "granularity": zod.enum(['monthly', 'yearly']).optional(),
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional()
+})
+
+export const GetAnalyticsTrendsResponseItem = zod.object({
+  "period": zod.string(),
+  "total": zod.number(),
+  "resolved": zod.number(),
+  "resolutionRate": zod.number().optional()
+})
+export const GetAnalyticsTrendsResponse = zod.array(GetAnalyticsTrendsResponseItem)
+
+
+/**
+ * @summary District-level complaint heat-map data
+ */
+export const GetAnalyticsMapDataResponseItem = zod.object({
+  "districtId": zod.number(),
+  "districtName": zod.string(),
+  "districtCode": zod.string(),
+  "total": zod.number(),
+  "resolved": zod.number().optional(),
+  "pending": zod.number().optional(),
+  "density": zod.number().optional()
+})
+export const GetAnalyticsMapDataResponse = zod.array(GetAnalyticsMapDataResponseItem)
+
+
+/**
+ * @summary Advanced complaint search with filters and pagination
+ */
+export const SearchComplaintsQueryParams = zod.object({
+  "q": zod.coerce.string().optional(),
+  "complaintNumber": zod.coerce.string().optional(),
+  "status": zod.coerce.string().optional(),
+  "departmentId": zod.coerce.number().optional(),
+  "districtId": zod.coerce.number().optional(),
+  "talukId": zod.coerce.number().optional(),
+  "categoryId": zod.coerce.number().optional(),
+  "priority": zod.coerce.string().optional(),
+  "from": zod.coerce.string().optional(),
+  "to": zod.coerce.string().optional(),
+  "minAmount": zod.coerce.number().optional(),
+  "maxAmount": zod.coerce.number().optional(),
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional(),
+  "sortBy": zod.coerce.string().optional(),
+  "sortDir": zod.enum(['asc', 'desc']).optional(),
+  "format": zod.enum(['json', 'csv']).optional()
+})
+
+export const SearchComplaintsResponse = zod.object({
+  "results": zod.array(zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "createdAt": zod.string()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
+
+/**
+ * @summary AI-assisted complaint category suggestion
+ */
+export const aiClassifyComplaintBodyTextMin = 10;
+
+
+
+export const AiClassifyComplaintBody = zod.object({
+  "text": zod.string().min(aiClassifyComplaintBodyTextMin),
+  "categories": zod.array(zod.string()).optional()
+})
+
+export const AiClassifyComplaintResponse = zod.object({
+  "suggestions": zod.array(zod.object({
+  "categoryName": zod.string(),
+  "confidence": zod.number(),
+  "reasoning": zod.string().nullish()
+})),
+  "model": zod.string().optional()
+})
+
+
+/**
+ * @summary Translate text between Tamil and English
+ */
+
+
+
+export const AiTranslateBody = zod.object({
+  "text": zod.string().min(1),
+  "targetLang": zod.enum(['en', 'ta'])
+})
+
+export const AiTranslateResponse = zod.object({
+  "translatedText": zod.string(),
+  "sourceLang": zod.string(),
+  "targetLang": zod.string(),
+  "model": zod.string().optional()
+})
+
+
