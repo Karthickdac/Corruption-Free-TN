@@ -1,0 +1,842 @@
+Project Name
+
+TNCorruptions - Tamil Nadu Public Corruption Complaint & Transparency Portal
+
+Objective
+
+Develop a modern, enterprise-grade, secure web application called TNCorruptions that enables citizens to submit corruption complaints against government departments in Tamil Nadu.
+
+The system should route complaints automatically to the respective department based on the selected department, district, taluk, village, and office.
+
+The platform should support verification workflows, evidence management, analytics, RTI tracking, whistleblower protection, complaint status tracking, and role-based administration.
+
+The UI should be similar to modern government portals with excellent UX, mobile responsiveness, dark/light mode, multilingual support (Tamil & English), and enterprise security.
+
+Technology Stack
+
+Frontend
+
+React 19
+TypeScript
+TailwindCSS
+ShadCN UI
+Framer Motion
+React Router
+React Query
+Axios
+
+Backend
+
+Node.js
+Express
+PostgreSQL
+Prisma ORM
+JWT Authentication
+Redis Cache
+Socket.io
+
+Storage
+
+AWS S3 compatible
+Cloudflare R2
+Local Storage option
+
+Deployment
+
+Docker
+Nginx
+PM2
+
+Authentication
+
+JWT
+Refresh Tokens
+OTP Login
+Email Verification
+Modules
+Citizen Portal
+
+Public Homepage
+
+Search Complaints
+
+Submit Complaint
+
+Track Complaint
+
+Upload Evidence
+
+Anonymous Complaint
+
+RTI Tracking
+
+News
+
+Statistics
+
+Whistleblower Information
+
+Transparency Reports
+
+FAQ
+
+Downloads
+
+Public Dashboard
+
+Complaint Registration
+
+Complaint Number Auto Generation
+
+Citizen Details
+
+Anonymous Option
+
+Department
+
+Ministry
+
+District
+
+Taluk
+
+Village
+
+Local Body
+
+Office Name
+
+Officer Name
+
+Designation
+
+Nature of Corruption
+
+Amount Involved
+
+Date
+
+Location
+
+Description
+
+Witnesses
+
+Supporting Documents
+
+Images
+
+Videos
+
+Audio
+
+PDF
+
+GPS Location
+
+Status
+
+Priority
+
+Category
+
+Complaint Categories
+
+Bribery
+
+Tender Corruption
+
+Illegal Commission
+
+Land Scam
+
+Property Registration
+
+Revenue
+
+Police
+
+Education
+
+Medical
+
+Municipality
+
+Electricity
+
+Water Supply
+
+Transport
+
+Ration Shop
+
+Panchayat
+
+Corporation
+
+Tax
+
+Forest
+
+Mining
+
+Public Works
+
+Housing
+
+Road Works
+
+Illegal Sand Mining
+
+Illegal Quarry
+
+Environmental Violations
+
+Fake Certificates
+
+Recruitment Scam
+
+Government Contract Scam
+
+Others
+
+Tamil Nadu Administrative Hierarchy
+
+Create master tables for:
+
+All Tamil Nadu Districts
+
+All Taluks
+
+All Blocks
+
+All Panchayat Unions
+
+All Municipalities
+
+All Corporations
+
+All Town Panchayats
+
+All Villages
+
+All Revenue Villages
+
+All Wards
+
+Automatically map
+
+Village
+
+↓
+
+Taluk
+
+↓
+
+District
+
+↓
+
+Department Office
+
+↓
+
+Ministry
+
+Government Departments
+
+Include master data for all major Tamil Nadu Government departments, for example:
+
+Chief Minister Department
+
+Finance
+
+Home
+
+Revenue
+
+Police
+
+Education
+
+School Education
+
+Higher Education
+
+Health
+
+Medical Education
+
+Transport
+
+Highways
+
+PWD
+
+Municipal Administration
+
+Rural Development
+
+Electricity
+
+Energy
+
+Agriculture
+
+Animal Husbandry
+
+Fisheries
+
+Forest
+
+Tourism
+
+Commercial Taxes
+
+Registration
+
+Food
+
+Civil Supplies
+
+Housing
+
+Industries
+
+Labour
+
+Employment
+
+IT
+
+Cooperation
+
+Social Welfare
+
+BC Welfare
+
+SC/ST Welfare
+
+Youth Welfare
+
+Sports
+
+HR & CE
+
+Environment
+
+Planning
+
+Law
+
+Prisons
+
+Fire & Rescue
+
+Excise
+
+Town Planning
+
+Housing Board
+
+Slum Clearance
+
+Metro Water
+
+Pollution Control
+
+Archives
+
+Libraries
+
+Museums
+
+Culture
+
+Disaster Management
+
+More...
+
+Each department must have
+
+Department Profile
+
+Secretary
+
+Minister
+
+Commissioner
+
+Regional Offices
+
+District Offices
+
+Contact Details
+
+Jurisdiction
+
+Complaint Categories
+
+Ministry Mapping
+
+Every department should automatically map to:
+
+Minister
+
+Secretary
+
+Department Head
+
+District Officer
+
+Regional Officer
+
+Complaint Review Team
+
+Department Dashboard
+
+Role Based Access
+
+Citizen
+
+Village Officer
+
+Taluk Officer
+
+District Officer
+
+Department Officer
+
+Ministry Officer
+
+State Administrator
+
+Super Admin
+
+Investigation Officer
+
+Moderator
+
+Auditor
+
+Legal Officer
+
+Each role should only access assigned departments.
+
+Complaint Workflow
+
+Submitted
+
+↓
+
+Under Review
+
+↓
+
+Evidence Verification
+
+↓
+
+Forwarded
+
+↓
+
+Department Response
+
+↓
+
+Investigation
+
+↓
+
+Action Taken
+
+↓
+
+Closed
+
+↓
+
+Reopened
+
+Evidence Module
+
+Photos
+
+Videos
+
+Audio
+
+Documents
+
+PDF
+
+Office Files
+
+RTI Responses
+
+Court Orders
+
+Geo Tagged Images
+
+Digital Signature Verification
+
+Hash Verification
+
+Investigation Module
+
+Assign Investigator
+
+Timeline
+
+Case Notes
+
+Internal Comments
+
+Evidence Timeline
+
+Visits
+
+Inspection Reports
+
+Interview Notes
+
+Department Replies
+
+Final Report
+
+Public Transparency Dashboard
+
+Total Complaints
+
+Department-wise
+
+District-wise
+
+Taluk-wise
+
+Village-wise
+
+Pending
+
+Closed
+
+Resolved
+
+Rejected
+
+Verified
+
+Anonymous
+
+Average Resolution Time
+
+Top Complaint Categories
+
+Heat Maps
+
+Charts
+
+Graphs
+
+Monthly Reports
+
+Yearly Reports
+
+GIS Dashboard
+
+Interactive Tamil Nadu Map
+
+Click District
+
+↓
+
+Taluk
+
+↓
+
+Village
+
+↓
+
+Department
+
+↓
+
+Complaints
+
+Display heatmaps
+
+Filters
+
+Analytics
+
+Power BI style dashboards
+
+Department Performance
+
+Officer Performance
+
+Complaint Trends
+
+Seasonal Trends
+
+Most Reported Departments
+
+Most Corruption Categories
+
+Average Resolution Time
+
+Complaint Growth
+
+Export Excel
+
+Export PDF
+
+CSV
+
+Search Engine
+
+Search by
+
+Complaint ID
+
+Department
+
+Officer
+
+Minister
+
+District
+
+Taluk
+
+Village
+
+Date
+
+Status
+
+Keyword
+
+Amount
+
+Category
+
+Notifications
+
+SMS
+
+WhatsApp
+
+Email
+
+Push Notifications
+
+Internal Notifications
+
+Audit Logs
+
+Every activity
+
+Login
+
+Download
+
+Upload
+
+Status Change
+
+Evidence Added
+
+Report Generated
+
+IP Address
+
+Browser
+
+Time
+
+Reports
+
+Daily
+
+Weekly
+
+Monthly
+
+Quarterly
+
+Annual
+
+Department Reports
+
+District Reports
+
+Officer Reports
+
+Minister Reports
+
+Pending Cases
+
+Resolved Cases
+
+Admin Panel
+
+Master Data
+
+Departments
+
+Districts
+
+Taluks
+
+Villages
+
+Users
+
+Roles
+
+Permissions
+
+Complaint Categories
+
+Notifications
+
+Settings
+
+Audit Logs
+
+Language
+
+Themes
+
+System Health
+
+API Keys
+
+Backup
+
+Restore
+
+Security
+
+HTTPS
+
+JWT
+
+RBAC
+
+Encryption
+
+Rate Limiting
+
+Captcha
+
+SQL Injection Protection
+
+XSS Protection
+
+CSRF Protection
+
+File Scan
+
+Malware Detection
+
+Audit Trail
+
+AI Features
+
+AI Complaint Classification
+
+Duplicate Complaint Detection
+
+OCR from Uploaded Documents
+
+Tamil OCR
+
+English OCR
+
+Speech to Text
+
+Auto Department Detection
+
+Risk Score
+
+Fraud Detection
+
+Evidence Similarity Detection
+
+Sentiment Analysis
+
+Auto Summary
+
+Translation Tamil ↔ English
+
+Mobile Responsive
+
+Desktop
+
+Tablet
+
+Android
+
+iPhone
+
+PWA Support
+
+Offline Mode
+
+UI Theme
+
+Modern Government Dashboard
+
+Premium SaaS Design
+
+Tamil Nadu inspired color palette
+
+Blue
+
+White
+
+Green
+
+Glassmorphism
+
+Beautiful animations
+
+Professional cards
+
+Charts
+
+Maps
+
+Responsive layouts
+
+Database
+
+Design a normalized PostgreSQL schema with foreign key relationships covering:
+
+Users
+Roles
+Ministries
+Departments
+Districts
+Taluks
+Blocks
+Panchayats
+Villages
+Offices
+Complaints
+Evidence
+Investigation
+Comments
+Notifications
+Audit Logs
+Reports
+Settings
+
+Seed the database with Tamil Nadu administrative master data (all districts, taluks, villages, and local bodies) from official government datasets where available, and create import scripts so the data can be updated when official boundaries change.
+
+Build the application using clean architecture, REST APIs (or GraphQL if preferred), reusable React components, comprehensive validation, automated tests, API documentation, and Docker support for production deployment.
