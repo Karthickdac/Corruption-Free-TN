@@ -49,6 +49,7 @@ export const complaintsTable = pgTable("complaints", {
   amountInvolved: numeric("amount_involved"),
   incidentDate: text("incident_date"),
   location: text("location"),
+  village: text("village"),
   witnesses: text("witnesses"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -69,6 +70,7 @@ export const evidenceTable = pgTable("evidence", {
     .references(() => complaintsTable.id),
   fileUrl: text("file_url").notNull(),
   fileType: text("file_type"),
+  fileHash: text("file_hash"),
   description: text("description"),
   uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
 });

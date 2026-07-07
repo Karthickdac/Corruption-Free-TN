@@ -13,6 +13,8 @@ export interface EvidenceItem {
   /** @nullable */
   fileType?: string | null;
   /** @nullable */
+  fileHash?: string | null;
+  /** @nullable */
   description?: string | null;
   uploadedAt: string;
 }

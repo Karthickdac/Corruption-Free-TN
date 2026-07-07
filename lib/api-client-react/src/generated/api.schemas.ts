@@ -127,6 +127,13 @@ export interface UserProfile {
   role: string;
 }
 
+export interface StatusHistoryItem {
+  status: string;
+  changedAt: string;
+  /** @nullable */
+  note?: string | null;
+}
+
 export interface Complaint {
   id: number;
   complaintNumber: string;
@@ -156,9 +163,14 @@ export interface Complaint {
   /** @nullable */
   officerName?: string | null;
   /** @nullable */
+  village?: string | null;
+  /** @nullable */
+  location?: string | null;
+  /** @nullable */
   amountInvolved?: number | null;
   /** @nullable */
   incidentDate?: string | null;
+  statusHistory?: StatusHistoryItem[];
   createdAt: string;
 }
 
@@ -178,6 +190,7 @@ export interface ComplaintInput {
   amountInvolved?: number;
   incidentDate?: string;
   location?: string;
+  village?: string;
   witnesses?: string;
 }
 
@@ -188,6 +201,8 @@ export interface EvidenceItem {
   /** @nullable */
   fileType?: string | null;
   /** @nullable */
+  fileHash?: string | null;
+  /** @nullable */
   description?: string | null;
   uploadedAt: string;
 }
@@ -195,6 +210,7 @@ export interface EvidenceItem {
 export interface EvidenceInput {
   fileUrl: string;
   fileType?: string;
+  fileHash?: string;
   description?: string;
 }
 

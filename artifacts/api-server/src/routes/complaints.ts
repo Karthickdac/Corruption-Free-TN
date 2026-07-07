@@ -9,6 +9,7 @@ import {
   departmentsTable,
   complaintCategoriesTable,
   usersTable,
+  auditLogsTable,
 } from "@workspace/db";
 import {
   ListComplaintsResponse,
@@ -35,7 +36,7 @@ type ComplaintRow = {
   categoryName: string | null;
 };
 
-function toApiComplaint(row: ComplaintRow) {
+function toApiComplaint(row: ComplaintRow, statusHistory?: { status: string; changedAt: string; note: string | null }[]) {
   const c = row.complaint;
   return {
     id: c.id,
@@ -55,9 +56,12 @@ function toApiComplaint(row: ComplaintRow) {
     categoryName: row.categoryName,
     officeName: c.officeName,
     officerName: c.officerName,
+    village: c.village,
+    location: c.location,
     amountInvolved:
       c.amountInvolved === null ? null : Number(c.amountInvolved),
     incidentDate: c.incidentDate,
+    statusHistory: statusHistory ?? [],
     createdAt: c.createdAt.toISOString(),
   };
 }
@@ -84,6 +88,28 @@ function complaintSelection() {
     );
 }
 
+async function getStatusHistory(complaintId: number) {
+  const logs = await db
+    .select()
+    .from(auditLogsTable)
+    .where(
+      and(
+        eq(auditLogsTable.entityType, "complaint"),
+        eq(auditLogsTable.entityId, complaintId),
+        eq(auditLogsTable.action, "status_change"),
+      ),
+    )
+    .orderBy(auditLogsTable.createdAt);
+  return logs.map((l) => {
+    const d = l.details as { status?: string; note?: string } | null;
+    return {
+      status: d?.status ?? "submitted",
+      changedAt: l.createdAt.toISOString(),
+      note: d?.note ?? null,
+    };
+  });
+}
+
 router.get("/complaints", async (req, res, next) => {
   try {
     const params = ListComplaintsQueryParams.parse(req.query);
@@ -106,7 +132,7 @@ router.get("/complaints", async (req, res, next) => {
       .orderBy(desc(complaintsTable.createdAt))
       .limit(limit);
 
-    res.json(ListComplaintsResponse.parse(rows.map(toApiComplaint)));
+    res.json(ListComplaintsResponse.parse(rows.map((r) => toApiComplaint(r))));
   } catch (err) {
     next(err);
   }
@@ -193,6 +219,7 @@ router.post("/complaints", async (req, res, next) => {
                 : String(body.amountInvolved),
             incidentDate: body.incidentDate ?? null,
             location: body.location ?? null,
+            village: (body as any).village ?? null,
             witnesses: body.witnesses ?? null,
           })
           .returning();
@@ -211,6 +238,14 @@ router.post("/complaints", async (req, res, next) => {
       return;
     }
 
+    await db.insert(auditLogsTable).values({
+      userId,
+      action: "status_change",
+      entityType: "complaint",
+      entityId: created.id,
+      details: { status: "submitted", note: "Complaint filed" },
+    });
+
     const rows = await complaintSelection().where(
       eq(complaintsTable.id, created.id),
     );
@@ -219,7 +254,8 @@ router.post("/complaints", async (req, res, next) => {
       res.status(400).json({ error: "Failed to create complaint" });
       return;
     }
-    res.status(201).json(CreateComplaintResponse.parse(toApiComplaint(row)));
+    const statusHistory = await getStatusHistory(created.id);
+    res.status(201).json(CreateComplaintResponse.parse(toApiComplaint(row, statusHistory)));
   } catch (err) {
     next(err);
   }
@@ -244,7 +280,7 @@ router.get("/complaints/mine", async (req, res, next) => {
     const rows = await complaintSelection()
       .where(eq(complaintsTable.userId, userId))
       .orderBy(desc(complaintsTable.createdAt));
-    res.json(ListMyComplaintsResponse.parse(rows.map(toApiComplaint)));
+    res.json(ListMyComplaintsResponse.parse(rows.map((r) => toApiComplaint(r))));
   } catch (err) {
     next(err);
   }
@@ -252,13 +288,27 @@ router.get("/complaints/mine", async (req, res, next) => {
 
 router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
   try {
+    const auth = getAuth(req);
+    if (!auth.userId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
     const params = ListEvidenceParams.parse({ complaintId: Number(req.params.complaintId) });
     const complaint = await db
-      .select({ id: complaintsTable.id })
+      .select({ id: complaintsTable.id, userId: complaintsTable.userId })
       .from(complaintsTable)
       .where(eq(complaintsTable.id, params.complaintId));
     if (!complaint[0]) {
       res.status(404).json({ error: "Complaint not found" });
+      return;
+    }
+    const localUser = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.clerkId, auth.userId));
+    const localUserId = localUser[0]?.id;
+    if (complaint[0].userId !== null && complaint[0].userId !== localUserId) {
+      res.status(403).json({ error: "Access denied" });
       return;
     }
     const rows = await db
@@ -272,6 +322,7 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
           complaintId: e.complaintId,
           fileUrl: e.fileUrl,
           fileType: e.fileType,
+          fileHash: e.fileHash,
           description: e.description,
           uploadedAt: e.uploadedAt.toISOString(),
         })),
@@ -284,6 +335,11 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
 
 router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
   try {
+    const auth = getAuth(req);
+    if (!auth.userId) {
+      res.status(401).json({ error: "Authentication required" });
+      return;
+    }
     const params = AddEvidenceParams.parse({ complaintId: Number(req.params.complaintId) });
     const parsed = AddEvidenceBody.safeParse(req.body);
     if (!parsed.success) {
@@ -291,11 +347,20 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       return;
     }
     const complaint = await db
-      .select({ id: complaintsTable.id })
+      .select({ id: complaintsTable.id, userId: complaintsTable.userId })
       .from(complaintsTable)
       .where(eq(complaintsTable.id, params.complaintId));
     if (!complaint[0]) {
       res.status(404).json({ error: "Complaint not found" });
+      return;
+    }
+    const localUser = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.clerkId, auth.userId));
+    const localUserId = localUser[0]?.id;
+    if (complaint[0].userId !== null && complaint[0].userId !== localUserId) {
+      res.status(403).json({ error: "Access denied" });
       return;
     }
     const inserted = await db
@@ -304,6 +369,7 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
         complaintId: params.complaintId,
         fileUrl: parsed.data.fileUrl,
         fileType: parsed.data.fileType ?? null,
+        fileHash: parsed.data.fileHash ?? null,
         description: parsed.data.description ?? null,
       })
       .returning();
@@ -314,6 +380,7 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
         complaintId: e.complaintId,
         fileUrl: e.fileUrl,
         fileType: e.fileType,
+        fileHash: e.fileHash,
         description: e.description,
         uploadedAt: e.uploadedAt.toISOString(),
       }),
@@ -334,7 +401,8 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
-    res.json(TrackComplaintResponse.parse(toApiComplaint(row)));
+    const statusHistory = await getStatusHistory(row.complaint.id);
+    res.json(TrackComplaintResponse.parse(toApiComplaint(row, statusHistory)));
   } catch (err) {
     next(err);
   }

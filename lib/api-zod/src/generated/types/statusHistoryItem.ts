@@ -6,9 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface EvidenceInput {
-  fileUrl: string;
-  fileType?: string;
-  fileHash?: string;
-  description?: string;
+export interface StatusHistoryItem {
+  status: string;
+  changedAt: string;
+  /** @nullable */
+  note?: string | null;
 }

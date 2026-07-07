@@ -22,6 +22,7 @@ type FormData = {
   categoryId: string;
   districtId: string;
   talukId: string;
+  village: string;
   officerName: string;
   officerDesignation: string;
   officeName: string;
@@ -39,6 +40,7 @@ const empty: FormData = {
   categoryId: "",
   districtId: "",
   talukId: "",
+  village: "",
   officerName: "",
   officerDesignation: "",
   officeName: "",
@@ -78,7 +80,7 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
   );
 }
 
-type UploadedFile = { name: string; objectPath: string; fileType: string; size: number };
+type UploadedFile = { name: string; objectPath: string; fileType: string; size: number; fileHash?: string };
 
 function EvidenceUploader({
   files,
@@ -93,6 +95,14 @@ function EvidenceUploader({
   const [uploading, setUploading] = useState(false);
   const requestUpload = useRequestUploadUrl();
 
+  const computeHash = async (file: File): Promise<string> => {
+    const buf = await file.arrayBuffer();
+    const hashBuf = await crypto.subtle.digest("SHA-256", buf);
+    return Array.from(new Uint8Array(hashBuf))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+  };
+
   const handleFiles = async (selected: FileList | null) => {
     if (!selected || selected.length === 0) return;
     setUploading(true);
@@ -103,16 +113,20 @@ function EvidenceUploader({
         continue;
       }
       try {
-        const { uploadURL, objectPath } = await requestUpload.mutateAsync({
-          data: { name: file.name, size: file.size, contentType: file.type },
-        });
+        const [fileHash, uploadResult] = await Promise.all([
+          computeHash(file),
+          requestUpload.mutateAsync({
+            data: { name: file.name, size: file.size, contentType: file.type },
+          }),
+        ]);
+        const { uploadURL, objectPath } = uploadResult;
         const putRes = await fetch(uploadURL, {
           method: "PUT",
           body: file,
           headers: { "Content-Type": file.type },
         });
         if (!putRes.ok) throw new Error("Upload failed");
-        newFiles.push({ name: file.name, objectPath, fileType: file.type, size: file.size });
+        newFiles.push({ name: file.name, objectPath, fileType: file.type, size: file.size, fileHash });
       } catch {
         toast({ title: `Failed to upload ${file.name}`, variant: "destructive" });
       }
@@ -211,6 +225,7 @@ export default function Submit() {
           incidentDate: form.incidentDate || undefined,
           amountInvolved: form.amountInvolved ? parseFloat(form.amountInvolved) : undefined,
           location: form.location || undefined,
+          village: form.village || undefined,
           witnesses: form.witnesses || undefined,
         },
       });
@@ -219,7 +234,7 @@ export default function Submit() {
         try {
           await addEvidence.mutateAsync({
             complaintId: created.id,
-            data: { fileUrl: f.objectPath, fileType: f.fileType, description: f.name },
+            data: { fileUrl: f.objectPath, fileType: f.fileType, fileHash: f.fileHash, description: f.name },
           });
         } catch {
           // non-fatal
@@ -381,6 +396,15 @@ export default function Submit() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("form_village")}</Label>
+                <Input
+                  placeholder={t("form_village_placeholder")}
+                  value={form.village}
+                  onChange={(e) => upd("village", e.target.value)}
+                  className="bg-background"
+                />
               </div>
               <div className="space-y-2">
                 <Label>{t("form_location")}</Label>
@@ -560,6 +584,7 @@ export default function Submit() {
                     label: t("form_taluk"),
                     value: taluks?.find((t) => t.id.toString() === form.talukId)?.name,
                   },
+                  { label: t("form_village"), value: form.village },
                   { label: t("form_officer"), value: form.officerName },
                   { label: t("form_date"), value: form.incidentDate },
                   {

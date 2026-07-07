@@ -28,6 +28,7 @@ export * from './publicStats';
 export * from './rtiInput';
 export * from './rtiRequest';
 export * from './statusCount';
+export * from './statusHistoryItem';
 export * from './taluk';
 export * from './uploadUrlRequest';
 export * from './uploadUrlResponse';

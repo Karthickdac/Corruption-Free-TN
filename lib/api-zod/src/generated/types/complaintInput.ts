@@ -22,5 +22,6 @@ export interface ComplaintInput {
   amountInvolved?: number;
   incidentDate?: string;
   location?: string;
+  village?: string;
   witnesses?: string;
 }

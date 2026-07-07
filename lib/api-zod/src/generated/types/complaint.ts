@@ -5,6 +5,7 @@
  * CorruptionFreeTN API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { StatusHistoryItem } from './statusHistoryItem';
 
 export interface Complaint {
   id: number;
@@ -35,8 +36,13 @@ export interface Complaint {
   /** @nullable */
   officerName?: string | null;
   /** @nullable */
+  village?: string | null;
+  /** @nullable */
+  location?: string | null;
+  /** @nullable */
   amountInvolved?: number | null;
   /** @nullable */
   incidentDate?: string | null;
+  statusHistory?: StatusHistoryItem[];
   createdAt: string;
 }

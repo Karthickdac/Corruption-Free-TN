@@ -3,7 +3,7 @@ import { useI18n } from "@/contexts/i18n";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, ShieldAlert, Clock, MapPin, Building, Info, AlertTriangle } from "lucide-react";
+import { Search, Clock, MapPin, Building, Info, AlertTriangle, CheckCircle, RotateCcw, Eye, Gavel, XCircle } from "lucide-react";
 import {
   useTrackComplaint as useTrackComplaintQuery,
   getTrackComplaintQueryKey,
@@ -138,6 +138,47 @@ export default function Track() {
                       <p className="text-2xl font-mono font-bold text-foreground">₹{complaint.amountInvolved.toLocaleString('en-IN')}</p>
                     </div>
                   )}
+
+                  {complaint.statusHistory && complaint.statusHistory.length > 0 && (
+                    <div>
+                      <h4 className="text-sm uppercase font-bold tracking-wider text-muted-foreground mb-4 flex items-center gap-2">
+                        <RotateCcw className="h-4 w-4" /> Status Timeline
+                      </h4>
+                      <ol className="relative border-l border-border/40 space-y-0">
+                        {complaint.statusHistory.map((item, idx) => {
+                          const isLast = idx === complaint.statusHistory!.length - 1;
+                          const statusIcons: Record<string, React.ReactNode> = {
+                            submitted: <Clock className="h-3.5 w-3.5" />,
+                            under_review: <Eye className="h-3.5 w-3.5" />,
+                            under_investigation: <Search className="h-3.5 w-3.5" />,
+                            action_taken: <Gavel className="h-3.5 w-3.5" />,
+                            resolved: <CheckCircle className="h-3.5 w-3.5" />,
+                            rejected: <XCircle className="h-3.5 w-3.5" />,
+                          };
+                          return (
+                            <li key={idx} className="mb-6 ml-4">
+                              <div className={`absolute -left-2 w-4 h-4 rounded-full border-2 flex items-center justify-center text-[9px] ${
+                                isLast ? 'bg-primary border-primary text-primary-foreground' : 'bg-background border-border/60 text-muted-foreground'
+                              }`}>
+                                {statusIcons[item.status] ?? <Clock className="h-2.5 w-2.5" />}
+                              </div>
+                              <div className="flex flex-wrap items-baseline gap-2">
+                                <span className={`text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${getStatusColor(item.status)}`}>
+                                  {t(`status_${item.status}` as any) || item.status}
+                                </span>
+                                <time className="text-xs text-muted-foreground">
+                                  {new Date(item.changedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                </time>
+                              </div>
+                              {item.note && (
+                                <p className="mt-1 text-sm text-muted-foreground">{item.note}</p>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ol>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="space-y-6 bg-muted/20 p-6 rounded-lg border border-border/40">
@@ -155,7 +196,7 @@ export default function Track() {
                       <MapPin className="h-3 w-3" /> Location
                     </h4>
                     <p className="font-medium text-foreground">
-                      {[complaint.districtName, complaint.talukName].filter(Boolean).join(', ') || 'Not specified'}
+                      {[complaint.districtName, complaint.talukName, (complaint as any).village].filter(Boolean).join(', ') || 'Not specified'}
                     </p>
                   </div>
 

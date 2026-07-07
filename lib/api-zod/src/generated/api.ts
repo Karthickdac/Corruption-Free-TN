@@ -215,8 +215,15 @@ export const ListComplaintsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "officeName": zod.string().nullish(),
   "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string()
 })
 export const ListComplaintsResponse = zod.array(ListComplaintsResponseItem)
@@ -245,6 +252,7 @@ export const CreateComplaintBody = zod.object({
   "amountInvolved": zod.number().optional(),
   "incidentDate": zod.string().optional(),
   "location": zod.string().optional(),
+  "village": zod.string().optional(),
   "witnesses": zod.string().optional()
 })
 
@@ -266,8 +274,15 @@ export const CreateComplaintResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "officeName": zod.string().nullish(),
   "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string()
 })
 
@@ -293,8 +308,15 @@ export const ListMyComplaintsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "officeName": zod.string().nullish(),
   "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string()
 })
 export const ListMyComplaintsResponse = zod.array(ListMyComplaintsResponseItem)
@@ -312,6 +334,7 @@ export const ListEvidenceResponseItem = zod.object({
   "complaintId": zod.number(),
   "fileUrl": zod.string(),
   "fileType": zod.string().nullish(),
+  "fileHash": zod.string().nullish(),
   "description": zod.string().nullish(),
   "uploadedAt": zod.string()
 })
@@ -328,6 +351,7 @@ export const AddEvidenceParams = zod.object({
 export const AddEvidenceBody = zod.object({
   "fileUrl": zod.string(),
   "fileType": zod.string().optional(),
+  "fileHash": zod.string().optional(),
   "description": zod.string().optional()
 })
 
@@ -336,6 +360,7 @@ export const AddEvidenceResponse = zod.object({
   "complaintId": zod.number(),
   "fileUrl": zod.string(),
   "fileType": zod.string().nullish(),
+  "fileHash": zod.string().nullish(),
   "description": zod.string().nullish(),
   "uploadedAt": zod.string()
 })
@@ -366,8 +391,15 @@ export const TrackComplaintResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "officeName": zod.string().nullish(),
   "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
   "createdAt": zod.string()
 })
 

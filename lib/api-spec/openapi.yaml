@@ -736,10 +736,18 @@ components:
           type: ["string", "null"]
         officerName:
           type: ["string", "null"]
+        village:
+          type: ["string", "null"]
+        location:
+          type: ["string", "null"]
         amountInvolved:
           type: ["number", "null"]
         incidentDate:
           type: ["string", "null"]
+        statusHistory:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusHistoryItem"
         createdAt:
           type: string
       required:
@@ -775,6 +783,8 @@ components:
           type: string
         location:
           type: string
+        village:
+          type: string
         witnesses:
           type: string
       required: [title, description, isAnonymous]
@@ -789,6 +799,8 @@ components:
           type: string
         fileType:
           type: ["string", "null"]
+        fileHash:
+          type: ["string", "null"]
         description:
           type: ["string", "null"]
         uploadedAt:
@@ -801,9 +813,21 @@ components:
           type: string
         fileType:
           type: string
+        fileHash:
+          type: string
         description:
           type: string
       required: [fileUrl]
+    StatusHistoryItem:
+      type: object
+      properties:
+        status:
+          type: string
+        changedAt:
+          type: string
+        note:
+          type: ["string", "null"]
+      required: [status, changedAt]
     RtiRequest:
       type: object
       properties:
