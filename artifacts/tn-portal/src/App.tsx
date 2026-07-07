@@ -3,12 +3,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
-import { ClerkProvider } from "@clerk/react";
+import { ClerkProvider, useAuth } from "@clerk/react";
 import { publishableKeyFromHost } from "@clerk/react/internal";
 import { dark } from "@clerk/themes";
 import { I18nProvider } from "@/contexts/i18n";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/layout";
+import { useEffect, useRef } from "react";
+import { usePostAuthSession } from "@workspace/api-client-react";
 
 // Pages
 import Home from "@/pages/home";
@@ -27,6 +29,7 @@ import AdminComplaintDetail from "@/pages/admin/complaint-detail";
 import AdminComplaintsList from "@/pages/admin/complaints-list";
 import AdminUsers from "@/pages/admin/users";
 import AdminAuditLogs from "@/pages/admin/audit-logs";
+import AdminMasterData from "@/pages/admin/master-data";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +65,7 @@ function Router() {
       <Route path="/admin/complaints" component={AdminComplaintsList} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/audit-logs" component={AdminAuditLogs} />
+      <Route path="/admin/master-data" component={AdminMasterData} />
       <Route>
         <Layout>
           <Switch>
@@ -81,6 +85,28 @@ function Router() {
       </Route>
     </Switch>
   );
+}
+
+/**
+ * Fires POST /auth/session exactly once per Clerk session (survives page
+ * reloads within the same session) to record the login event in the audit log.
+ * Dedupes via sessionStorage keyed on the Clerk session ID.
+ */
+function AuthSessionLogger() {
+  const { isSignedIn, sessionId } = useAuth();
+  const { mutate: recordSession } = usePostAuthSession();
+  const firedRef = useRef(false);
+
+  useEffect(() => {
+    if (!isSignedIn || !sessionId || firedRef.current) return;
+    const storageKey = `auth_session_logged_${sessionId}`;
+    if (sessionStorage.getItem(storageKey)) return;
+    firedRef.current = true;
+    sessionStorage.setItem(storageKey, "1");
+    recordSession();
+  }, [isSignedIn, sessionId, recordSession]);
+
+  return null;
 }
 
 function ClerkProviderWithRoutes() {
@@ -104,6 +130,7 @@ function ClerkProviderWithRoutes() {
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           <I18nProvider>
             <TooltipProvider>
+              <AuthSessionLogger />
               <Router />
               <Toaster />
             </TooltipProvider>

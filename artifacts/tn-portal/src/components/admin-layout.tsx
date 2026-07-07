@@ -18,6 +18,7 @@ interface NavItem {
   label: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  superAdminOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -43,6 +44,12 @@ const navItems: NavItem[] = [
     icon: <ClipboardList className="h-4 w-4" />,
     adminOnly: true,
   },
+  {
+    href: "/admin/master-data",
+    label: "Master Data",
+    icon: <Settings className="h-4 w-4" />,
+    superAdminOnly: true,
+  },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -62,7 +69,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, role, isAdmin } = useCurrentUser();
+  const { user, role, isAdmin, isSuperAdmin } = useCurrentUser();
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
@@ -84,7 +91,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav className="flex-1 px-2 space-y-0.5">
           {navItems
-            .filter((item) => !item.adminOnly || isAdmin)
+            .filter((item) => {
+              if (item.superAdminOnly) return isSuperAdmin;
+              if (item.adminOnly) return isAdmin;
+              return true;
+            })
             .map((item) => {
               const active =
                 location === item.href || location.startsWith(item.href + "/");

@@ -74,26 +74,49 @@ function toApiComplaint(row: {
   };
 }
 
-/** Build jurisdiction WHERE clauses for the current user */
-function buildJurisdictionConditions(user: NonNullable<Express.Request["localUser"]>): SQL[] {
-  const conditions: SQL[] = [];
+/**
+ * Build jurisdiction WHERE clauses for the current user.
+ * Returns `forbidden: true` if the user has a scoped role but no matching
+ * department/district ID — callers must return 403 in that case instead of
+ * falling through to an unscoped query.
+ */
+function buildJurisdictionConditions(user: NonNullable<Express.Request["localUser"]>): {
+  conditions: SQL[];
+  forbidden: boolean;
+} {
   if (user.role === "department_officer" || user.role === "ministry_officer") {
-    if (user.departmentId) {
-      conditions.push(eq(complaintsTable.departmentId, user.departmentId));
+    if (!user.departmentId) {
+      return { conditions: [], forbidden: true };
     }
-  } else if (
+    return {
+      conditions: [eq(complaintsTable.departmentId, user.departmentId)],
+      forbidden: false,
+    };
+  }
+
+  if (
     user.role === "district_officer" ||
     user.role === "taluk_officer" ||
     user.role === "village_officer"
   ) {
-    if (user.districtId) {
-      conditions.push(eq(complaintsTable.districtId, user.districtId));
+    if (!user.districtId) {
+      return { conditions: [], forbidden: true };
     }
-  } else if (user.role === "investigation_officer") {
-    conditions.push(eq(complaintsTable.assignedOfficerId, user.id));
+    return {
+      conditions: [eq(complaintsTable.districtId, user.districtId)],
+      forbidden: false,
+    };
   }
-  // state_administrator, super_admin, moderator, legal_officer, auditor — no jurisdiction restriction
-  return conditions;
+
+  if (user.role === "investigation_officer") {
+    return {
+      conditions: [eq(complaintsTable.assignedOfficerId, user.id)],
+      forbidden: false,
+    };
+  }
+
+  // state_administrator, super_admin, moderator, legal_officer, auditor — no restriction
+  return { conditions: [], forbidden: false };
 }
 
 router.get(
@@ -102,6 +125,16 @@ router.get(
   async (req, res, next) => {
     try {
       const user = req.localUser!;
+      const { conditions: jurisdictionConditions, forbidden } = buildJurisdictionConditions(user);
+
+      if (forbidden) {
+        res.status(403).json({
+          error:
+            "Your account is not configured with a valid jurisdiction. Contact your administrator.",
+        });
+        return;
+      }
+
       const params = GetDashboardComplaintsQueryParams.safeParse(req.query);
       const status = params.success ? params.data.status : undefined;
       const priority = params.success ? params.data.priority : undefined;
@@ -109,9 +142,7 @@ router.get(
       const limit = params.success ? (params.data.limit ?? 50) : 50;
       const offset = params.success ? (params.data.offset ?? 0) : 0;
 
-      const jurisdictionConditions = buildJurisdictionConditions(user);
       const filterConditions: SQL[] = [...jurisdictionConditions];
-
       if (status) filterConditions.push(eq(complaintsTable.status, status));
       if (priority) filterConditions.push(eq(complaintsTable.priority, priority));
       if (assignedToMe === true) {
@@ -119,7 +150,9 @@ router.get(
       }
 
       const whereClause = filterConditions.length ? and(...filterConditions) : undefined;
-      const statsWhereClause = jurisdictionConditions.length ? and(...jurisdictionConditions) : undefined;
+      const statsWhereClause = jurisdictionConditions.length
+        ? and(...jurisdictionConditions)
+        : undefined;
 
       const [rows, totalResult, allForStats] = await Promise.all([
         complaintSelection()
@@ -169,11 +202,24 @@ router.get(
   async (req, res, next) => {
     try {
       const user = req.localUser!;
-      const jurisdictionConditions = buildJurisdictionConditions(user);
+      const { conditions: jurisdictionConditions, forbidden } = buildJurisdictionConditions(user);
+
+      if (forbidden) {
+        res.status(403).json({
+          error:
+            "Your account is not configured with a valid jurisdiction. Contact your administrator.",
+        });
+        return;
+      }
 
       const OPEN_STATUSES = [
-        "submitted", "under_review", "evidence_verification",
-        "forwarded", "department_response", "investigation", "reopened",
+        "submitted",
+        "under_review",
+        "evidence_verification",
+        "forwarded",
+        "department_response",
+        "investigation",
+        "reopened",
       ];
       const CLOSED_STATUSES = ["closed", "action_taken", "rejected"];
 
