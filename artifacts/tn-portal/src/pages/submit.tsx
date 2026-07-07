@@ -14,7 +14,8 @@ import { useCreateComplaint, useRequestUploadUrl, useAddEvidence, useAiClassifyC
 import { useUser } from "@clerk/react";
 import { useListDistricts, useListTaluks, useListDepartments, useListComplaintCategories, getListTaluksQueryKey } from "@workspace/api-client-react";
 import {
-  ChevronRight, ChevronLeft, Building, MapPin, User, Tag, FileText, CheckCircle, Paperclip, X, Upload, Sparkles
+  ChevronRight, ChevronLeft, Building, MapPin, User, Tag, FileText, CheckCircle, Paperclip, X, Upload, Sparkles,
+  AlertCircle, Loader2, RotateCw
 } from "lucide-react";
 
 const TOTAL_STEPS = 5;
@@ -82,20 +83,30 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
   );
 }
 
-type UploadedFile = { name: string; objectPath: string; fileType: string; size: number; fileHash?: string };
+type EvidenceItem = {
+  id: string;
+  file: File | null;
+  name: string;
+  fileType: string;
+  size: number;
+  status: "uploading" | "done" | "error";
+  objectPath?: string;
+  fileHash?: string;
+};
 
 function EvidenceUploader({
-  files,
+  items,
   onChange,
 }: {
-  files: UploadedFile[];
-  onChange: (files: UploadedFile[]) => void;
+  items: EvidenceItem[];
+  onChange: (updater: (items: EvidenceItem[]) => EvidenceItem[]) => void;
 }) {
   const { t } = useI18n();
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
   const requestUpload = useRequestUploadUrl();
+
+  const anyUploading = items.some((i) => i.status === "uploading");
 
   const computeHash = async (file: File): Promise<string> => {
     const buf = await file.arrayBuffer();
@@ -105,36 +116,55 @@ function EvidenceUploader({
       .join("");
   };
 
-  const handleFiles = async (selected: FileList | null) => {
+  const uploadItem = async (id: string, file: File) => {
+    onChange((prev) =>
+      prev.map((it) => (it.id === id ? { ...it, status: "uploading" } : it))
+    );
+    try {
+      const [fileHash, uploadResult] = await Promise.all([
+        computeHash(file),
+        requestUpload.mutateAsync({
+          data: { name: file.name, size: file.size, contentType: file.type },
+        }),
+      ]);
+      const { uploadURL, objectPath } = uploadResult;
+      const putRes = await fetch(uploadURL, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+      });
+      if (!putRes.ok) throw new Error("Upload failed");
+      onChange((prev) =>
+        prev.map((it) =>
+          it.id === id ? { ...it, status: "done", objectPath, fileHash } : it
+        )
+      );
+    } catch {
+      onChange((prev) =>
+        prev.map((it) => (it.id === id ? { ...it, status: "error" } : it))
+      );
+      toast({
+        title: `${t("upload_failed")}: ${file.name}`,
+        description: t("evidence_upload_failed_toast"),
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFiles = (selected: FileList | null) => {
     if (!selected || selected.length === 0) return;
-    setUploading(true);
-    const newFiles: UploadedFile[] = [];
     for (const file of Array.from(selected)) {
       if (file.size > 20 * 1024 * 1024) {
         toast({ title: `${file.name}: max 20MB`, variant: "destructive" });
         continue;
       }
-      try {
-        const [fileHash, uploadResult] = await Promise.all([
-          computeHash(file),
-          requestUpload.mutateAsync({
-            data: { name: file.name, size: file.size, contentType: file.type },
-          }),
-        ]);
-        const { uploadURL, objectPath } = uploadResult;
-        const putRes = await fetch(uploadURL, {
-          method: "PUT",
-          body: file,
-          headers: { "Content-Type": file.type },
-        });
-        if (!putRes.ok) throw new Error("Upload failed");
-        newFiles.push({ name: file.name, objectPath, fileType: file.type, size: file.size, fileHash });
-      } catch {
-        toast({ title: `Failed to upload ${file.name}`, variant: "destructive" });
-      }
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      onChange((prev) => [
+        ...prev,
+        { id, file, name: file.name, fileType: file.type, size: file.size, status: "uploading" },
+      ]);
+      void uploadItem(id, file);
     }
-    onChange([...files, ...newFiles]);
-    setUploading(false);
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -146,7 +176,7 @@ function EvidenceUploader({
       >
         <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">
-          {uploading ? t("uploading") : t("evidence_drop_hint")}
+          {anyUploading ? t("uploading") : t("evidence_drop_hint")}
         </p>
         <p className="text-xs text-muted-foreground mt-1">{t("evidence_types")}</p>
         <input
@@ -158,16 +188,49 @@ function EvidenceUploader({
           onChange={(e) => handleFiles(e.target.files)}
         />
       </div>
-      {files.length > 0 && (
+      {items.length > 0 && (
         <ul className="space-y-2">
-          {files.map((f, i) => (
-            <li key={i} className="flex items-center gap-2 bg-muted/20 rounded px-3 py-2 text-sm">
-              <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+          {items.map((f) => (
+            <li
+              key={f.id}
+              className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${
+                f.status === "error"
+                  ? "bg-destructive/10 border border-destructive/30"
+                  : "bg-muted/20"
+              }`}
+            >
+              {f.status === "error" ? (
+                <AlertCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+              ) : f.status === "uploading" ? (
+                <Loader2 className="h-3.5 w-3.5 text-primary shrink-0 animate-spin" />
+              ) : (
+                <Paperclip className="h-3.5 w-3.5 text-primary shrink-0" />
+              )}
               <span className="truncate flex-1 text-foreground">{f.name}</span>
-              <span className="text-muted-foreground text-xs shrink-0">{(f.size / 1024).toFixed(0)}KB</span>
+              {f.status === "error" ? (
+                <>
+                  <span className="text-destructive text-xs font-medium shrink-0">
+                    {t("upload_failed")}
+                  </span>
+                  {f.file && (
+                    <button
+                      type="button"
+                      onClick={() => f.file && uploadItem(f.id, f.file)}
+                      className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
+                    >
+                      <RotateCw className="h-3 w-3" />
+                      {t("retry")}
+                    </button>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground text-xs shrink-0">
+                  {(f.size / 1024).toFixed(0)}KB
+                </span>
+              )}
               <button
                 type="button"
-                onClick={() => onChange(files.filter((_, j) => j !== i))}
+                onClick={() => onChange((prev) => prev.filter((it) => it.id !== f.id))}
                 className="text-muted-foreground hover:text-destructive transition-colors"
               >
                 <X className="h-3.5 w-3.5" />
@@ -187,7 +250,9 @@ export default function Submit() {
   const { isSignedIn } = useUser();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(empty);
-  const [evidenceFiles, setEvidenceFiles] = useState<UploadedFile[]>([]);
+  const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);
+  const evidenceFiles = evidenceItems.filter((it) => it.status === "done");
+  const hasUploadIssues = evidenceItems.some((it) => it.status === "error" || it.status === "uploading");
   const [result, setResult] = useState<{ complaintNumber: string; id: number } | null>(null);
 
   const canUploadEvidence = isSignedIn && !form.isAnonymous;
@@ -261,7 +326,7 @@ export default function Submit() {
         try {
           await addEvidence.mutateAsync({
             complaintId: created.id,
-            data: { fileUrl: f.objectPath, fileType: f.fileType, fileHash: f.fileHash, description: f.name },
+            data: { fileUrl: f.objectPath!, fileType: f.fileType, fileHash: f.fileHash, description: f.name },
           });
         } catch {
           evidenceFailed++;
@@ -307,7 +372,7 @@ export default function Submit() {
             <Button
               onClick={() => {
                 setForm(empty);
-                setEvidenceFiles([]);
+                setEvidenceItems([]);
                 setResult(null);
                 setStep(1);
               }}
@@ -620,7 +685,7 @@ export default function Submit() {
               <div className="space-y-2">
                 <Label>{t("evidence_label")}</Label>
                 {canUploadEvidence ? (
-                  <EvidenceUploader files={evidenceFiles} onChange={setEvidenceFiles} />
+                  <EvidenceUploader items={evidenceItems} onChange={setEvidenceItems} />
                 ) : (
                   <div className="rounded-lg border border-border/40 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
                     {!isSignedIn
@@ -635,7 +700,7 @@ export default function Submit() {
                   checked={form.isAnonymous}
                   onCheckedChange={(v) => {
                     upd("isAnonymous", !!v);
-                    if (!!v) setEvidenceFiles([]);
+                    if (!!v) setEvidenceItems([]);
                   }}
                 />
                 <div>
@@ -750,14 +815,19 @@ export default function Submit() {
                 <ChevronRight className="h-4 w-4" />
               </Button>
             ) : (
-              <Button
-                onClick={handleSubmit}
-                disabled={createComplaint.isPending}
-                className="gap-2 min-w-[140px]"
-              >
-                {createComplaint.isPending ? t("submitting") : t("submit_btn")}
-                {!createComplaint.isPending && <CheckCircle className="h-4 w-4" />}
-              </Button>
+              <div className="flex flex-col items-end gap-1.5">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={createComplaint.isPending || hasUploadIssues}
+                  className="gap-2 min-w-[140px]"
+                >
+                  {createComplaint.isPending ? t("submitting") : t("submit_btn")}
+                  {!createComplaint.isPending && <CheckCircle className="h-4 w-4" />}
+                </Button>
+                {hasUploadIssues && (
+                  <p className="text-xs text-destructive text-right">{t("evidence_fix_uploads")}</p>
+                )}
+              </div>
             )}
           </div>
         </CardContent>
