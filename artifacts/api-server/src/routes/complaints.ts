@@ -43,8 +43,9 @@ import {
 } from "@workspace/api-zod";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { ObjectPermission } from "../lib/objectAcl";
-import { requireAnyOfficer, isAllowedTransition, canAccessComplaint } from "../middlewares/rbac";
+import { requireAnyOfficer, requireWriteOfficer, isAllowedTransition, canAccessComplaint } from "../middlewares/rbac";
 import { sendEmail } from "../lib/email";
+import { logAudit } from "../lib/audit";
 import { investigationReportsTable } from "@workspace/db";
 
 const objectStorageService = new ObjectStorageService();
@@ -261,7 +262,8 @@ router.post("/complaints", async (req, res, next) => {
       return;
     }
 
-    await db.insert(auditLogsTable).values({
+    await logAudit({
+      req,
       userId,
       action: "status_change",
       entityType: "complaint",
@@ -343,6 +345,17 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
       .select()
       .from(evidenceTable)
       .where(eq(evidenceTable.complaintId, params.complaintId));
+
+    // Audit: download event
+    await logAudit({
+      req,
+      userId: localUser[0]?.id ?? null,
+      action: "evidence_download",
+      entityType: "complaint",
+      entityId: params.complaintId,
+      details: { fileCount: rows.length },
+    });
+
     res.json(
       ListEvidenceResponse.parse(
         rows.map((e) => ({
@@ -417,6 +430,16 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       .returning();
     const e = inserted[0]!;
 
+    // Audit: upload event
+    await logAudit({
+      req,
+      userId: localUserId ?? null,
+      action: "evidence_upload",
+      entityType: "complaint",
+      entityId: params.complaintId,
+      details: { evidenceId: e.id, fileUrl, fileType: parsed.data.fileType ?? null },
+    });
+
     // Set ACL so only the uploader can retrieve this file via /storage/objects/*
     try {
       await objectStorageService.trySetObjectEntityAclPolicy(fileUrl, {
@@ -463,7 +486,7 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
 
 router.patch(
   "/complaints/:complaintId/status",
-  requireAnyOfficer(),
+  requireWriteOfficer(),
   async (req, res, next) => {
     try {
       const params = UpdateComplaintStatusParams.safeParse({
@@ -521,7 +544,8 @@ router.patch(
         .set(updateData)
         .where(eq(complaintsTable.id, params.data.complaintId));
 
-      await db.insert(auditLogsTable).values({
+      await logAudit({
+        req,
         userId: req.localUser?.id ?? null,
         action: "status_change",
         entityType: "complaint",
@@ -578,7 +602,7 @@ router.patch(
 
 router.post(
   "/complaints/:complaintId/assign",
-  requireAnyOfficer(),
+  requireWriteOfficer(),
   async (req, res, next) => {
     try {
       const params = AssignComplaintParams.safeParse({
@@ -633,7 +657,8 @@ router.post(
         .set({ assignedOfficerId: body.data.officerUserId, updatedAt: new Date() })
         .where(eq(complaintsTable.id, params.data.complaintId));
 
-      await db.insert(auditLogsTable).values({
+      await logAudit({
+        req,
         userId: req.localUser?.id ?? null,
         action: "assignment",
         entityType: "complaint",
@@ -722,7 +747,7 @@ router.get(
 
 router.post(
   "/complaints/:complaintId/notes",
-  requireAnyOfficer(),
+  requireWriteOfficer(),
   async (req, res, next) => {
     try {
       const params = AddCaseNoteParams.safeParse({
@@ -774,7 +799,8 @@ router.post(
         .returning();
       const note = inserted[0]!;
 
-      await db.insert(auditLogsTable).values({
+      await logAudit({
+        req,
         userId: req.localUser?.id ?? null,
         action: "case_note_added",
         entityType: "complaint",
@@ -810,7 +836,7 @@ router.post(
 
 router.post(
   "/complaints/:complaintId/report",
-  requireAnyOfficer(),
+  requireWriteOfficer(),
   async (req, res, next) => {
     try {
       const params = SubmitInvestigationReportParams.safeParse({
@@ -857,7 +883,8 @@ router.post(
         .returning();
       const report = inserted[0]!;
 
-      await db.insert(auditLogsTable).values({
+      await logAudit({
+        req,
         userId: req.localUser?.id ?? null,
         action: "investigation_report_submitted",
         entityType: "complaint",

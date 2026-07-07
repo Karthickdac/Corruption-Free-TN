@@ -33,6 +33,14 @@ export const OFFICER_ROLES: RoleName[] = [
   "legal_officer",
 ];
 
+/**
+ * Officer roles that may perform write/mutating operations on complaints.
+ * Excludes read-only roles (auditor) that must not trigger complaint mutations.
+ */
+export const WRITE_OFFICER_ROLES: RoleName[] = OFFICER_ROLES.filter(
+  (r) => r !== "auditor",
+);
+
 export const ADMIN_ROLES: RoleName[] = [
   "state_administrator",
   "super_admin",
@@ -133,6 +141,11 @@ export function requireRole(roles: string[]) {
 
 export function requireAnyOfficer() {
   return requireRole(OFFICER_ROLES);
+}
+
+/** Guard for mutating complaint endpoints — excludes read-only roles like auditor. */
+export function requireWriteOfficer() {
+  return requireRole(WRITE_OFFICER_ROLES);
 }
 
 export function requireAnyAdmin() {

@@ -7,6 +7,7 @@ import {
   departmentsTable,
   complaintCategoriesTable,
   rolesTable,
+  usersTable,
 } from "../schema";
 import {
   districtSeeds,
@@ -118,6 +119,28 @@ async function seedRoles(): Promise<void> {
   }
 }
 
+async function seedSuperAdmin(): Promise<void> {
+  const clerkId = process.env["SUPER_ADMIN_CLERK_ID"];
+  const email = process.env["SUPER_ADMIN_EMAIL"] ?? null;
+  if (!clerkId) {
+    console.log("  super_admin: skipped (SUPER_ADMIN_CLERK_ID not set)");
+    return;
+  }
+  await db
+    .insert(usersTable)
+    .values({
+      clerkId,
+      email,
+      name: "Super Administrator",
+      role: "super_admin",
+    })
+    .onConflictDoUpdate({
+      target: usersTable.clerkId,
+      set: { role: "super_admin", email },
+    });
+  console.log(`  super_admin: seeded (${email ?? clerkId})`);
+}
+
 async function main(): Promise<void> {
   console.log("Seeding Tamil Nadu master data...");
   const districtIds = await seedDistricts();
@@ -132,6 +155,7 @@ async function main(): Promise<void> {
   console.log(`  complaint categories: ${categorySeeds.length}`);
   await seedRoles();
   console.log(`  roles: ${roleSeeds.length}`);
+  await seedSuperAdmin();
   console.log("Seed complete.");
 }
 

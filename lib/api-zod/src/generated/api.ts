@@ -726,6 +726,8 @@ export const ListAuditLogsResponse = zod.object({
   "details": zod.object({
 
 }).passthrough().optional(),
+  "ipAddress": zod.string().nullish(),
+  "userAgent": zod.string().nullish(),
   "createdAt": zod.string()
 })),
   "total": zod.number()
@@ -940,6 +942,185 @@ export const AdminDeleteDepartmentParams = zod.object({
 })
 
 export const AdminDeleteDepartmentResponse = zod.void()
+
+
+/**
+ * @summary Record login event for the authenticated user
+ */
+export const PostAuthSessionResponse = zod.object({
+  "ok": zod.boolean()
+})
+
+
+/**
+ * @summary List all districts (super-admin master data)
+ */
+export const AdminListDistrictsResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "code": zod.string()
+})
+export const AdminListDistrictsResponse = zod.array(AdminListDistrictsResponseItem)
+
+
+/**
+ * @summary Create a district
+ */
+export const adminCreateDistrictBodyNameMin = 2;
+
+
+export const adminCreateDistrictBodyCodeMin = 2;
+
+
+
+export const AdminCreateDistrictBody = zod.object({
+  "name": zod.string().min(adminCreateDistrictBodyNameMin),
+  "nameTa": zod.string().min(1),
+  "code": zod.string().min(adminCreateDistrictBodyCodeMin)
+})
+
+export const AdminCreateDistrictResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "code": zod.string()
+})
+
+
+/**
+ * @summary Update a district
+ */
+export const AdminUpdateDistrictParams = zod.object({
+  "districtId": zod.coerce.number()
+})
+
+export const adminUpdateDistrictBodyNameMin = 2;
+
+
+export const adminUpdateDistrictBodyCodeMin = 2;
+
+
+
+export const AdminUpdateDistrictBody = zod.object({
+  "name": zod.string().min(adminUpdateDistrictBodyNameMin),
+  "nameTa": zod.string().min(1),
+  "code": zod.string().min(adminUpdateDistrictBodyCodeMin)
+})
+
+export const AdminUpdateDistrictResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "code": zod.string()
+})
+
+
+/**
+ * @summary Delete a district
+ */
+export const AdminDeleteDistrictParams = zod.object({
+  "districtId": zod.coerce.number()
+})
+
+export const AdminDeleteDistrictResponse = zod.void()
+
+
+/**
+ * @summary List all complaint categories (super-admin master data)
+ */
+export const AdminListCategoriesResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
+export const AdminListCategoriesResponse = zod.array(AdminListCategoriesResponseItem)
+
+
+/**
+ * @summary Create a complaint category
+ */
+export const adminCreateCategoryBodyNameMin = 2;
+
+
+
+export const AdminCreateCategoryBody = zod.object({
+  "name": zod.string().min(adminCreateCategoryBodyNameMin),
+  "nameTa": zod.string().optional(),
+  "description": zod.string().optional()
+})
+
+export const AdminCreateCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
+
+
+/**
+ * @summary Update a complaint category
+ */
+export const AdminUpdateCategoryParams = zod.object({
+  "categoryId": zod.coerce.number()
+})
+
+export const adminUpdateCategoryBodyNameMin = 2;
+
+
+
+export const AdminUpdateCategoryBody = zod.object({
+  "name": zod.string().min(adminUpdateCategoryBodyNameMin),
+  "nameTa": zod.string().optional(),
+  "description": zod.string().optional()
+})
+
+export const AdminUpdateCategoryResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "description": zod.string().nullish()
+})
+
+
+/**
+ * @summary Delete a complaint category
+ */
+export const AdminDeleteCategoryParams = zod.object({
+  "categoryId": zod.coerce.number()
+})
+
+export const AdminDeleteCategoryResponse = zod.void()
+
+
+/**
+ * @summary List all portal settings
+ */
+export const AdminListSettingsResponseItem = zod.object({
+  "key": zod.string(),
+  "value": zod.string().nullish(),
+  "updatedAt": zod.string().optional()
+})
+export const AdminListSettingsResponse = zod.array(AdminListSettingsResponseItem)
+
+
+/**
+ * @summary Update a portal setting value
+ */
+export const AdminUpdateSettingParams = zod.object({
+  "key": zod.coerce.string()
+})
+
+export const AdminUpdateSettingBody = zod.object({
+  "value": zod.string()
+})
+
+export const AdminUpdateSettingResponse = zod.object({
+  "key": zod.string(),
+  "value": zod.string().nullish(),
+  "updatedAt": zod.string().optional()
+})
 
 
 /**

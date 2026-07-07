@@ -905,6 +905,242 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+  /auth/session:
+    post:
+      operationId: postAuthSession
+      tags: [auth]
+      summary: Record login event for the authenticated user
+      responses:
+        "200":
+          description: Session recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required: [ok]
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/districts:
+    get:
+      operationId: adminListDistricts
+      tags: [admin]
+      summary: List all districts (super-admin master data)
+      responses:
+        "200":
+          description: District list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminDistrict"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: adminCreateDistrict
+      tags: [admin]
+      summary: Create a district
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistrictInput"
+      responses:
+        "201":
+          description: Created district
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDistrict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/districts/{districtId}:
+    patch:
+      operationId: adminUpdateDistrict
+      tags: [admin]
+      summary: Update a district
+      parameters:
+        - name: districtId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DistrictInput"
+      responses:
+        "200":
+          description: Updated district
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminDistrict"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: adminDeleteDistrict
+      tags: [admin]
+      summary: Delete a district
+      parameters:
+        - name: districtId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/categories:
+    get:
+      operationId: adminListCategories
+      tags: [admin]
+      summary: List all complaint categories (super-admin master data)
+      responses:
+        "200":
+          description: Category list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdminCategory"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: adminCreateCategory
+      tags: [admin]
+      summary: Create a complaint category
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCategory"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/categories/{categoryId}:
+    patch:
+      operationId: adminUpdateCategory
+      tags: [admin]
+      summary: Update a complaint category
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategoryInput"
+      responses:
+        "200":
+          description: Updated category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminCategory"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: adminDeleteCategory
+      tags: [admin]
+      summary: Delete a complaint category
+      parameters:
+        - name: categoryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/settings:
+    get:
+      operationId: adminListSettings
+      tags: [admin]
+      summary: List all portal settings
+      responses:
+        "200":
+          description: Settings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SettingItem"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /admin/settings/{key}:
+    patch:
+      operationId: adminUpdateSetting
+      tags: [admin]
+      summary: Update a portal setting value
+      parameters:
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingInput"
+      responses:
+        "200":
+          description: Updated setting
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingItem"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notifications:
     get:
       operationId: listNotifications
@@ -1225,6 +1461,10 @@ components:
           type: ["integer", "null"]
         details:
           type: object
+        ipAddress:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
         createdAt:
           type: string
       required: [id, action, createdAt]
@@ -1562,6 +1802,70 @@ components:
           type: string
           minLength: 2
         description:
+          type: string
+    AdminDistrict:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+        code:
+          type: string
+      required: [id, name, code]
+    DistrictInput:
+      type: object
+      required: [name, nameTa, code]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        nameTa:
+          type: string
+          minLength: 1
+        code:
+          type: string
+          minLength: 2
+    AdminCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+      required: [id, name]
+    CategoryInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 2
+        nameTa:
+          type: string
+        description:
+          type: string
+    SettingItem:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: ["string", "null"]
+        updatedAt:
+          type: string
+      required: [key]
+    SettingInput:
+      type: object
+      required: [value]
+      properties:
+        value:
           type: string
     UploadUrlRequest:
       type: object

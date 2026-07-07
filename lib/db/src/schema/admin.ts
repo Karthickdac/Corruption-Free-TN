@@ -48,6 +48,8 @@ export const auditLogsTable = pgTable("audit_logs", {
   entityType: text("entity_type"),
   entityId: integer("entity_id"),
   details: jsonb("details"),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -19,5 +19,9 @@ export interface AuditLogEntry {
   /** @nullable */
   entityId?: number | null;
   details?: AuditLogEntryDetails;
+  /** @nullable */
+  ipAddress?: string | null;
+  /** @nullable */
+  userAgent?: string | null;
   createdAt: string;
 }

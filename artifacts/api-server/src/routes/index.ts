@@ -9,6 +9,7 @@ import storageRouter from "./storage";
 import adminRouter from "./admin";
 import dashboardRouter from "./dashboard";
 import notificationsRouter from "./notifications";
+import authRouter from "./auth";
 import { loadLocalUser } from "../middlewares/rbac";
 
 const router: IRouter = Router();
@@ -24,5 +25,6 @@ router.use(storageRouter);
 router.use(adminRouter);
 router.use(dashboardRouter);
 router.use(notificationsRouter);
+router.use(authRouter);
 
 export default router;

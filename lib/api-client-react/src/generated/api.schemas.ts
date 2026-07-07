@@ -173,6 +173,10 @@ export interface AuditLogEntry {
   /** @nullable */
   entityId?: number | null;
   details?: AuditLogEntryDetails;
+  /** @nullable */
+  ipAddress?: string | null;
+  /** @nullable */
+  userAgent?: string | null;
   createdAt: string;
 }
 
@@ -412,6 +416,50 @@ export interface DepartmentInput {
   description?: string;
 }
 
+export interface AdminDistrict {
+  id: number;
+  name: string;
+  /** @nullable */
+  nameTa?: string | null;
+  code: string;
+}
+
+export interface DistrictInput {
+  /** @minLength 2 */
+  name: string;
+  /** @minLength 1 */
+  nameTa: string;
+  /** @minLength 2 */
+  code: string;
+}
+
+export interface AdminCategory {
+  id: number;
+  name: string;
+  /** @nullable */
+  nameTa?: string | null;
+  /** @nullable */
+  description?: string | null;
+}
+
+export interface CategoryInput {
+  /** @minLength 2 */
+  name: string;
+  nameTa?: string;
+  description?: string;
+}
+
+export interface SettingItem {
+  key: string;
+  /** @nullable */
+  value?: string | null;
+  updatedAt?: string;
+}
+
+export interface SettingInput {
+  value: string;
+}
+
 export interface UploadUrlRequest {
   /** @minLength 1 */
   name: string;
@@ -486,5 +534,9 @@ priority?: string;
 assignedToMe?: boolean;
 limit?: number;
 offset?: number;
+};
+
+export type PostAuthSession200 = {
+  ok: boolean;
 };
 
