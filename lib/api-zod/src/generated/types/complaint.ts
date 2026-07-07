@@ -43,6 +43,10 @@ export interface Complaint {
   amountInvolved?: number | null;
   /** @nullable */
   incidentDate?: string | null;
+  /** @nullable */
+  assignedOfficerId?: number | null;
+  /** @nullable */
+  assignedOfficerName?: string | null;
   statusHistory?: StatusHistoryItem[];
   createdAt: string;
 }

@@ -6,13 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UserProfile {
-  id: number;
-  clerkId: string;
-  /** @nullable */
-  name?: string | null;
-  /** @nullable */
-  email?: string | null;
+export interface UpdateUserRoleInput {
   role: string;
   /** @nullable */
   departmentId?: number | null;

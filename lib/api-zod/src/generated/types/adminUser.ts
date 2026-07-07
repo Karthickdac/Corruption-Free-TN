@@ -6,7 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UserProfile {
+export interface AdminUser {
   id: number;
   clerkId: string;
   /** @nullable */
@@ -18,4 +18,5 @@ export interface UserProfile {
   departmentId?: number | null;
   /** @nullable */
   districtId?: number | null;
+  createdAt: string;
 }

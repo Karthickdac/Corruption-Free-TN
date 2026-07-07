@@ -51,6 +51,7 @@ export const complaintsTable = pgTable("complaints", {
   location: text("location"),
   village: text("village"),
   witnesses: text("witnesses"),
+  assignedOfficerId: integer("assigned_officer_id").references(() => usersTable.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -81,6 +82,25 @@ export const insertEvidenceSchema = createInsertSchema(evidenceTable).omit({
 });
 export type InsertEvidence = z.infer<typeof insertEvidenceSchema>;
 export type Evidence = typeof evidenceTable.$inferSelect;
+
+export const caseNotesTable = pgTable("case_notes", {
+  id: serial("id").primaryKey(),
+  complaintId: integer("complaint_id")
+    .notNull()
+    .references(() => complaintsTable.id),
+  authorId: integer("author_id").references(() => usersTable.id),
+  noteType: text("note_type").notNull().default("case_note"),
+  content: text("content").notNull(),
+  isInternal: boolean("is_internal").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCaseNoteSchema = createInsertSchema(caseNotesTable).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCaseNote = z.infer<typeof insertCaseNoteSchema>;
+export type CaseNote = typeof caseNotesTable.$inferSelect;
 
 export const rtiRequestsTable = pgTable("rti_requests", {
   id: serial("id").primaryKey(),

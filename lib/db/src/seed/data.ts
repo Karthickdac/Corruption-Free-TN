@@ -2258,18 +2258,58 @@ export const roleSeeds: RoleSeed[] = [
     "description": "Regular citizen who can file and track complaints"
   },
   {
-    "name": "department_officer",
-    "nameTa": "துறை அதிகாரி",
-    "description": "Department officer who handles assigned complaints"
+    "name": "village_officer",
+    "nameTa": "கிராம அதிகாரி",
+    "description": "Village-level officer handling local complaints"
   },
   {
-    "name": "district_admin",
-    "nameTa": "மாவட்ட நிர்வாகி",
-    "description": "District administrator overseeing complaints in a district"
+    "name": "taluk_officer",
+    "nameTa": "தாலுகா அதிகாரி",
+    "description": "Taluk-level officer overseeing complaints within a taluk"
+  },
+  {
+    "name": "district_officer",
+    "nameTa": "மாவட்ட அதிகாரி",
+    "description": "District-level officer overseeing complaints in a district"
+  },
+  {
+    "name": "department_officer",
+    "nameTa": "துறை அதிகாரி",
+    "description": "Department officer who handles complaints assigned to their department"
+  },
+  {
+    "name": "ministry_officer",
+    "nameTa": "அமைச்சக அதிகாரி",
+    "description": "Ministry-level officer overseeing cross-department complaints"
+  },
+  {
+    "name": "state_administrator",
+    "nameTa": "மாநில நிர்வாகி",
+    "description": "State-level administrator with broad oversight"
   },
   {
     "name": "super_admin",
     "nameTa": "தலைமை நிர்வாகி",
-    "description": "Portal administrator with full access"
+    "description": "Portal administrator with full system access"
+  },
+  {
+    "name": "investigation_officer",
+    "nameTa": "விசாரணை அதிகாரி",
+    "description": "Specialist officer who conducts investigations and files case notes"
+  },
+  {
+    "name": "moderator",
+    "nameTa": "மட்டுப்படுத்துபவர்",
+    "description": "Moderates complaint content and manages portal quality"
+  },
+  {
+    "name": "auditor",
+    "nameTa": "தணிக்கையாளர்",
+    "description": "Read-only auditor with access to logs and reports"
+  },
+  {
+    "name": "legal_officer",
+    "nameTa": "சட்ட அதிகாரி",
+    "description": "Legal officer who reviews complaints with legal implications"
   }
 ];

@@ -6,16 +6,30 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './adminUser';
+export * from './adminUsersResponse';
+export * from './assignComplaintInput';
+export * from './auditLogEntry';
+export * from './auditLogEntryDetails';
+export * from './auditLogsResponse';
 export * from './block';
+export * from './caseNote';
+export * from './caseNoteInput';
+export * from './caseNoteInputNoteType';
 export * from './complaint';
 export * from './complaintCategory';
 export * from './complaintInput';
+export * from './dashboardComplaintsResponse';
+export * from './dashboardStats';
 export * from './department';
 export * from './district';
 export * from './errorResponse';
 export * from './evidenceInput';
 export * from './evidenceItem';
+export * from './getDashboardComplaintsParams';
 export * from './healthStatus';
+export * from './listAdminUsersParams';
+export * from './listAuditLogsParams';
 export * from './listBlocksParams';
 export * from './listComplaintsParams';
 export * from './listDepartmentsParams';
@@ -23,6 +37,7 @@ export * from './listOfficesParams';
 export * from './listTaluksParams';
 export * from './ministry';
 export * from './namedCount';
+export * from './notificationItem';
 export * from './office';
 export * from './publicStats';
 export * from './rtiInput';
@@ -30,6 +45,8 @@ export * from './rtiRequest';
 export * from './statusCount';
 export * from './statusHistoryItem';
 export * from './taluk';
+export * from './updateStatusInput';
+export * from './updateUserRoleInput';
 export * from './uploadUrlRequest';
 export * from './uploadUrlResponse';
 export * from './userProfile';

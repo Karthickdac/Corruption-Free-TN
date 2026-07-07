@@ -21,6 +21,12 @@ import MyComplaints from "@/pages/my-complaints";
 import Rti from "@/pages/rti";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
+// Admin pages
+import AdminDashboard from "@/pages/admin/dashboard";
+import AdminComplaintDetail from "@/pages/admin/complaint-detail";
+import AdminComplaintsList from "@/pages/admin/complaints-list";
+import AdminUsers from "@/pages/admin/users";
+import AdminAuditLogs from "@/pages/admin/audit-logs";
 
 const queryClient = new QueryClient();
 
@@ -50,21 +56,30 @@ function stripBase(path: string): string {
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Home} />
-        <Route path="/submit" component={Submit} />
-        <Route path="/track" component={Track} />
-        <Route path="/complaints" component={Complaints} />
-        <Route path="/transparency" component={Transparency} />
-        <Route path="/directory" component={Directory} />
-        <Route path="/my-complaints" component={MyComplaints} />
-        <Route path="/rti" component={Rti} />
-        <Route path="/sign-in/*?" component={SignInPage} />
-        <Route path="/sign-up/*?" component={SignUpPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/complaints/:id" component={AdminComplaintDetail} />
+      <Route path="/admin/complaints" component={AdminComplaintsList} />
+      <Route path="/admin/users" component={AdminUsers} />
+      <Route path="/admin/audit-logs" component={AdminAuditLogs} />
+      <Route>
+        <Layout>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/submit" component={Submit} />
+            <Route path="/track" component={Track} />
+            <Route path="/complaints" component={Complaints} />
+            <Route path="/transparency" component={Transparency} />
+            <Route path="/directory" component={Directory} />
+            <Route path="/my-complaints" component={MyComplaints} />
+            <Route path="/rti" component={Rti} />
+            <Route path="/sign-in/*?" component={SignInPage} />
+            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route component={NotFound} />
+          </Switch>
+        </Layout>
+      </Route>
+    </Switch>
   );
 }
 

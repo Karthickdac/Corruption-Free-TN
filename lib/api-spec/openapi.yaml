@@ -22,6 +22,12 @@ tags:
     description: RTI (Right to Information) requests
   - name: Storage
     description: Object storage upload and serving endpoints
+  - name: admin
+    description: Admin and officer operations
+  - name: dashboard
+    description: Role-scoped dashboard views
+  - name: notifications
+    description: In-app notifications
 paths:
   /health:
     get:
@@ -357,6 +363,127 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /complaints/{complaintId}/status:
+    patch:
+      operationId: updateComplaintStatus
+      tags: [complaints, admin]
+      summary: Update complaint status (officer/admin only)
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusInput"
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+        "400":
+          description: Invalid transition
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /complaints/{complaintId}/assign:
+    post:
+      operationId: assignComplaint
+      tags: [complaints, admin]
+      summary: Assign an investigation officer to a complaint
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignComplaintInput"
+      responses:
+        "200":
+          description: Assignment recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /complaints/{complaintId}/notes:
+    get:
+      operationId: listCaseNotes
+      tags: [complaints, admin]
+      summary: List case notes for a complaint (officer/admin only)
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of case notes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CaseNote"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: addCaseNote
+      tags: [complaints, admin]
+      summary: Add a case note, visit log, or department response
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseNoteInput"
+      responses:
+        "201":
+          description: Note added
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CaseNote"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /complaints/track/{complaintNumber}:
     get:
       operationId: trackComplaint
@@ -499,6 +626,197 @@ paths:
                 format: binary
         "404":
           description: Object not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/users:
+    get:
+      operationId: listAdminUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      parameters:
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUsersResponse"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/users/{userId}/role:
+    patch:
+      operationId: updateUserRole
+      tags: [admin]
+      summary: Update a user's role (super_admin only)
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRoleInput"
+      responses:
+        "200":
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminUser"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /admin/audit-logs:
+    get:
+      operationId: listAuditLogs
+      tags: [admin]
+      summary: List audit logs (admin only)
+      parameters:
+        - name: entityType
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogsResponse"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /dashboard/complaints:
+    get:
+      operationId: getDashboardComplaints
+      tags: [dashboard]
+      summary: Get complaints for the officer's jurisdiction/department dashboard
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: assignedToMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dashboard complaint list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardComplaintsResponse"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for the current user
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NotificationItem"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notifications/{notificationId}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationItem"
+        "404":
+          description: Not found
           content:
             application/json:
               schema:
@@ -698,7 +1016,173 @@ components:
           type: ["string", "null"]
         role:
           type: string
+        departmentId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
       required: [id, clerkId, role]
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        name:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        role:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+      required: [id, clerkId, role, createdAt]
+    AdminUsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminUser"
+        total:
+          type: integer
+      required: [users, total]
+    UpdateUserRoleInput:
+      type: object
+      properties:
+        role:
+          type: string
+        departmentId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
+      required: [role]
+    AuditLogEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: ["integer", "null"]
+        userName:
+          type: ["string", "null"]
+        action:
+          type: string
+        entityType:
+          type: ["string", "null"]
+        entityId:
+          type: ["integer", "null"]
+        details:
+          type: object
+        createdAt:
+          type: string
+      required: [id, action, createdAt]
+    AuditLogsResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLogEntry"
+        total:
+          type: integer
+      required: [logs, total]
+    DashboardComplaintsResponse:
+      type: object
+      properties:
+        complaints:
+          type: array
+          items:
+            $ref: "#/components/schemas/Complaint"
+        total:
+          type: integer
+        stats:
+          $ref: "#/components/schemas/DashboardStats"
+      required: [complaints, total]
+    DashboardStats:
+      type: object
+      properties:
+        submitted:
+          type: integer
+        under_review:
+          type: integer
+        investigation:
+          type: integer
+        action_taken:
+          type: integer
+        closed:
+          type: integer
+        rejected:
+          type: integer
+      required: [submitted, under_review, investigation, action_taken, closed, rejected]
+    UpdateStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+        note:
+          type: string
+        priority:
+          type: string
+      required: [status]
+    AssignComplaintInput:
+      type: object
+      properties:
+        officerUserId:
+          type: integer
+        note:
+          type: string
+      required: [officerUserId]
+    CaseNote:
+      type: object
+      properties:
+        id:
+          type: integer
+        complaintId:
+          type: integer
+        authorId:
+          type: ["integer", "null"]
+        authorName:
+          type: ["string", "null"]
+        noteType:
+          type: string
+        content:
+          type: string
+        isInternal:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, complaintId, noteType, content, isInternal, createdAt]
+    CaseNoteInput:
+      type: object
+      properties:
+        noteType:
+          type: string
+          enum: [case_note, visit_log, timeline_event, department_response, internal_comment]
+        content:
+          type: string
+          minLength: 5
+        isInternal:
+          type: boolean
+      required: [noteType, content]
+    NotificationItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: ["string", "null"]
+        isRead:
+          type: boolean
+        createdAt:
+          type: string
+      required: [id, title, isRead, createdAt]
     Complaint:
       type: object
       properties:
@@ -743,6 +1227,10 @@ components:
         amountInvolved:
           type: ["number", "null"]
         incidentDate:
+          type: ["string", "null"]
+        assignedOfficerId:
+          type: ["integer", "null"]
+        assignedOfficerName:
           type: ["string", "null"]
         statusHistory:
           type: array

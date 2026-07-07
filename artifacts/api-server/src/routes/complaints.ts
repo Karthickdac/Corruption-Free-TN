@@ -11,6 +11,8 @@ import {
   usersTable,
   auditLogsTable,
   evidenceTable,
+  notificationsTable,
+  caseNotesTable,
 } from "@workspace/db";
 import {
   ListComplaintsResponse,
@@ -24,9 +26,21 @@ import {
   AddEvidenceParams,
   AddEvidenceBody,
   AddEvidenceResponse,
+  UpdateComplaintStatusParams,
+  UpdateComplaintStatusBody,
+  UpdateComplaintStatusResponse,
+  AssignComplaintParams,
+  AssignComplaintBody,
+  AssignComplaintResponse,
+  ListCaseNotesParams,
+  ListCaseNotesResponse,
+  AddCaseNoteParams,
+  AddCaseNoteBody,
+  AddCaseNoteResponse,
 } from "@workspace/api-zod";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { ObjectPermission } from "../lib/objectAcl";
+import { requireAnyOfficer, isAllowedTransition } from "../middlewares/rbac";
 
 const objectStorageService = new ObjectStorageService();
 
@@ -441,5 +455,278 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
     next(err);
   }
 });
+
+router.patch(
+  "/complaints/:complaintId/status",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const params = UpdateComplaintStatusParams.safeParse({
+        complaintId: Number(req.params.complaintId),
+      });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      const body = UpdateComplaintStatusBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+      const { status: newStatus, note, priority } = body.data;
+
+      const existing = await db
+        .select({ id: complaintsTable.id, status: complaintsTable.status, userId: complaintsTable.userId })
+        .from(complaintsTable)
+        .where(eq(complaintsTable.id, params.data.complaintId));
+      if (!existing[0]) {
+        res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+      const current = existing[0];
+
+      if (!isAllowedTransition(current.status, newStatus)) {
+        res.status(400).json({
+          error: `Invalid transition: ${current.status} → ${newStatus}`,
+        });
+        return;
+      }
+
+      const updateData: Partial<typeof complaintsTable.$inferInsert> = {
+        status: newStatus,
+        updatedAt: new Date(),
+      };
+      if (priority) updateData.priority = priority;
+
+      await db
+        .update(complaintsTable)
+        .set(updateData)
+        .where(eq(complaintsTable.id, params.data.complaintId));
+
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "status_change",
+        entityType: "complaint",
+        entityId: params.data.complaintId,
+        details: { status: newStatus, previousStatus: current.status, note: note ?? null },
+      });
+
+      if (current.userId) {
+        const statusLabels: Record<string, string> = {
+          under_review: "Under Review",
+          evidence_verification: "Evidence Verification",
+          forwarded: "Forwarded",
+          department_response: "Department Response",
+          investigation: "Under Investigation",
+          action_taken: "Action Taken",
+          closed: "Closed",
+          rejected: "Rejected",
+          reopened: "Reopened",
+        };
+        await db.insert(notificationsTable).values({
+          userId: current.userId,
+          title: `Complaint status updated: ${statusLabels[newStatus] ?? newStatus}`,
+          message: note ?? `Your complaint has been moved to "${statusLabels[newStatus] ?? newStatus}".`,
+        });
+      }
+
+      const rows = await complaintSelection().where(
+        eq(complaintsTable.id, params.data.complaintId),
+      );
+      const statusHistory = await getStatusHistory(params.data.complaintId);
+      res.json(UpdateComplaintStatusResponse.parse(toApiComplaint(rows[0]!, statusHistory)));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/complaints/:complaintId/assign",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const params = AssignComplaintParams.safeParse({
+        complaintId: Number(req.params.complaintId),
+      });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      const body = AssignComplaintBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+
+      const complaint = await db
+        .select({ id: complaintsTable.id })
+        .from(complaintsTable)
+        .where(eq(complaintsTable.id, params.data.complaintId));
+      if (!complaint[0]) {
+        res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+
+      const officer = await db
+        .select({ id: usersTable.id, name: usersTable.name })
+        .from(usersTable)
+        .where(eq(usersTable.id, body.data.officerUserId));
+      if (!officer[0]) {
+        res.status(404).json({ error: "Officer not found" });
+        return;
+      }
+
+      await db
+        .update(complaintsTable)
+        .set({ assignedOfficerId: body.data.officerUserId, updatedAt: new Date() })
+        .where(eq(complaintsTable.id, params.data.complaintId));
+
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "assignment",
+        entityType: "complaint",
+        entityId: params.data.complaintId,
+        details: {
+          assignedTo: body.data.officerUserId,
+          assignedOfficerName: officer[0].name,
+          note: body.data.note ?? null,
+        },
+      });
+
+      await db.insert(notificationsTable).values({
+        userId: body.data.officerUserId,
+        title: "New complaint assigned to you",
+        message: body.data.note ?? "A complaint has been assigned to you for investigation.",
+      });
+
+      const rows = await complaintSelection().where(
+        eq(complaintsTable.id, params.data.complaintId),
+      );
+      const statusHistory = await getStatusHistory(params.data.complaintId);
+      res.json(AssignComplaintResponse.parse(toApiComplaint(rows[0]!, statusHistory)));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  "/complaints/:complaintId/notes",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const params = ListCaseNotesParams.safeParse({
+        complaintId: Number(req.params.complaintId),
+      });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      const rows = await db
+        .select({
+          note: caseNotesTable,
+          authorName: usersTable.name,
+        })
+        .from(caseNotesTable)
+        .leftJoin(usersTable, eq(caseNotesTable.authorId, usersTable.id))
+        .where(eq(caseNotesTable.complaintId, params.data.complaintId))
+        .orderBy(caseNotesTable.createdAt);
+      res.json(
+        ListCaseNotesResponse.parse(
+          rows.map(({ note, authorName }) => ({
+            id: note.id,
+            complaintId: note.complaintId,
+            authorId: note.authorId,
+            authorName: authorName ?? null,
+            noteType: note.noteType,
+            content: note.content,
+            isInternal: note.isInternal,
+            createdAt: note.createdAt.toISOString(),
+          })),
+        ),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/complaints/:complaintId/notes",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const params = AddCaseNoteParams.safeParse({
+        complaintId: Number(req.params.complaintId),
+      });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      const body = AddCaseNoteBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+
+      const complaint = await db
+        .select({ id: complaintsTable.id, userId: complaintsTable.userId })
+        .from(complaintsTable)
+        .where(eq(complaintsTable.id, params.data.complaintId));
+      if (!complaint[0]) {
+        res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+
+      const isInternal = body.data.isInternal !== undefined
+        ? body.data.isInternal
+        : body.data.noteType !== "department_response";
+
+      const inserted = await db
+        .insert(caseNotesTable)
+        .values({
+          complaintId: params.data.complaintId,
+          authorId: req.localUser?.id ?? null,
+          noteType: body.data.noteType,
+          content: body.data.content,
+          isInternal,
+        })
+        .returning();
+      const note = inserted[0]!;
+
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "case_note_added",
+        entityType: "complaint",
+        entityId: params.data.complaintId,
+        details: { noteType: note.noteType, isInternal },
+      });
+
+      if (body.data.noteType === "department_response" && complaint[0].userId) {
+        await db.insert(notificationsTable).values({
+          userId: complaint[0].userId,
+          title: "Department response added to your complaint",
+          message: body.data.content.slice(0, 200),
+        });
+      }
+
+      res.status(201).json(
+        AddCaseNoteResponse.parse({
+          id: note.id,
+          complaintId: note.complaintId,
+          authorId: note.authorId,
+          authorName: req.localUser?.name ?? null,
+          noteType: note.noteType,
+          content: note.content,
+          isInternal: note.isInternal,
+          createdAt: note.createdAt.toISOString(),
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;

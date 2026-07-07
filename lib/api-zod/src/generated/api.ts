@@ -183,7 +183,9 @@ export const GetCurrentUserResponse = zod.object({
   "clerkId": zod.string(),
   "name": zod.string().nullish(),
   "email": zod.string().nullish(),
-  "role": zod.string()
+  "role": zod.string(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish()
 })
 
 
@@ -219,6 +221,8 @@ export const ListComplaintsResponseItem = zod.object({
   "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
   "statusHistory": zod.array(zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
@@ -278,6 +282,8 @@ export const CreateComplaintResponse = zod.object({
   "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
   "statusHistory": zod.array(zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
@@ -312,6 +318,8 @@ export const ListMyComplaintsResponseItem = zod.object({
   "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
   "statusHistory": zod.array(zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
@@ -367,6 +375,146 @@ export const AddEvidenceResponse = zod.object({
 
 
 /**
+ * @summary Update complaint status (officer/admin only)
+ */
+export const UpdateComplaintStatusParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const UpdateComplaintStatusBody = zod.object({
+  "status": zod.string(),
+  "note": zod.string().optional(),
+  "priority": zod.string().optional()
+})
+
+export const UpdateComplaintStatusResponse = zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Assign an investigation officer to a complaint
+ */
+export const AssignComplaintParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const AssignComplaintBody = zod.object({
+  "officerUserId": zod.number(),
+  "note": zod.string().optional()
+})
+
+export const AssignComplaintResponse = zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List case notes for a complaint (officer/admin only)
+ */
+export const ListCaseNotesParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const ListCaseNotesResponseItem = zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullish(),
+  "authorName": zod.string().nullish(),
+  "noteType": zod.string(),
+  "content": zod.string(),
+  "isInternal": zod.boolean(),
+  "createdAt": zod.string()
+})
+export const ListCaseNotesResponse = zod.array(ListCaseNotesResponseItem)
+
+
+/**
+ * @summary Add a case note, visit log, or department response
+ */
+export const AddCaseNoteParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const addCaseNoteBodyContentMin = 5;
+
+
+
+export const AddCaseNoteBody = zod.object({
+  "noteType": zod.enum(['case_note', 'visit_log', 'timeline_event', 'department_response', 'internal_comment']),
+  "content": zod.string().min(addCaseNoteBodyContentMin),
+  "isInternal": zod.boolean().optional()
+})
+
+export const AddCaseNoteResponse = zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullish(),
+  "authorName": zod.string().nullish(),
+  "noteType": zod.string(),
+  "content": zod.string(),
+  "isInternal": zod.boolean(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Track a complaint by its complaint number
  */
 export const TrackComplaintParams = zod.object({
@@ -395,6 +543,8 @@ export const TrackComplaintResponse = zod.object({
   "location": zod.string().nullish(),
   "amountInvolved": zod.number().nullish(),
   "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
   "statusHistory": zod.array(zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
@@ -504,5 +654,165 @@ export const GetStorageObjectParams = zod.object({
 })
 
 export const GetStorageObjectResponse = zod.unknown()
+
+
+/**
+ * @summary List all users (admin only)
+ */
+export const ListAdminUsersQueryParams = zod.object({
+  "role": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const ListAdminUsersResponse = zod.object({
+  "users": zod.array(zod.object({
+  "id": zod.number(),
+  "clerkId": zod.string(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "role": zod.string(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish(),
+  "createdAt": zod.string()
+})),
+  "total": zod.number()
+})
+
+
+/**
+ * @summary Update a user's role (super_admin only)
+ */
+export const UpdateUserRoleParams = zod.object({
+  "userId": zod.coerce.number()
+})
+
+export const UpdateUserRoleBody = zod.object({
+  "role": zod.string(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish()
+})
+
+export const UpdateUserRoleResponse = zod.object({
+  "id": zod.number(),
+  "clerkId": zod.string(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "role": zod.string(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List audit logs (admin only)
+ */
+export const ListAuditLogsQueryParams = zod.object({
+  "entityType": zod.coerce.string().optional(),
+  "action": zod.coerce.string().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const ListAuditLogsResponse = zod.object({
+  "logs": zod.array(zod.object({
+  "id": zod.number(),
+  "userId": zod.number().nullish(),
+  "userName": zod.string().nullish(),
+  "action": zod.string(),
+  "entityType": zod.string().nullish(),
+  "entityId": zod.number().nullish(),
+  "details": zod.object({
+
+}).passthrough().optional(),
+  "createdAt": zod.string()
+})),
+  "total": zod.number()
+})
+
+
+/**
+ * @summary Get complaints for the officer's jurisdiction/department dashboard
+ */
+export const GetDashboardComplaintsQueryParams = zod.object({
+  "status": zod.coerce.string().optional(),
+  "priority": zod.coerce.string().optional(),
+  "assignedToMe": zod.coerce.boolean().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const GetDashboardComplaintsResponse = zod.object({
+  "complaints": zod.array(zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.string()
+})),
+  "total": zod.number(),
+  "stats": zod.object({
+  "submitted": zod.number(),
+  "under_review": zod.number(),
+  "investigation": zod.number(),
+  "action_taken": zod.number(),
+  "closed": zod.number(),
+  "rejected": zod.number()
+}).optional()
+})
+
+
+/**
+ * @summary List notifications for the current user
+ */
+export const ListNotificationsResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "message": zod.string().nullish(),
+  "isRead": zod.boolean(),
+  "createdAt": zod.string()
+})
+export const ListNotificationsResponse = zod.array(ListNotificationsResponseItem)
+
+
+/**
+ * @summary Mark a notification as read
+ */
+export const MarkNotificationReadParams = zod.object({
+  "notificationId": zod.coerce.number()
+})
+
+export const MarkNotificationReadResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "message": zod.string().nullish(),
+  "isRead": zod.boolean(),
+  "createdAt": zod.string()
+})
 
 

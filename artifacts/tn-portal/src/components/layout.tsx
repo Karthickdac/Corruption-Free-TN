@@ -3,8 +3,10 @@ import { useI18n } from "@/contexts/i18n";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useUser, useClerk } from "@clerk/react";
-import { Moon, Sun, Languages, Menu, ShieldAlert, LogOut } from "lucide-react";
+import { Moon, Sun, Languages, Menu, ShieldAlert, LogOut, Shield } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import NotificationBell from "@/components/notification-bell";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { t, lang, setLang } = useI18n();
@@ -12,6 +14,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { isSignedIn, user } = useUser();
   const { signOut } = useClerk();
+  const { isOfficer } = useCurrentUser();
 
   const toggleLanguage = () => {
     setLang(lang === 'en' ? 'ta' : 'en');
@@ -51,10 +54,23 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Button>
                 </Link>
               ))}
+              {isOfficer && (
+                <Link href="/admin/dashboard">
+                  <Button
+                    variant={location.startsWith("/admin") ? "secondary" : "ghost"}
+                    className="h-9 text-sm font-medium gap-1.5 text-primary"
+                  >
+                    <Shield className="h-3.5 w-3.5" />
+                    Officer Portal
+                  </Button>
+                </Link>
+              )}
             </nav>
           </div>
 
           <div className="flex items-center gap-2">
+            <NotificationBell />
+
             <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-9 w-9">
               <Languages className="h-4 w-4" />
               <span className="sr-only">Toggle Language</span>
@@ -113,6 +129,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       </span>
                     </Link>
                   ))}
+                  {isOfficer && (
+                    <Link href="/admin/dashboard">
+                      <span className="block px-2 py-1 text-lg font-medium text-primary">
+                        Officer Portal
+                      </span>
+                    </Link>
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>

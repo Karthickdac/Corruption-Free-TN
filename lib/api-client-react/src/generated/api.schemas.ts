@@ -125,6 +125,60 @@ export interface UserProfile {
   /** @nullable */
   email?: string | null;
   role: string;
+  /** @nullable */
+  departmentId?: number | null;
+  /** @nullable */
+  districtId?: number | null;
+}
+
+export interface AdminUser {
+  id: number;
+  clerkId: string;
+  /** @nullable */
+  name?: string | null;
+  /** @nullable */
+  email?: string | null;
+  role: string;
+  /** @nullable */
+  departmentId?: number | null;
+  /** @nullable */
+  districtId?: number | null;
+  createdAt: string;
+}
+
+export interface AdminUsersResponse {
+  users: AdminUser[];
+  total: number;
+}
+
+export interface UpdateUserRoleInput {
+  role: string;
+  /** @nullable */
+  departmentId?: number | null;
+  /** @nullable */
+  districtId?: number | null;
+}
+
+export type AuditLogEntryDetails = { [key: string]: unknown };
+
+export interface AuditLogEntry {
+  id: number;
+  /** @nullable */
+  userId?: number | null;
+  /** @nullable */
+  userName?: string | null;
+  action: string;
+  /** @nullable */
+  entityType?: string | null;
+  /** @nullable */
+  entityId?: number | null;
+  details?: AuditLogEntryDetails;
+  createdAt: string;
+}
+
+export interface AuditLogsResponse {
+  logs: AuditLogEntry[];
+  total: number;
 }
 
 export interface StatusHistoryItem {
@@ -170,7 +224,77 @@ export interface Complaint {
   amountInvolved?: number | null;
   /** @nullable */
   incidentDate?: string | null;
+  /** @nullable */
+  assignedOfficerId?: number | null;
+  /** @nullable */
+  assignedOfficerName?: string | null;
   statusHistory?: StatusHistoryItem[];
+  createdAt: string;
+}
+
+export interface DashboardStats {
+  submitted: number;
+  under_review: number;
+  investigation: number;
+  action_taken: number;
+  closed: number;
+  rejected: number;
+}
+
+export interface DashboardComplaintsResponse {
+  complaints: Complaint[];
+  total: number;
+  stats?: DashboardStats;
+}
+
+export interface UpdateStatusInput {
+  status: string;
+  note?: string;
+  priority?: string;
+}
+
+export interface AssignComplaintInput {
+  officerUserId: number;
+  note?: string;
+}
+
+export interface CaseNote {
+  id: number;
+  complaintId: number;
+  /** @nullable */
+  authorId?: number | null;
+  /** @nullable */
+  authorName?: string | null;
+  noteType: string;
+  content: string;
+  isInternal: boolean;
+  createdAt: string;
+}
+
+export type CaseNoteInputNoteType = typeof CaseNoteInputNoteType[keyof typeof CaseNoteInputNoteType];
+
+
+export const CaseNoteInputNoteType = {
+  case_note: 'case_note',
+  visit_log: 'visit_log',
+  timeline_event: 'timeline_event',
+  department_response: 'department_response',
+  internal_comment: 'internal_comment',
+} as const;
+
+export interface CaseNoteInput {
+  noteType: CaseNoteInputNoteType;
+  /** @minLength 5 */
+  content: string;
+  isInternal?: boolean;
+}
+
+export interface NotificationItem {
+  id: number;
+  title: string;
+  /** @nullable */
+  message?: string | null;
+  isRead: boolean;
   createdAt: string;
 }
 
@@ -279,5 +403,26 @@ districtId?: number;
 departmentId?: number;
 status?: string;
 limit?: number;
+};
+
+export type ListAdminUsersParams = {
+role?: string;
+limit?: number;
+offset?: number;
+};
+
+export type ListAuditLogsParams = {
+entityType?: string;
+action?: string;
+limit?: number;
+offset?: number;
+};
+
+export type GetDashboardComplaintsParams = {
+status?: string;
+priority?: string;
+assignedToMe?: boolean;
+limit?: number;
+offset?: number;
 };
 
