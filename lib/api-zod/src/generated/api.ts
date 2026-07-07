@@ -273,7 +273,8 @@ export const CreateComplaintBody = zod.object({
   "incidentDate": zod.string().optional(),
   "location": zod.string().optional(),
   "village": zod.string().optional(),
-  "witnesses": zod.string().optional()
+  "witnesses": zod.string().optional(),
+  "confirmDuplicate": zod.boolean().optional()
 })
 
 export const CreateComplaintResponse = zod.object({

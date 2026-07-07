@@ -1,6 +1,8 @@
 import { Router, type IRouter } from "express";
 import { getAuth, clerkClient } from "@clerk/express";
-import { eq, desc, and, type SQL } from "drizzle-orm";
+import { eq, desc, and, sql, type SQL } from "drizzle-orm";
+import { complaintSubmitLimiter } from "../middlewares/rateLimit";
+import { logger } from "../lib/logger";
 import {
   db,
   complaintsTable,
@@ -197,7 +199,7 @@ function isUniqueViolation(err: unknown): boolean {
   return code === "23505";
 }
 
-router.post("/complaints", async (req, res, next) => {
+router.post("/complaints", complaintSubmitLimiter, async (req, res, next) => {
   try {
     const parsed = CreateComplaintBody.safeParse(req.body);
     if (!parsed.success) {
@@ -207,6 +209,58 @@ router.post("/complaints", async (req, res, next) => {
       return;
     }
     const body = parsed.data;
+
+    if (!body.confirmDuplicate) {
+      try {
+        const dupConditions: SQL[] = [
+          sql`created_at > now() - interval '90 days'`,
+          sql`similarity(description, ${body.description}) > 0.55`,
+        ];
+        if (body.districtId != null) {
+          dupConditions.push(sql`district_id = ${body.districtId}`);
+        }
+        if (body.departmentId != null) {
+          dupConditions.push(sql`department_id = ${body.departmentId}`);
+        }
+        const dupResult = await db.execute(sql`
+          SELECT
+            complaint_number,
+            title,
+            status,
+            created_at,
+            similarity(description, ${body.description}) AS sim
+          FROM complaints
+          WHERE ${sql.join(dupConditions, sql` AND `)}
+          ORDER BY sim DESC
+          LIMIT 5
+        `);
+        const dupRows = dupResult.rows as Array<{
+          complaint_number: string;
+          title: string;
+          status: string;
+          created_at: Date;
+          sim: number;
+        }>;
+        if (dupRows.length > 0) {
+          res.status(409).json({
+            error: "possible_duplicate",
+            duplicates: dupRows.map((r) => ({
+              complaintNumber: r.complaint_number,
+              title: r.title,
+              status: r.status,
+              submittedAt: new Date(r.created_at).toISOString(),
+              similarity: Number(r.sim),
+            })),
+          });
+          return;
+        }
+      } catch (dupErr) {
+        logger.error(
+          { err: dupErr },
+          "Duplicate check failed; proceeding with complaint submission",
+        );
+      }
+    }
 
     let userId: number | null = null;
     if (!body.isAnonymous) {

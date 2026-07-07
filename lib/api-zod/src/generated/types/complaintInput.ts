@@ -24,4 +24,5 @@ export interface ComplaintInput {
   location?: string;
   village?: string;
   witnesses?: string;
+  confirmDuplicate?: boolean;
 }

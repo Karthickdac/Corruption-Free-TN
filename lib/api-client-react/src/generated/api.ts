@@ -47,6 +47,7 @@ import type {
   District,
   DistrictInput,
   DistrictMapDataPoint,
+  DuplicateCheckResponse,
   ErrorResponse,
   EvidenceInput,
   EvidenceItem,
@@ -1100,7 +1101,7 @@ export const createComplaint = async (complaintInput: ComplaintInput, options?: 
 
 
 
-export const getCreateComplaintMutationOptions = <TError = ErrorType<ErrorResponse>,
+export const getCreateComplaintMutationOptions = <TError = ErrorType<ErrorResponse | DuplicateCheckResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComplaint>>, TError,{data: BodyType<ComplaintInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
 ): UseMutationOptions<Awaited<ReturnType<typeof createComplaint>>, TError,{data: BodyType<ComplaintInput>}, TContext> => {
 
@@ -1129,12 +1130,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
     export type CreateComplaintMutationResult = NonNullable<Awaited<ReturnType<typeof createComplaint>>>
     export type CreateComplaintMutationBody = BodyType<ComplaintInput>
-    export type CreateComplaintMutationError = ErrorType<ErrorResponse>
+    export type CreateComplaintMutationError = ErrorType<ErrorResponse | DuplicateCheckResponse>
 
     /**
  * @summary Submit a new complaint
  */
-export const useCreateComplaint = <TError = ErrorType<ErrorResponse>,
+export const useCreateComplaint = <TError = ErrorType<ErrorResponse | DuplicateCheckResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createComplaint>>, TError,{data: BodyType<ComplaintInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof createComplaint>>,

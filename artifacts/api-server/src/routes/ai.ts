@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import { AiClassifyComplaintResponse, AiTranslateResponse } from "@workspace/api-zod";
+import { aiLimiter } from "../middlewares/rateLimit";
 
 const router: IRouter = Router();
 
@@ -64,7 +65,7 @@ async function tryOpenAIClassify(text: string, categories: string[]): Promise<Ar
   }
 }
 
-router.post("/ai/classify-complaint", async (req, res, next) => {
+router.post("/ai/classify-complaint", aiLimiter, async (req, res, next) => {
   try {
     const { text, categories = [] } = req.body as { text: string; categories?: string[] };
     if (!text || text.length < 10) {
@@ -116,7 +117,7 @@ async function tryOpenAITranslate(text: string, targetLang: string): Promise<str
   }
 }
 
-router.post("/ai/translate", async (req, res, next) => {
+router.post("/ai/translate", aiLimiter, async (req, res, next) => {
   try {
     const { text, targetLang } = req.body as { text: string; targetLang: string };
     if (!text || !targetLang) {

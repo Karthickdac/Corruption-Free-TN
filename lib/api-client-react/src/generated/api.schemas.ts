@@ -371,6 +371,20 @@ export interface ComplaintInput {
   location?: string;
   village?: string;
   witnesses?: string;
+  confirmDuplicate?: boolean;
+}
+
+export interface DuplicateMatch {
+  complaintNumber: string;
+  title: string;
+  status: string;
+  submittedAt: string;
+  similarity: number;
+}
+
+export interface DuplicateCheckResponse {
+  error: string;
+  duplicates: DuplicateMatch[];
 }
 
 export interface EvidenceItem {

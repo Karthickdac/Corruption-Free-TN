@@ -10,7 +10,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateComplaint, useRequestUploadUrl, useAddEvidence, useAiClassifyComplaint } from "@workspace/api-client-react";
+import { useCreateComplaint, useRequestUploadUrl, useAddEvidence, useAiClassifyComplaint, type DuplicateMatch } from "@workspace/api-client-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useUser } from "@clerk/react";
 import { useListDistricts, useListTaluks, useListDepartments, useListComplaintCategories, getListTaluksQueryKey } from "@workspace/api-client-react";
 import {
@@ -254,6 +264,7 @@ export default function Submit() {
   const evidenceFiles = evidenceItems.filter((it) => it.status === "done");
   const hasUploadIssues = evidenceItems.some((it) => it.status === "error" || it.status === "uploading");
   const [result, setResult] = useState<{ complaintNumber: string; id: number } | null>(null);
+  const [duplicates, setDuplicates] = useState<DuplicateMatch[] | null>(null);
 
   const canUploadEvidence = isSignedIn && !form.isAnonymous;
 
@@ -299,10 +310,11 @@ export default function Submit() {
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (confirmDuplicate = false) => {
     try {
       const created = await createComplaint.mutateAsync({
         data: {
+          confirmDuplicate: confirmDuplicate || undefined,
           title: form.title,
           description: form.description,
           isAnonymous: form.isAnonymous,
@@ -341,7 +353,16 @@ export default function Submit() {
       }
 
       setResult({ complaintNumber: created.complaintNumber, id: created.id });
-    } catch {
+    } catch (err) {
+      const apiErr = err as { status?: number; data?: { duplicates?: DuplicateMatch[] } };
+      if (apiErr?.status === 409 && Array.isArray(apiErr?.data?.duplicates)) {
+        setDuplicates(apiErr.data.duplicates);
+        return;
+      }
+      if (apiErr?.status === 429) {
+        toast({ title: t("rate_limited"), variant: "destructive" });
+        return;
+      }
       toast({ title: t("error_generic"), variant: "destructive" });
     }
   };
@@ -817,7 +838,7 @@ export default function Submit() {
             ) : (
               <div className="flex flex-col items-end gap-1.5">
                 <Button
-                  onClick={handleSubmit}
+                  onClick={() => handleSubmit(false)}
                   disabled={createComplaint.isPending || hasUploadIssues}
                   className="gap-2 min-w-[140px]"
                 >
@@ -832,6 +853,45 @@ export default function Submit() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={!!duplicates}
+        onOpenChange={(open) => {
+          if (!open) setDuplicates(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("dup_title")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("dup_desc")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {duplicates?.map((d) => (
+              <div key={d.complaintNumber} className="border border-border rounded-md p-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs text-primary">{d.complaintNumber}</span>
+                  <Badge variant="outline" className="text-[10px] uppercase">{d.status}</Badge>
+                </div>
+                <div className="font-medium mt-1">{d.title}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">
+                  {new Date(d.submittedAt).toLocaleDateString()} &middot; {Math.round(d.similarity * 100)}% {t("dup_match")}
+                </div>
+              </div>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("dup_cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setDuplicates(null);
+                handleSubmit(true);
+              }}
+            >
+              {t("dup_submit_anyway")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -286,6 +286,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Complaint"
+        "409":
+          description: Possible duplicate complaint detected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateCheckResponse"
+        "429":
+          description: Too many submissions from this address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "400":
           description: Invalid input
           content:
@@ -2028,7 +2040,33 @@ components:
           type: string
         witnesses:
           type: string
+        confirmDuplicate:
+          type: boolean
       required: [title, description, isAnonymous]
+    DuplicateMatch:
+      type: object
+      properties:
+        complaintNumber:
+          type: string
+        title:
+          type: string
+        status:
+          type: string
+        submittedAt:
+          type: string
+        similarity:
+          type: number
+      required: [complaintNumber, title, status, submittedAt, similarity]
+    DuplicateCheckResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        duplicates:
+          type: array
+          items:
+            $ref: "#/components/schemas/DuplicateMatch"
+      required: [error, duplicates]
     EvidenceItem:
       type: object
       properties:

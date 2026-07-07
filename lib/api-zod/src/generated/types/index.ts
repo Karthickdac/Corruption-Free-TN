@@ -40,6 +40,8 @@ export * from './departmentPerformance';
 export * from './district';
 export * from './districtInput';
 export * from './districtMapDataPoint';
+export * from './duplicateCheckResponse';
+export * from './duplicateMatch';
 export * from './errorResponse';
 export * from './evidenceInput';
 export * from './evidenceItem';
