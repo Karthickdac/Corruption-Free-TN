@@ -1,12 +1,12 @@
 import { useState, useCallback } from "react";
-import { useSearchComplaints, useListDepartments, useListDistricts, useListComplaintCategories } from "@workspace/api-client-react";
+import { useSearchComplaints, useListDepartments, useListDistricts, useListComplaintCategories, useListTaluks, getListTaluksQueryKey } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Download, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import { Search, Download, ChevronLeft, ChevronRight, Filter, X, FileSpreadsheet, Printer } from "lucide-react";
 import { Link } from "wouter";
 
 const STATUSES = ["submitted","under_review","evidence_verification","forwarded","department_response","investigation","action_taken","closed","reopened","rejected"];
@@ -42,6 +42,7 @@ type Filters = {
   status: string;
   departmentId: string;
   districtId: string;
+  talukId: string;
   categoryId: string;
   priority: string;
   from: string;
@@ -54,7 +55,7 @@ type Filters = {
 
 const emptyFilters: Filters = {
   q: "", complaintNumber: "", status: "", departmentId: "", districtId: "",
-  categoryId: "", priority: "", from: "", to: "", minAmount: "", maxAmount: "",
+  talukId: "", categoryId: "", priority: "", from: "", to: "", minAmount: "", maxAmount: "",
   sortBy: "createdAt", sortDir: "desc",
 };
 
@@ -66,6 +67,7 @@ function buildApiUrl(filters: Filters, page: number, limit: number, format = "js
   if (filters.status) p.set("status", filters.status);
   if (filters.departmentId) p.set("departmentId", filters.departmentId);
   if (filters.districtId) p.set("districtId", filters.districtId);
+  if (filters.talukId) p.set("talukId", filters.talukId);
   if (filters.categoryId) p.set("categoryId", filters.categoryId);
   if (filters.priority) p.set("priority", filters.priority);
   if (filters.from) p.set("from", filters.from);
@@ -90,6 +92,10 @@ export default function SearchPage() {
   const { data: depts } = useListDepartments({});
   const { data: districts } = useListDistricts();
   const { data: categories } = useListComplaintCategories();
+  const talukParams = filters.districtId ? { districtId: Number(filters.districtId) } : undefined;
+  const { data: taluks } = useListTaluks(talukParams, {
+    query: { queryKey: getListTaluksQueryKey(talukParams) },
+  });
 
   const queryParams = {
     q: applied.q || undefined,
@@ -97,6 +103,7 @@ export default function SearchPage() {
     status: applied.status || undefined,
     departmentId: applied.departmentId ? Number(applied.departmentId) : undefined,
     districtId: applied.districtId ? Number(applied.districtId) : undefined,
+    talukId: applied.talukId ? Number(applied.talukId) : undefined,
     categoryId: applied.categoryId ? Number(applied.categoryId) : undefined,
     priority: applied.priority || undefined,
     from: applied.from || undefined,
@@ -121,6 +128,14 @@ export default function SearchPage() {
     window.open(buildApiUrl(applied, 1, 1000, "csv"), "_blank");
   }, [applied]);
 
+  const handleExportXlsx = useCallback(() => {
+    window.open(buildApiUrl(applied, 1, 5000, "xlsx"), "_blank");
+  }, [applied]);
+
+  const handlePrint = useCallback(() => {
+    window.print();
+  }, []);
+
   const totalPages = data ? Math.ceil(data.total / limit) : 0;
   const activeFilters = Object.entries(applied).filter(([k, v]) => v && k !== "sortBy" && k !== "sortDir").length;
 
@@ -131,14 +146,22 @@ export default function SearchPage() {
           <h1 className="text-3xl font-serif font-bold uppercase tracking-tight">Advanced Search</h1>
           <p className="text-sm text-muted-foreground mt-1">Search and filter all public complaint records</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" size="sm" onClick={() => setShowFilters(f => !f)} className="text-xs uppercase tracking-wider font-bold">
             <Filter className="h-3.5 w-3.5 mr-1" />
             Filters {activeFilters > 0 && <Badge className="ml-1 h-4 px-1 text-xs bg-primary">{activeFilters}</Badge>}
           </Button>
           <Button variant="outline" size="sm" onClick={handleExportCsv} className="text-xs uppercase tracking-wider font-bold">
             <Download className="h-3.5 w-3.5 mr-1" />
-            Export CSV
+            CSV
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleExportXlsx} className="text-xs uppercase tracking-wider font-bold">
+            <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
+            Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrint} className="text-xs uppercase tracking-wider font-bold print:hidden">
+            <Printer className="h-3.5 w-3.5 mr-1" />
+            PDF
           </Button>
         </div>
       </div>
@@ -180,11 +203,21 @@ export default function SearchPage() {
               </div>
               <div>
                 <Label className="text-xs">District</Label>
-                <Select value={filters.districtId} onValueChange={v => upd("districtId", v === "all" ? "" : v)}>
+                <Select value={filters.districtId} onValueChange={v => { upd("districtId", v === "all" ? "" : v); upd("talukId", ""); }}>
                   <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder="Any district" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Any District</SelectItem>
                     {(districts ?? []).map(d => <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Taluk</Label>
+                <Select value={filters.talukId} onValueChange={v => upd("talukId", v === "all" ? "" : v)} disabled={!filters.districtId}>
+                  <SelectTrigger className="mt-1 text-sm"><SelectValue placeholder={filters.districtId ? "Any taluk" : "Select district first"} /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Any Taluk</SelectItem>
+                    {(taluks ?? []).map(t => <SelectItem key={t.id} value={String(t.id)}>{t.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

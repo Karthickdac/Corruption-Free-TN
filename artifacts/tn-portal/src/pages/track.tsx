@@ -3,10 +3,11 @@ import { useI18n } from "@/contexts/i18n";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Clock, MapPin, Building, Info, AlertTriangle, CheckCircle, RotateCcw, Eye, Gavel, XCircle } from "lucide-react";
+import { Search, Clock, MapPin, Building, Info, AlertTriangle, CheckCircle, RotateCcw, Eye, Gavel, XCircle, Languages, Loader2 } from "lucide-react";
 import {
   useTrackComplaint as useTrackComplaintQuery,
   getTrackComplaintQueryKey,
+  useAiTranslate,
 } from "@workspace/api-client-react";
 
 function useTrackComplaint(complaintNumber: string) {
@@ -23,6 +24,9 @@ export default function Track() {
   const { t, isTa } = useI18n();
   const [searchInput, setSearchInput] = useState("");
   const [complaintNumber, setComplaintNumber] = useState("");
+  const [showTranslated, setShowTranslated] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
+  const translateMutation = useAiTranslate();
 
   const { data: complaint, isLoading, isError } = useTrackComplaint(complaintNumber);
 
@@ -124,12 +128,47 @@ export default function Track() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div className="md:col-span-2 space-y-6">
                   <div>
-                    <h4 className="text-sm uppercase font-bold tracking-wider text-muted-foreground mb-2 flex items-center gap-2">
-                      <Info className="h-4 w-4" /> Description
-                    </h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm uppercase font-bold tracking-wider text-muted-foreground flex items-center gap-2">
+                        <Info className="h-4 w-4" /> Description
+                      </h4>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs px-2 gap-1"
+                        onClick={async () => {
+                          if (showTranslated) {
+                            setShowTranslated(false);
+                          } else {
+                            if (translatedText === null) {
+                              try {
+                                const result = await translateMutation.mutateAsync({
+                                  data: {
+                                    text: complaint.description,
+                                    targetLang: isTa ? "en" : "ta",
+                                  },
+                                });
+                                setTranslatedText(result.translatedText);
+                              } catch {}
+                            }
+                            setShowTranslated(true);
+                          }
+                        }}
+                        disabled={translateMutation.isPending}
+                      >
+                        {translateMutation.isPending
+                          ? <Loader2 className="h-3 w-3 animate-spin" />
+                          : <Languages className="h-3 w-3" />
+                        }
+                        {showTranslated ? (isTa ? "Show Tamil" : "Show English") : (isTa ? "Translate to English" : "மொழிபெயர்க்கவும்")}
+                      </Button>
+                    </div>
                     <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                      {complaint.description}
+                      {showTranslated && translatedText ? translatedText : complaint.description}
                     </p>
+                    {showTranslated && translatedText && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">AI translation — may not be fully accurate</p>
+                    )}
                   </div>
                   
                   {complaint.amountInvolved && (

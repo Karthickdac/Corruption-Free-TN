@@ -124,24 +124,38 @@ router.get("/search/complaints", async (req, res, next) => {
       createdAt: r.complaint.createdAt.toISOString(),
     }));
 
-    if (format === "csv") {
-      const headers = ["ID", "Number", "Title", "Status", "Priority", "District", "Department", "Category", "Date"];
-      const csvRows = [
-        headers.join(","),
-        ...complaints.map(c =>
-          [
-            c.id,
-            c.complaintNumber,
-            `"${c.title.replace(/"/g, '""')}"`,
-            c.status,
-            c.priority,
-            c.districtName ?? "",
-            c.departmentName ?? "",
-            c.categoryName ?? "",
-            c.createdAt.split("T")[0],
-          ].join(",")
-        ),
-      ];
+    if (format === "csv" || format === "xlsx") {
+      const headers = ["ID", "Number", "Title", "Status", "Priority", "District", "Taluk", "Department", "Category", "Officer", "Village", "Amount", "Date"];
+      const rows = complaints.map(c => [
+        c.id,
+        c.complaintNumber,
+        c.title,
+        c.status,
+        c.priority,
+        c.districtName ?? "",
+        c.talukName ?? "",
+        c.departmentName ?? "",
+        c.categoryName ?? "",
+        c.officerName ?? "",
+        c.village ?? "",
+        c.amountInvolved ?? "",
+        c.createdAt.split("T")[0],
+      ]);
+
+      if (format === "xlsx") {
+        // @ts-ignore — xlsx package
+        const XLSX = await import("xlsx");
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+        XLSX.utils.book_append_sheet(wb, ws, "Complaints");
+        const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", `attachment; filename="complaints-export.xlsx"`);
+        res.send(buf);
+        return;
+      }
+
+      const csvRows = [headers.join(","), ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))];
       res.setHeader("Content-Type", "text/csv");
       res.setHeader("Content-Disposition", `attachment; filename="complaints-export.csv"`);
       res.send(csvRows.join("\n"));

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useI18n } from "@/contexts/i18n";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useCreateComplaint, useRequestUploadUrl, useAddEvidence } from "@workspace/api-client-react";
+import { useCreateComplaint, useRequestUploadUrl, useAddEvidence, useAiClassifyComplaint } from "@workspace/api-client-react";
 import { useUser } from "@clerk/react";
 import { useListDistricts, useListTaluks, useListDepartments, useListComplaintCategories, getListTaluksQueryKey } from "@workspace/api-client-react";
 import {
-  ChevronRight, ChevronLeft, Building, MapPin, User, Tag, FileText, CheckCircle, Paperclip, X, Upload
+  ChevronRight, ChevronLeft, Building, MapPin, User, Tag, FileText, CheckCircle, Paperclip, X, Upload, Sparkles
 } from "lucide-react";
 
 const TOTAL_STEPS = 5;
@@ -201,9 +202,26 @@ export default function Submit() {
 
   const createComplaint = useCreateComplaint();
   const addEvidence = useAddEvidence();
+  const classifyMutation = useAiClassifyComplaint();
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{ categoryName: string; confidence: number }>>([]);
+  const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const upd = (field: keyof FormData, value: string | boolean) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const triggerClassify = useCallback(async (text: string) => {
+    if (text.length < 50) { setAiSuggestions([]); return; }
+    try {
+      const result = await classifyMutation.mutateAsync({ data: { text, categories: [] } });
+      setAiSuggestions(result.suggestions?.slice(0, 3) ?? []);
+    } catch { setAiSuggestions([]); }
+  }, [classifyMutation]);
+
+  useEffect(() => {
+    if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
+    classifyTimerRef.current = setTimeout(() => triggerClassify(form.description), 600);
+    return () => { if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current); };
+  }, [form.description]);
 
   const canNextStep = () => {
     if (step === 1) return !!form.departmentId;
@@ -534,6 +552,32 @@ export default function Submit() {
                 />
                 {form.description.length > 0 && form.description.length < 20 && (
                   <p className="text-xs text-destructive">{t("validation_min_20")}</p>
+                )}
+                {aiSuggestions.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3 text-primary" /> AI suggests:
+                    </span>
+                    {aiSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          const matched = categories?.find(c =>
+                            c.name.toLowerCase().includes(s.categoryName.toLowerCase()) ||
+                            s.categoryName.toLowerCase().includes(c.name.toLowerCase())
+                          );
+                          if (matched) {
+                            upd("categoryId", String(matched.id));
+                            setStep(1);
+                          }
+                        }}
+                        className="text-xs px-2 py-1 rounded-full border border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        {s.categoryName} <span className="text-muted-foreground">({Math.round(s.confidence * 100)}%)</span>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
               <div className="space-y-2">
