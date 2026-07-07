@@ -2,3 +2,4 @@
 - [drizzle-where-join](drizzle-where-join.md) — count queries must replicate all joins referenced in where conditions; missing join causes SQL error
 - [db-extensions-bootstrap](db-extensions-bootstrap.md) — Postgres extensions aren't created by drizzle-kit push; codify CREATE EXTENSION in api-server startup and fail-open on non-essential DB features.
 - [orval-codegen-quirk](orval-codegen-quirk.md) — filtered pnpm codegen script can fail silently; run npx orval directly in lib/api-spec instead.
+- [TN district geojson matching](tn-district-geojson.md) — map joins by exact district name; 2011-source names were normalized and Mayiladuthurai is an approximate carve-out

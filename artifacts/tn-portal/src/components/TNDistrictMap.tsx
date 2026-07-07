@@ -228,8 +228,18 @@ function DrilldownPanel({
   );
 }
 
+type TooltipState = {
+  name: string;
+  total: number;
+  resolved: number;
+  rate: number;
+  x: number;
+  y: number;
+};
+
 export default function TNDistrictMap({ mapData }: Props) {
   const [selected, setSelected] = useState<DistrictPoint | null>(null);
+  const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
   const dataByName: Record<string, DistrictPoint> = {};
   for (const d of mapData) {
@@ -240,7 +250,26 @@ export default function TNDistrictMap({ mapData }: Props) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      <div className="flex-1 min-w-0">
+      <div
+        className="flex-1 min-w-0 relative"
+        onMouseMove={(e) => {
+          if (tooltip) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setTooltip({ ...tooltip, x: e.clientX - rect.left, y: e.clientY - rect.top });
+          }
+        }}
+      >
+        {tooltip && (
+          <div
+            className="pointer-events-none absolute z-10 rounded-md border border-border bg-background/95 px-3 py-2 text-xs shadow-lg"
+            style={{ left: tooltip.x + 12, top: tooltip.y - 8 }}
+          >
+            <p className="font-bold mb-0.5">{tooltip.name}</p>
+            <p className="text-muted-foreground">Total complaints: <span className="font-mono font-bold text-foreground">{tooltip.total}</span></p>
+            <p className="text-muted-foreground">Resolved: <span className="font-mono font-bold text-emerald-500">{tooltip.resolved}</span></p>
+            <p className="text-muted-foreground">Resolution rate: <span className={`font-mono font-bold ${tooltip.rate >= 60 ? "text-emerald-500" : tooltip.rate >= 30 ? "text-amber-500" : "text-red-500"}`}>{tooltip.rate}%</span></p>
+          </div>
+        )}
         <ComposableMap
           projection="geoMercator"
           projectionConfig={{ scale: 7200, center: [78.4, 10.85] }}
@@ -265,8 +294,22 @@ export default function TNDistrictMap({ mapData }: Props) {
                       const next = point ?? { districtId: 0, districtName: name, total: 0 };
                       setSelected(isSelected ? null : next);
                     }}
-                    onMouseEnter={() => {}}
-                    onMouseLeave={() => {}}
+                    onMouseEnter={(_geo: unknown, e: React.MouseEvent) => {
+                      const total = point?.total ?? 0;
+                      const resolved = point?.resolved ?? 0;
+                      const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+                      const container = (e.currentTarget as SVGElement | null)?.closest(".relative");
+                      const rect = container?.getBoundingClientRect();
+                      setTooltip({
+                        name,
+                        total,
+                        resolved,
+                        rate,
+                        x: rect ? e.clientX - rect.left : 0,
+                        y: rect ? e.clientY - rect.top : 0,
+                      });
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
                     style={{
                       default: {
                         fill,
