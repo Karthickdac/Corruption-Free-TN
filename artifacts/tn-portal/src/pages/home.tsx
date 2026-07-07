@@ -6,7 +6,6 @@ import {
   AlertOctagon, 
   FileSearch, 
   EyeOff, 
-  FileText, 
   Activity, 
   Database,
   ArrowRight,
@@ -259,17 +258,11 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-black font-serif uppercase tracking-tight mb-6">{t("home_features_title")}</h2>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card p-8 border border-border/50 hover:border-primary/50 transition-colors">
               <EyeOff className="h-10 w-10 text-primary mb-6" />
               <h3 className="text-xl font-bold uppercase mb-3">{t("home_feature1_title")}</h3>
               <p className="text-muted-foreground">{t("home_feature1_desc")}</p>
-            </motion.div>
-
-            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card p-8 border border-border/50 hover:border-primary/50 transition-colors">
-              <FileText className="h-10 w-10 text-primary mb-6" />
-              <h3 className="text-xl font-bold uppercase mb-3">{t("home_feature2_title")}</h3>
-              <p className="text-muted-foreground">{t("home_feature2_desc")}</p>
             </motion.div>
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card p-8 border border-border/50 hover:border-primary/50 transition-colors">

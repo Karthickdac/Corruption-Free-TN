@@ -393,33 +393,6 @@ export interface EvidenceInput {
   description?: string;
 }
 
-export interface RtiRequest {
-  id: number;
-  referenceNumber: string;
-  /** @nullable */
-  complaintId?: number | null;
-  /** @nullable */
-  complaintNumber?: string | null;
-  /** @nullable */
-  applicantName?: string | null;
-  /** @nullable */
-  applicantEmail?: string | null;
-  subject: string;
-  description: string;
-  status: string;
-  filedAt: string;
-}
-
-export interface RtiInput {
-  complaintNumber?: string;
-  applicantName?: string;
-  applicantEmail?: string;
-  /** @minLength 5 */
-  subject: string;
-  /** @minLength 10 */
-  description: string;
-}
-
 export interface OfficerDashboardResponse {
   totalAssigned: number;
   openCount: number;
@@ -545,8 +518,6 @@ export interface OfficerPerformance {
   officerId: number;
   /** @nullable */
   officerName: string | null;
-  /** @nullable */
-  officerEmail?: string | null;
   total: number;
   resolved: number;
   pending: number;
@@ -738,6 +709,7 @@ page?: number;
 limit?: number;
 sortBy?: string;
 sortDir?: SearchComplaintsSortDir;
+officerName?: string;
 format?: SearchComplaintsFormat;
 };
 
@@ -755,5 +727,7 @@ export type SearchComplaintsFormat = typeof SearchComplaintsFormat[keyof typeof 
 export const SearchComplaintsFormat = {
   json: 'json',
   csv: 'csv',
+  xlsx: 'xlsx',
+  pdf: 'pdf',
 } as const;
 

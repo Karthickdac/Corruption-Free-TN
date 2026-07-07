@@ -18,8 +18,6 @@ tags:
     description: Public statistics
   - name: users
     description: User operations
-  - name: rti
-    description: RTI (Right to Information) requests
   - name: Storage
     description: Object storage upload and serving endpoints
   - name: admin
@@ -536,54 +534,6 @@ paths:
                 $ref: "#/components/schemas/Complaint"
         "404":
           description: Complaint not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /rti:
-    post:
-      operationId: fileRti
-      tags: [rti]
-      summary: File a new RTI request
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RtiInput"
-      responses:
-        "201":
-          description: RTI request filed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RtiRequest"
-        "400":
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-  /rti/{referenceNumber}:
-    get:
-      operationId: getRti
-      tags: [rti]
-      summary: Get RTI request by reference number
-      parameters:
-        - name: referenceNumber
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: RTI request details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RtiRequest"
-        "404":
-          description: RTI not found
           content:
             application/json:
               schema:
@@ -2119,46 +2069,6 @@ components:
         note:
           type: ["string", "null"]
       required: [status, changedAt]
-    RtiRequest:
-      type: object
-      properties:
-        id:
-          type: integer
-        referenceNumber:
-          type: string
-        complaintId:
-          type: ["integer", "null"]
-        complaintNumber:
-          type: ["string", "null"]
-        applicantName:
-          type: ["string", "null"]
-        applicantEmail:
-          type: ["string", "null"]
-        subject:
-          type: string
-        description:
-          type: string
-        status:
-          type: string
-        filedAt:
-          type: string
-      required: [id, referenceNumber, subject, description, status, filedAt]
-    RtiInput:
-      type: object
-      properties:
-        complaintNumber:
-          type: string
-        applicantName:
-          type: string
-        applicantEmail:
-          type: string
-        subject:
-          type: string
-          minLength: 5
-        description:
-          type: string
-          minLength: 10
-      required: [subject, description]
     OfficerDashboardResponse:
       type: object
       required: [totalAssigned, openCount, closedCount, recentComplaints]

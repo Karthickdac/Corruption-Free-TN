@@ -73,8 +73,6 @@ export * from './officerPerformance';
 export * from './postAuthSession200';
 export * from './publicDepartmentResponse';
 export * from './publicStats';
-export * from './rtiInput';
-export * from './rtiRequest';
 export * from './searchComplaintsFormat';
 export * from './searchComplaintsParams';
 export * from './searchComplaintsSortDir';

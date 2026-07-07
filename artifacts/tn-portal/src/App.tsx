@@ -20,7 +20,6 @@ import Complaints from "@/pages/complaints";
 import Transparency from "@/pages/transparency";
 import Directory from "@/pages/directory";
 import MyComplaints from "@/pages/my-complaints";
-import Rti from "@/pages/rti";
 import SignInPage from "@/pages/sign-in";
 import SignUpPage from "@/pages/sign-up";
 import SearchPage from "@/pages/search";
@@ -79,7 +78,6 @@ function Router() {
             <Route path="/transparency" component={Transparency} />
             <Route path="/directory" component={Directory} />
             <Route path="/my-complaints" component={MyComplaints} />
-            <Route path="/rti" component={Rti} />
             <Route path="/search" component={SearchPage} />
             <Route path="/sign-in/*?" component={SignInPage} />
             <Route path="/sign-up/*?" component={SignUpPage} />

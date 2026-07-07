@@ -75,8 +75,6 @@ import type {
   OfficerPerformance,
   PostAuthSession200,
   PublicStats,
-  RtiInput,
-  RtiRequest,
   SearchComplaintsParams,
   SettingInput,
   SettingItem,
@@ -1804,153 +1802,6 @@ export function useTrackComplaint<TData = Awaited<ReturnType<typeof trackComplai
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getTrackComplaintQueryOptions(complaintNumber,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getFileRtiUrl = () => {
-
-
-
-
-  return `/api/rti`
-}
-
-/**
- * @summary File a new RTI request
- */
-export const fileRti = async (rtiInput: RtiInput, options?: RequestInit): Promise<RtiRequest> => {
-
-  return customFetch<RtiRequest>(getFileRtiUrl(),
-  {
-    ...options,
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(rtiInput)
-  }
-);}
-
-
-
-
-export const getFileRtiMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof fileRti>>, TError,{data: BodyType<RtiInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof fileRti>>, TError,{data: BodyType<RtiInput>}, TContext> => {
-
-const mutationKey = ['fileRti'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof fileRti>>, {data: BodyType<RtiInput>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  fileRti(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type FileRtiMutationResult = NonNullable<Awaited<ReturnType<typeof fileRti>>>
-    export type FileRtiMutationBody = BodyType<RtiInput>
-    export type FileRtiMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary File a new RTI request
- */
-export const useFileRti = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof fileRti>>, TError,{data: BodyType<RtiInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof fileRti>>,
-        TError,
-        {data: BodyType<RtiInput>},
-        TContext
-      > => {
-      return useMutation(getFileRtiMutationOptions(options));
-    }
-
-export const getGetRtiUrl = (referenceNumber: string,) => {
-
-
-
-
-  return `/api/rti/${referenceNumber}`
-}
-
-/**
- * @summary Get RTI request by reference number
- */
-export const getRti = async (referenceNumber: string, options?: RequestInit): Promise<RtiRequest> => {
-
-  return customFetch<RtiRequest>(getGetRtiUrl(referenceNumber),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetRtiQueryKey = (referenceNumber: string,) => {
-    return [
-    `/api/rti/${referenceNumber}`
-    ] as const;
-    }
-
-
-export const getGetRtiQueryOptions = <TData = Awaited<ReturnType<typeof getRti>>, TError = ErrorType<ErrorResponse>>(referenceNumber: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRti>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetRtiQueryKey(referenceNumber);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRti>>> = ({ signal }) => getRti(referenceNumber, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: referenceNumber !== null && referenceNumber !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRti>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetRtiQueryResult = NonNullable<Awaited<ReturnType<typeof getRti>>>
-export type GetRtiQueryError = ErrorType<ErrorResponse>
-
-
-/**
- * @summary Get RTI request by reference number
- */
-
-export function useGetRti<TData = Awaited<ReturnType<typeof getRti>>, TError = ErrorType<ErrorResponse>>(
- referenceNumber: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRti>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetRtiQueryOptions(referenceNumber,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -4232,7 +4083,7 @@ export const getGetAnalyticsOfficerPerformanceUrl = (params?: GetAnalyticsOffice
 }
 
 /**
- * @summary Officer performance table (admin-only)
+ * @summary Officer performance table (public transparency)
  */
 export const getAnalyticsOfficerPerformance = async (params?: GetAnalyticsOfficerPerformanceParams, options?: RequestInit): Promise<OfficerPerformance[]> => {
 
@@ -4256,7 +4107,7 @@ export const getGetAnalyticsOfficerPerformanceQueryKey = (params?: GetAnalyticsO
     }
 
 
-export const getGetAnalyticsOfficerPerformanceQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError = ErrorType<ForbiddenResponse>>(params?: GetAnalyticsOfficerPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetAnalyticsOfficerPerformanceQueryOptions = <TData = Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError = ErrorType<unknown>>(params?: GetAnalyticsOfficerPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -4275,14 +4126,14 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetAnalyticsOfficerPerformanceQueryResult = NonNullable<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>>
-export type GetAnalyticsOfficerPerformanceQueryError = ErrorType<ForbiddenResponse>
+export type GetAnalyticsOfficerPerformanceQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Officer performance table (admin-only)
+ * @summary Officer performance table (public transparency)
  */
 
-export function useGetAnalyticsOfficerPerformance<TData = Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError = ErrorType<ForbiddenResponse>>(
+export function useGetAnalyticsOfficerPerformance<TData = Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError = ErrorType<unknown>>(
  params?: GetAnalyticsOfficerPerformanceParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAnalyticsOfficerPerformance>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {

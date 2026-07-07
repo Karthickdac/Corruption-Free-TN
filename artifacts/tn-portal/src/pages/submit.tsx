@@ -204,6 +204,8 @@ export default function Submit() {
   const addEvidence = useAddEvidence();
   const classifyMutation = useAiClassifyComplaint();
   const [aiSuggestions, setAiSuggestions] = useState<Array<{ categoryName: string; confidence: number }>>([]);
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
+  const [appliedCategoryName, setAppliedCategoryName] = useState<string | null>(null);
   const classifyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const upd = (field: keyof FormData, value: string | boolean) =>
@@ -218,6 +220,8 @@ export default function Submit() {
   }, [classifyMutation]);
 
   useEffect(() => {
+    setSuggestionsDismissed(false);
+    setAppliedCategoryName(null);
     if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current);
     classifyTimerRef.current = setTimeout(() => triggerClassify(form.description), 600);
     return () => { if (classifyTimerRef.current) clearTimeout(classifyTimerRef.current); };
@@ -553,30 +557,54 @@ export default function Submit() {
                 {form.description.length > 0 && form.description.length < 20 && (
                   <p className="text-xs text-destructive">{t("validation_min_20")}</p>
                 )}
-                {aiSuggestions.length > 0 && (
+                {aiSuggestions.length > 0 && !suggestionsDismissed && (
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Sparkles className="h-3 w-3 text-primary" /> AI suggests:
+                      <Sparkles className="h-3 w-3 text-primary" /> {t("ai_suggests")}
                     </span>
-                    {aiSuggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          const matched = categories?.find(c =>
-                            c.name.toLowerCase().includes(s.categoryName.toLowerCase()) ||
-                            s.categoryName.toLowerCase().includes(c.name.toLowerCase())
-                          );
-                          if (matched) {
-                            upd("categoryId", String(matched.id));
-                            setStep(1);
-                          }
-                        }}
-                        className="text-xs px-2 py-1 rounded-full border border-primary/40 bg-primary/5 text-primary hover:bg-primary/10 transition-colors"
-                      >
-                        {s.categoryName} <span className="text-muted-foreground">({Math.round(s.confidence * 100)}%)</span>
-                      </button>
-                    ))}
+                    {aiSuggestions.map((s, i) => {
+                      const matched = categories?.find(c =>
+                        c.name.toLowerCase().includes(s.categoryName.toLowerCase()) ||
+                        s.categoryName.toLowerCase().includes(c.name.toLowerCase())
+                      );
+                      const isApplied = matched != null && form.categoryId === String(matched.id);
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          disabled={!matched}
+                          onClick={() => {
+                            if (matched) {
+                              upd("categoryId", String(matched.id));
+                              setAppliedCategoryName(matched.name);
+                            }
+                          }}
+                          className={`text-xs px-2 py-1 rounded-full border transition-colors inline-flex items-center gap-1 ${
+                            isApplied
+                              ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-600"
+                              : matched
+                                ? "border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
+                                : "border-border/40 bg-muted/20 text-muted-foreground cursor-default"
+                          }`}
+                        >
+                          {isApplied && <CheckCircle className="h-3 w-3" />}
+                          {s.categoryName} <span className="text-muted-foreground">({Math.round(s.confidence * 100)}%)</span>
+                        </button>
+                      );
+                    })}
+                    <button
+                      type="button"
+                      onClick={() => setSuggestionsDismissed(true)}
+                      className="p-0.5 rounded hover:bg-muted transition-colors"
+                      aria-label={t("ai_dismiss")}
+                    >
+                      <X className="h-3 w-3 text-muted-foreground" />
+                    </button>
+                    {appliedCategoryName && (
+                      <span className="text-xs text-emerald-600 w-full sm:w-auto">
+                        ✓ {t("ai_category_set")} "{appliedCategoryName}"
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

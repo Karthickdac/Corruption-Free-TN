@@ -105,7 +105,6 @@ export default function AdminAnalytics() {
                         <tr key={o.officerId} className="border-b border-border/50 hover:bg-muted/20">
                           <td className="py-2 pr-4">
                             <div className="font-medium">{o.officerName ?? "—"}</div>
-                            {o.officerEmail && <div className="text-xs text-muted-foreground">{o.officerEmail}</div>}
                           </td>
                           <td className="py-2 px-2 text-right font-mono">{o.total}</td>
                           <td className="py-2 px-2 text-right font-mono text-emerald-500">{o.resolved}</td>

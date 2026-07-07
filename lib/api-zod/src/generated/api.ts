@@ -707,58 +707,6 @@ export const TrackComplaintResponse = zod.object({
 
 
 /**
- * @summary File a new RTI request
- */
-export const fileRtiBodySubjectMin = 5;
-
-export const fileRtiBodyDescriptionMin = 10;
-
-
-
-export const FileRtiBody = zod.object({
-  "complaintNumber": zod.string().optional(),
-  "applicantName": zod.string().optional(),
-  "applicantEmail": zod.string().optional(),
-  "subject": zod.string().min(fileRtiBodySubjectMin),
-  "description": zod.string().min(fileRtiBodyDescriptionMin)
-})
-
-export const FileRtiResponse = zod.object({
-  "id": zod.number(),
-  "referenceNumber": zod.string(),
-  "complaintId": zod.number().nullish(),
-  "complaintNumber": zod.string().nullish(),
-  "applicantName": zod.string().nullish(),
-  "applicantEmail": zod.string().nullish(),
-  "subject": zod.string(),
-  "description": zod.string(),
-  "status": zod.string(),
-  "filedAt": zod.string()
-})
-
-
-/**
- * @summary Get RTI request by reference number
- */
-export const GetRtiParams = zod.object({
-  "referenceNumber": zod.coerce.string()
-})
-
-export const GetRtiResponse = zod.object({
-  "id": zod.number(),
-  "referenceNumber": zod.string(),
-  "complaintId": zod.number().nullish(),
-  "complaintNumber": zod.string().nullish(),
-  "applicantName": zod.string().nullish(),
-  "applicantEmail": zod.string().nullish(),
-  "subject": zod.string(),
-  "description": zod.string(),
-  "status": zod.string(),
-  "filedAt": zod.string()
-})
-
-
-/**
  * @summary Request a presigned URL for file upload
  */
 
@@ -1477,7 +1425,7 @@ export const GetAnalyticsDepartmentPerformanceResponse = zod.array(GetAnalyticsD
 
 
 /**
- * @summary Officer performance table (admin-only)
+ * @summary Officer performance table (public transparency)
  */
 export const GetAnalyticsOfficerPerformanceQueryParams = zod.object({
   "from": zod.coerce.string().optional(),
@@ -1549,7 +1497,8 @@ export const SearchComplaintsQueryParams = zod.object({
   "limit": zod.coerce.number().optional(),
   "sortBy": zod.coerce.string().optional(),
   "sortDir": zod.enum(['asc', 'desc']).optional(),
-  "format": zod.enum(['json', 'csv']).optional()
+  "officerName": zod.coerce.string().optional(),
+  "format": zod.enum(['json', 'csv', 'xlsx', 'pdf']).optional()
 })
 
 export const SearchComplaintsResponse = zod.object({

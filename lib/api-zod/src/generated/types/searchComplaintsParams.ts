@@ -25,5 +25,6 @@ page?: number;
 limit?: number;
 sortBy?: string;
 sortDir?: SearchComplaintsSortDir;
+officerName?: string;
 format?: SearchComplaintsFormat;
 };

@@ -12,4 +12,6 @@ export type SearchComplaintsFormat = typeof SearchComplaintsFormat[keyof typeof 
 export const SearchComplaintsFormat = {
   json: 'json',
   csv: 'csv',
+  xlsx: 'xlsx',
+  pdf: 'pdf',
 } as const;

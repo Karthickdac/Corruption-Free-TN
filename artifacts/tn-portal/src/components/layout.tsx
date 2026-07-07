@@ -3,7 +3,7 @@ import { useI18n } from "@/contexts/i18n";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import { useUser, useClerk } from "@clerk/react";
-import { Moon, Sun, Languages, Menu, ShieldAlert, LogOut, Shield } from "lucide-react";
+import { Moon, Sun, Languages, Menu, LogOut, Shield } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import NotificationBell from "@/components/notification-bell";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
@@ -29,7 +29,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { href: "/search", label: "Search" },
     { href: "/directory", label: t("nav_directory") },
     { href: "/my-complaints", label: t("nav_my_complaints") },
-    { href: "/rti", label: t("nav_rti") },
   ];
 
   return (
@@ -37,10 +36,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2 group">
-              <ShieldAlert className="h-6 w-6 text-primary group-hover:scale-110 transition-transform duration-300" />
-              <span className="font-serif font-bold text-lg hidden sm:inline-block tracking-tight text-foreground uppercase">
-                {t("app_name")}
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <span className="relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <Shield className="h-8 w-8 text-primary fill-primary" />
+                <span className="absolute font-black text-sm leading-none text-zinc-900 pb-0.5">!</span>
+              </span>
+              <span className="hidden sm:block w-0.5 h-9 bg-primary/70 rounded-full" />
+              <span className="hidden sm:flex flex-col leading-tight">
+                <span className="font-sans font-extrabold text-lg tracking-tight text-foreground">
+                  Corruption Free TN
+                </span>
+                <span className="text-[11px] text-muted-foreground -mt-0.5">
+                  ஊழல் இல்லாத தமிழ்நாடு
+                </span>
               </span>
             </Link>
             
@@ -151,7 +159,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <footer className="py-6 md:py-8 border-t border-border/40 bg-muted/20">
         <div className="container mx-auto px-4 text-center">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} {t("app_name")}. {t("footer_text")}
+            &copy; {new Date().getFullYear()} Corruption Free TN &middot; ஊழல் இல்லாத தமிழ்நாடு. {t("footer_text")}
           </p>
         </div>
       </footer>
