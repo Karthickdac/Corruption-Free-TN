@@ -37,10 +37,15 @@ import {
   AddCaseNoteParams,
   AddCaseNoteBody,
   AddCaseNoteResponse,
+  SubmitInvestigationReportParams,
+  SubmitInvestigationReportBody,
+  SubmitInvestigationReportResponse,
 } from "@workspace/api-zod";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { ObjectPermission } from "../lib/objectAcl";
-import { requireAnyOfficer, isAllowedTransition } from "../middlewares/rbac";
+import { requireAnyOfficer, isAllowedTransition, canAccessComplaint } from "../middlewares/rbac";
+import { sendEmail } from "../lib/email";
+import { investigationReportsTable } from "@workspace/db";
 
 const objectStorageService = new ObjectStorageService();
 
@@ -476,7 +481,14 @@ router.patch(
       const { status: newStatus, note, priority } = body.data;
 
       const existing = await db
-        .select({ id: complaintsTable.id, status: complaintsTable.status, userId: complaintsTable.userId })
+        .select({
+          id: complaintsTable.id,
+          status: complaintsTable.status,
+          userId: complaintsTable.userId,
+          departmentId: complaintsTable.departmentId,
+          districtId: complaintsTable.districtId,
+          assignedOfficerId: complaintsTable.assignedOfficerId,
+        })
         .from(complaintsTable)
         .where(eq(complaintsTable.id, params.data.complaintId));
       if (!existing[0]) {
@@ -484,6 +496,12 @@ router.patch(
         return;
       }
       const current = existing[0];
+
+      // Jurisdiction enforcement: officer may only update complaints within their scope
+      if (req.localUser && !canAccessComplaint(req.localUser, current)) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
+        return;
+      }
 
       if (!isAllowedTransition(current.status, newStatus)) {
         res.status(400).json({
@@ -523,11 +541,28 @@ router.patch(
           rejected: "Rejected",
           reopened: "Reopened",
         };
+        const statusLabel = statusLabels[newStatus] ?? newStatus;
+        const notifMessage = note ?? `Your complaint has been moved to "${statusLabel}".`;
+
+        // In-app notification
         await db.insert(notificationsTable).values({
           userId: current.userId,
-          title: `Complaint status updated: ${statusLabels[newStatus] ?? newStatus}`,
-          message: note ?? `Your complaint has been moved to "${statusLabels[newStatus] ?? newStatus}".`,
+          title: `Complaint status updated: ${statusLabel}`,
+          message: notifMessage,
         });
+
+        // Email notification (fires if SMTP is configured; silently logs otherwise)
+        const submitter = await db
+          .select({ email: usersTable.email })
+          .from(usersTable)
+          .where(eq(usersTable.id, current.userId));
+        if (submitter[0]?.email) {
+          await sendEmail({
+            to: submitter[0].email,
+            subject: `[CorruptionFreeTN] Complaint status updated: ${statusLabel}`,
+            text: `Your complaint has been updated to status: ${statusLabel}.\n\n${notifMessage}`,
+          });
+        }
       }
 
       const rows = await complaintSelection().where(
@@ -560,7 +595,12 @@ router.post(
       }
 
       const complaint = await db
-        .select({ id: complaintsTable.id })
+        .select({
+          id: complaintsTable.id,
+          departmentId: complaintsTable.departmentId,
+          districtId: complaintsTable.districtId,
+          assignedOfficerId: complaintsTable.assignedOfficerId,
+        })
         .from(complaintsTable)
         .where(eq(complaintsTable.id, params.data.complaintId));
       if (!complaint[0]) {
@@ -568,12 +608,23 @@ router.post(
         return;
       }
 
+      // Jurisdiction enforcement for assign
+      if (req.localUser && !canAccessComplaint(req.localUser, complaint[0])) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
+        return;
+      }
+
       const officer = await db
-        .select({ id: usersTable.id, name: usersTable.name })
+        .select({ id: usersTable.id, name: usersTable.name, role: usersTable.role })
         .from(usersTable)
         .where(eq(usersTable.id, body.data.officerUserId));
       if (!officer[0]) {
         res.status(404).json({ error: "Officer not found" });
+        return;
+      }
+      // Only investigation officers may be assigned to complaints
+      if (officer[0].role !== "investigation_officer") {
+        res.status(400).json({ error: "Only investigation officers may be assigned to complaints" });
         return;
       }
 
@@ -621,6 +672,23 @@ router.get(
       });
       if (!params.success) {
         res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      // Jurisdiction check for reading notes
+      const complaintRow = await db
+        .select({
+          departmentId: complaintsTable.departmentId,
+          districtId: complaintsTable.districtId,
+          assignedOfficerId: complaintsTable.assignedOfficerId,
+        })
+        .from(complaintsTable)
+        .where(eq(complaintsTable.id, params.data.complaintId));
+      if (!complaintRow[0]) {
+        res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+      if (req.localUser && !canAccessComplaint(req.localUser, complaintRow[0])) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
         return;
       }
       const rows = await db
@@ -671,11 +739,22 @@ router.post(
       }
 
       const complaint = await db
-        .select({ id: complaintsTable.id, userId: complaintsTable.userId })
+        .select({
+          id: complaintsTable.id,
+          userId: complaintsTable.userId,
+          departmentId: complaintsTable.departmentId,
+          districtId: complaintsTable.districtId,
+          assignedOfficerId: complaintsTable.assignedOfficerId,
+        })
         .from(complaintsTable)
         .where(eq(complaintsTable.id, params.data.complaintId));
       if (!complaint[0]) {
         res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+      // Jurisdiction check for adding notes
+      if (req.localUser && !canAccessComplaint(req.localUser, complaint[0])) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
         return;
       }
 
@@ -721,6 +800,82 @@ router.post(
           content: note.content,
           isInternal: note.isInternal,
           createdAt: note.createdAt.toISOString(),
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/complaints/:complaintId/report",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const params = SubmitInvestigationReportParams.safeParse({
+        complaintId: Number(req.params.complaintId),
+      });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      const body = SubmitInvestigationReportBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+
+      const complaint = await db
+        .select({
+          id: complaintsTable.id,
+          departmentId: complaintsTable.departmentId,
+          districtId: complaintsTable.districtId,
+          assignedOfficerId: complaintsTable.assignedOfficerId,
+        })
+        .from(complaintsTable)
+        .where(eq(complaintsTable.id, params.data.complaintId));
+      if (!complaint[0]) {
+        res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+      if (req.localUser && !canAccessComplaint(req.localUser, complaint[0])) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
+        return;
+      }
+
+      const inserted = await db
+        .insert(investigationReportsTable)
+        .values({
+          complaintId: params.data.complaintId,
+          authorId: req.localUser?.id ?? null,
+          summary: body.data.summary,
+          findings: body.data.findings,
+          recommendation: body.data.recommendation,
+          notes: body.data.notes ?? null,
+        })
+        .returning();
+      const report = inserted[0]!;
+
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "investigation_report_submitted",
+        entityType: "complaint",
+        entityId: params.data.complaintId,
+        details: { recommendation: body.data.recommendation },
+      });
+
+      res.status(201).json(
+        SubmitInvestigationReportResponse.parse({
+          id: report.id,
+          complaintId: report.complaintId,
+          authorId: report.authorId,
+          authorName: req.localUser?.name ?? null,
+          summary: report.summary,
+          findings: report.findings,
+          recommendation: report.recommendation,
+          notes: report.notes,
+          createdAt: report.createdAt.toISOString(),
         }),
       );
     } catch (err) {

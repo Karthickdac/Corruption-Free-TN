@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { getAuth } from "@clerk/express";
 import { db, notificationsTable, usersTable } from "@workspace/db";
 import {
@@ -66,14 +66,19 @@ router.patch("/notifications/:notificationId/read", async (req, res, next) => {
       res.status(404).json({ error: "Not found" });
       return;
     }
+    // Ownership-scoped update: WHERE id = $1 AND userId = $2
+    // This prevents IDOR — a user cannot mark another user's notification as read
     const updated = await db
       .update(notificationsTable)
       .set({ isRead: true })
       .where(
-        eq(notificationsTable.id, notificationId),
+        and(
+          eq(notificationsTable.id, notificationId),
+          eq(notificationsTable.userId, localUser[0].id),
+        ),
       )
       .returning();
-    if (!updated[0] || updated[0].userId !== localUser[0].id) {
+    if (!updated[0]) {
       res.status(404).json({ error: "Notification not found" });
       return;
     }

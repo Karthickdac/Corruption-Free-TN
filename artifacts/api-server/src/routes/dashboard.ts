@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, and, count, type SQL } from "drizzle-orm";
+import { eq, desc, and, count, inArray, type SQL } from "drizzle-orm";
 import {
   db,
   complaintsTable,
@@ -12,6 +12,7 @@ import {
 import {
   GetDashboardComplaintsQueryParams,
   GetDashboardComplaintsResponse,
+  GetOfficerDashboardResponse,
 } from "@workspace/api-zod";
 import { requireAnyOfficer } from "../middlewares/rbac";
 
@@ -73,6 +74,28 @@ function toApiComplaint(row: {
   };
 }
 
+/** Build jurisdiction WHERE clauses for the current user */
+function buildJurisdictionConditions(user: NonNullable<Express.Request["localUser"]>): SQL[] {
+  const conditions: SQL[] = [];
+  if (user.role === "department_officer" || user.role === "ministry_officer") {
+    if (user.departmentId) {
+      conditions.push(eq(complaintsTable.departmentId, user.departmentId));
+    }
+  } else if (
+    user.role === "district_officer" ||
+    user.role === "taluk_officer" ||
+    user.role === "village_officer"
+  ) {
+    if (user.districtId) {
+      conditions.push(eq(complaintsTable.districtId, user.districtId));
+    }
+  } else if (user.role === "investigation_officer") {
+    conditions.push(eq(complaintsTable.assignedOfficerId, user.id));
+  }
+  // state_administrator, super_admin, moderator, legal_officer, auditor — no jurisdiction restriction
+  return conditions;
+}
+
 router.get(
   "/dashboard/complaints",
   requireAnyOfficer(),
@@ -86,61 +109,36 @@ router.get(
       const limit = params.success ? (params.data.limit ?? 50) : 50;
       const offset = params.success ? (params.data.offset ?? 0) : 0;
 
-      const conditions: SQL[] = [];
+      const jurisdictionConditions = buildJurisdictionConditions(user);
+      const filterConditions: SQL[] = [...jurisdictionConditions];
 
-      if (
-        user.role === "department_officer" ||
-        user.role === "ministry_officer"
-      ) {
-        if (user.departmentId) {
-          conditions.push(eq(complaintsTable.departmentId, user.departmentId));
-        }
-      } else if (
-        user.role === "district_officer" ||
-        user.role === "taluk_officer" ||
-        user.role === "village_officer"
-      ) {
-        if (user.districtId) {
-          conditions.push(eq(complaintsTable.districtId, user.districtId));
-        }
-      }
-
-      if (status) conditions.push(eq(complaintsTable.status, status));
-      if (priority) conditions.push(eq(complaintsTable.priority, priority));
+      if (status) filterConditions.push(eq(complaintsTable.status, status));
+      if (priority) filterConditions.push(eq(complaintsTable.priority, priority));
       if (assignedToMe === true) {
-        conditions.push(eq(complaintsTable.assignedOfficerId, user.id));
+        filterConditions.push(eq(complaintsTable.assignedOfficerId, user.id));
       }
 
-      const whereClause = conditions.length ? and(...conditions) : undefined;
+      const whereClause = filterConditions.length ? and(...filterConditions) : undefined;
+      const statsWhereClause = jurisdictionConditions.length ? and(...jurisdictionConditions) : undefined;
 
-      const [rows, totalResult] = await Promise.all([
+      const [rows, totalResult, allForStats] = await Promise.all([
         complaintSelection()
           .where(whereClause)
           .orderBy(desc(complaintsTable.createdAt))
           .limit(limit)
           .offset(offset),
+        db.select({ count: count() }).from(complaintsTable).where(whereClause),
         db
-          .select({ count: count() })
+          .select({ status: complaintsTable.status })
           .from(complaintsTable)
-          .where(whereClause),
+          .where(statsWhereClause),
       ]);
-
-      const allComplaints = await complaintSelection()
-        .where(conditions.length > 0 && (status || priority || assignedToMe)
-          ? (conditions.filter(c =>
-              !status || c !== eq(complaintsTable.status, status)
-            ).length ? and(...conditions.filter((_, i) => {
-              const baseCondLen = conditions.length - (status ? 1 : 0) - (priority ? 1 : 0) - (assignedToMe ? 1 : 0);
-              return i < baseCondLen;
-            })) : undefined)
-          : whereClause
-        );
 
       const statuses = ["submitted", "under_review", "investigation", "action_taken", "closed", "rejected"];
       const stats: Record<string, number> = {};
       for (const s of statuses) stats[s] = 0;
-      for (const r of allComplaints) {
-        const s = r.complaint.status;
+      for (const r of allForStats) {
+        const s = r.status;
         if (s in stats) stats[s]++;
       }
 
@@ -157,6 +155,54 @@ router.get(
             closed: stats["closed"] ?? 0,
             rejected: stats["rejected"] ?? 0,
           },
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  "/dashboard/officer",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const user = req.localUser!;
+      const jurisdictionConditions = buildJurisdictionConditions(user);
+
+      const OPEN_STATUSES = [
+        "submitted", "under_review", "evidence_verification",
+        "forwarded", "department_response", "investigation", "reopened",
+      ];
+      const CLOSED_STATUSES = ["closed", "action_taken", "rejected"];
+
+      const whereAll = jurisdictionConditions.length ? and(...jurisdictionConditions) : undefined;
+      const whereOpen = and(
+        ...(jurisdictionConditions.length ? jurisdictionConditions : []),
+        inArray(complaintsTable.status, OPEN_STATUSES),
+      );
+      const whereClosed = and(
+        ...(jurisdictionConditions.length ? jurisdictionConditions : []),
+        inArray(complaintsTable.status, CLOSED_STATUSES),
+      );
+
+      const [totalResult, openResult, closedResult, recent] = await Promise.all([
+        db.select({ count: count() }).from(complaintsTable).where(whereAll),
+        db.select({ count: count() }).from(complaintsTable).where(whereOpen),
+        db.select({ count: count() }).from(complaintsTable).where(whereClosed),
+        complaintSelection()
+          .where(whereAll)
+          .orderBy(desc(complaintsTable.createdAt))
+          .limit(5),
+      ]);
+
+      res.json(
+        GetOfficerDashboardResponse.parse({
+          totalAssigned: totalResult[0]?.count ?? 0,
+          openCount: openResult[0]?.count ?? 0,
+          closedCount: closedResult[0]?.count ?? 0,
+          recentComplaints: recent.map(toApiComplaint),
         }),
       );
     } catch (err) {

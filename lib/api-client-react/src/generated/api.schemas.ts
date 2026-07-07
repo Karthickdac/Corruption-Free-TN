@@ -365,6 +365,53 @@ export interface RtiInput {
   description: string;
 }
 
+export interface OfficerDashboardResponse {
+  totalAssigned: number;
+  openCount: number;
+  closedCount: number;
+  recentComplaints: Complaint[];
+}
+
+export type InvestigationReportInputRecommendation = typeof InvestigationReportInputRecommendation[keyof typeof InvestigationReportInputRecommendation];
+
+
+export const InvestigationReportInputRecommendation = {
+  substantiated: 'substantiated',
+  unsubstantiated: 'unsubstantiated',
+  partially_substantiated: 'partially_substantiated',
+  referred_to_authority: 'referred_to_authority',
+} as const;
+
+export interface InvestigationReportInput {
+  /** @minLength 10 */
+  summary: string;
+  /** @minLength 10 */
+  findings: string;
+  recommendation: InvestigationReportInputRecommendation;
+  notes?: string;
+}
+
+export interface InvestigationReport {
+  id: number;
+  complaintId: number;
+  /** @nullable */
+  authorId: number | null;
+  /** @nullable */
+  authorName?: string | null;
+  summary: string;
+  findings: string;
+  recommendation: string;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
+export interface DepartmentInput {
+  /** @minLength 2 */
+  name: string;
+  description?: string;
+}
+
 export interface UploadUrlRequest {
   /** @minLength 1 */
   name: string;
@@ -379,6 +426,21 @@ export interface UploadUrlResponse {
   objectPath: string;
   metadata?: UploadUrlRequest;
 }
+
+/**
+ * Bad request
+ */
+export type BadRequestResponse = ErrorResponse;
+
+/**
+ * Insufficient role
+ */
+export type ForbiddenResponse = ErrorResponse;
+
+/**
+ * Not found
+ */
+export type NotFoundResponse = ErrorResponse;
 
 export type ListTaluksParams = {
 districtId?: number;

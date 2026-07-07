@@ -102,6 +102,26 @@ export const insertCaseNoteSchema = createInsertSchema(caseNotesTable).omit({
 export type InsertCaseNote = z.infer<typeof insertCaseNoteSchema>;
 export type CaseNote = typeof caseNotesTable.$inferSelect;
 
+export const investigationReportsTable = pgTable("investigation_reports", {
+  id: serial("id").primaryKey(),
+  complaintId: integer("complaint_id")
+    .notNull()
+    .references(() => complaintsTable.id),
+  authorId: integer("author_id").references(() => usersTable.id),
+  summary: text("summary").notNull(),
+  findings: text("findings").notNull(),
+  recommendation: text("recommendation").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertInvestigationReportSchema = createInsertSchema(investigationReportsTable).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertInvestigationReport = z.infer<typeof insertInvestigationReportSchema>;
+export type InvestigationReport = typeof investigationReportsTable.$inferSelect;
+
 export const rtiRequestsTable = pgTable("rti_requests", {
   id: serial("id").primaryKey(),
   referenceNumber: text("reference_number").notNull().unique(),

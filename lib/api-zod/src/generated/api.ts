@@ -788,6 +788,161 @@ export const GetDashboardComplaintsResponse = zod.object({
 
 
 /**
+ * @summary Summary stats and recent complaints for the current officer
+ */
+export const GetOfficerDashboardResponse = zod.object({
+  "totalAssigned": zod.number(),
+  "openCount": zod.number(),
+  "closedCount": zod.number(),
+  "recentComplaints": zod.array(zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "createdAt": zod.string()
+}))
+})
+
+
+/**
+ * @summary Submit a final investigation report for a complaint
+ */
+export const SubmitInvestigationReportParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const submitInvestigationReportBodySummaryMin = 10;
+
+export const submitInvestigationReportBodyFindingsMin = 10;
+
+
+
+export const SubmitInvestigationReportBody = zod.object({
+  "summary": zod.string().min(submitInvestigationReportBodySummaryMin),
+  "findings": zod.string().min(submitInvestigationReportBodyFindingsMin),
+  "recommendation": zod.enum(['substantiated', 'unsubstantiated', 'partially_substantiated', 'referred_to_authority']),
+  "notes": zod.string().optional()
+})
+
+export const SubmitInvestigationReportResponse = zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary List all departments (super-admin master data)
+ */
+export const AdminListDepartmentsResponseItem = zod.object({
+  "id": zod.number(),
+  "ministryId": zod.number().nullish(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "secretary": zod.string().nullish(),
+  "commissioner": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish()
+})
+export const AdminListDepartmentsResponse = zod.array(AdminListDepartmentsResponseItem)
+
+
+/**
+ * @summary Create a new department
+ */
+export const adminCreateDepartmentBodyNameMin = 2;
+
+
+
+export const AdminCreateDepartmentBody = zod.object({
+  "name": zod.string().min(adminCreateDepartmentBodyNameMin),
+  "description": zod.string().optional()
+})
+
+export const AdminCreateDepartmentResponse = zod.object({
+  "id": zod.number(),
+  "ministryId": zod.number().nullish(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "secretary": zod.string().nullish(),
+  "commissioner": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish()
+})
+
+
+/**
+ * @summary Update a department
+ */
+export const AdminUpdateDepartmentParams = zod.object({
+  "departmentId": zod.coerce.number()
+})
+
+export const adminUpdateDepartmentBodyNameMin = 2;
+
+
+
+export const AdminUpdateDepartmentBody = zod.object({
+  "name": zod.string().min(adminUpdateDepartmentBodyNameMin),
+  "description": zod.string().optional()
+})
+
+export const AdminUpdateDepartmentResponse = zod.object({
+  "id": zod.number(),
+  "ministryId": zod.number().nullish(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "description": zod.string().nullish(),
+  "secretary": zod.string().nullish(),
+  "commissioner": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish()
+})
+
+
+/**
+ * @summary Delete a department
+ */
+export const AdminDeleteDepartmentParams = zod.object({
+  "departmentId": zod.coerce.number()
+})
+
+export const AdminDeleteDepartmentResponse = zod.void()
+
+
+/**
  * @summary List notifications for the current user
  */
 export const ListNotificationsResponseItem = zod.object({

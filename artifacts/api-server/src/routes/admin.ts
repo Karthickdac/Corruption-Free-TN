@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc, and, count, ilike, type SQL } from "drizzle-orm";
-import { db, usersTable, auditLogsTable } from "@workspace/db";
+import { db, usersTable, auditLogsTable, departmentsTable } from "@workspace/db";
 import {
   ListAdminUsersQueryParams,
   ListAdminUsersResponse,
@@ -8,6 +8,13 @@ import {
   UpdateUserRoleResponse,
   ListAuditLogsQueryParams,
   ListAuditLogsResponse,
+  AdminListDepartmentsResponse,
+  AdminCreateDepartmentBody,
+  AdminCreateDepartmentResponse,
+  AdminUpdateDepartmentParams,
+  AdminUpdateDepartmentBody,
+  AdminUpdateDepartmentResponse,
+  AdminDeleteDepartmentParams,
 } from "@workspace/api-zod";
 import { requireRole, OFFICER_ROLES, ADMIN_ROLES } from "../middlewares/rbac";
 
@@ -171,6 +178,147 @@ router.get(
           total,
         }),
       );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// Super-admin master data: departments
+
+router.get(
+  "/admin/departments",
+  requireRole(["super_admin", "state_administrator"]),
+  async (req, res, next) => {
+    try {
+      const rows = await db
+        .select()
+        .from(departmentsTable)
+        .orderBy(departmentsTable.name);
+      res.json(
+        AdminListDepartmentsResponse.parse(
+          rows.map((d) => ({
+            id: d.id,
+            name: d.name,
+            nameTa: d.nameTa ?? null,
+            code: "",
+          })),
+        ),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/admin/departments",
+  requireRole(["super_admin"]),
+  async (req, res, next) => {
+    try {
+      const body = AdminCreateDepartmentBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+      const inserted = await db
+        .insert(departmentsTable)
+        .values({ name: body.data.name })
+        .returning();
+      const d = inserted[0]!;
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "department_created",
+        entityType: "department",
+        entityId: d.id,
+        details: { name: d.name },
+      });
+      res.status(201).json(
+        AdminCreateDepartmentResponse.parse({
+          id: d.id,
+          name: d.name,
+          nameTa: d.nameTa ?? null,
+          code: "",
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.patch(
+  "/admin/departments/:departmentId",
+  requireRole(["super_admin"]),
+  async (req, res, next) => {
+    try {
+      const params = AdminUpdateDepartmentParams.safeParse({ departmentId: Number(req.params.departmentId) });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid department id" });
+        return;
+      }
+      const body = AdminUpdateDepartmentBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+      const updated = await db
+        .update(departmentsTable)
+        .set({ name: body.data.name })
+        .where(eq(departmentsTable.id, params.data.departmentId))
+        .returning();
+      if (!updated[0]) {
+        res.status(404).json({ error: "Department not found" });
+        return;
+      }
+      const d = updated[0];
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "department_updated",
+        entityType: "department",
+        entityId: d.id,
+        details: { name: d.name },
+      });
+      res.json(
+        AdminUpdateDepartmentResponse.parse({
+          id: d.id,
+          name: d.name,
+          nameTa: d.nameTa ?? null,
+          code: "",
+        }),
+      );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.delete(
+  "/admin/departments/:departmentId",
+  requireRole(["super_admin"]),
+  async (req, res, next) => {
+    try {
+      const params = AdminDeleteDepartmentParams.safeParse({ departmentId: Number(req.params.departmentId) });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid department id" });
+        return;
+      }
+      const deleted = await db
+        .delete(departmentsTable)
+        .where(eq(departmentsTable.id, params.data.departmentId))
+        .returning({ id: departmentsTable.id });
+      if (!deleted[0]) {
+        res.status(404).json({ error: "Department not found" });
+        return;
+      }
+      await db.insert(auditLogsTable).values({
+        userId: req.localUser?.id ?? null,
+        action: "department_deleted",
+        entityType: "department",
+        entityId: params.data.departmentId,
+        details: {},
+      });
+      res.status(204).send();
     } catch (err) {
       next(err);
     }

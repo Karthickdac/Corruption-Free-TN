@@ -146,3 +146,41 @@ export function requireSuperAdmin() {
 export function isAllowedTransition(from: string, to: string): boolean {
   return WORKFLOW_TRANSITIONS[from]?.includes(to) ?? false;
 }
+
+/**
+ * Returns true if the current officer may act on a complaint.
+ * Super admins, state administrators, moderators, and legal officers bypass all restrictions.
+ * Department-scoped roles can only act on complaints in their department.
+ * District/taluk/village officers can only act on complaints in their district.
+ * Investigation officers can act only on complaints assigned to them.
+ * Auditors can read but not modify (enforcement at the route level).
+ */
+export function canAccessComplaint(
+  user: NonNullable<Express.Request["localUser"]>,
+  complaint: { departmentId: number | null; districtId: number | null; assignedOfficerId: number | null },
+): boolean {
+  const bypassRoles = ["super_admin", "state_administrator", "moderator", "legal_officer", "auditor"];
+  if (bypassRoles.includes(user.role)) return true;
+
+  if (user.role === "department_officer" || user.role === "ministry_officer") {
+    if (!user.departmentId) return false;
+    if (complaint.departmentId !== null && complaint.departmentId !== user.departmentId) return false;
+    return true;
+  }
+
+  if (
+    user.role === "district_officer" ||
+    user.role === "taluk_officer" ||
+    user.role === "village_officer"
+  ) {
+    if (!user.districtId) return false;
+    if (complaint.districtId !== null && complaint.districtId !== user.districtId) return false;
+    return true;
+  }
+
+  if (user.role === "investigation_officer") {
+    return complaint.assignedOfficerId === user.id;
+  }
+
+  return false;
+}
