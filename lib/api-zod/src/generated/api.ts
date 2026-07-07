@@ -958,6 +958,77 @@ export const GetDashboardComplaintsResponse = zod.object({
 
 
 /**
+ * @summary Alias of /dashboard/complaints — complaints for the officer's jurisdiction/department
+ */
+export const GetDepartmentDashboardQueryParams = zod.object({
+  "status": zod.coerce.string().optional(),
+  "priority": zod.coerce.string().optional(),
+  "assignedToMe": zod.coerce.boolean().optional(),
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
+})
+
+export const GetDepartmentDashboardResponse = zod.object({
+  "complaints": zod.array(zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "createdAt": zod.string()
+})),
+  "total": zod.number(),
+  "stats": zod.object({
+  "submitted": zod.number(),
+  "under_review": zod.number(),
+  "investigation": zod.number(),
+  "action_taken": zod.number(),
+  "closed": zod.number(),
+  "rejected": zod.number()
+}).optional()
+})
+
+
+/**
  * @summary Summary stats and recent complaints for the current officer
  */
 export const GetOfficerDashboardResponse = zod.object({

@@ -36,6 +36,7 @@ export * from './evidenceInput';
 export * from './evidenceItem';
 export * from './forbiddenResponse';
 export * from './getDashboardComplaintsParams';
+export * from './getDepartmentDashboardParams';
 export * from './healthStatus';
 export * from './investigationReport';
 export * from './investigationReportInput';

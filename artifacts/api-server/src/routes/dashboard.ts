@@ -121,7 +121,7 @@ function buildJurisdictionConditions(user: NonNullable<Express.Request["localUse
 }
 
 router.get(
-  "/dashboard/complaints",
+  ["/dashboard/complaints", "/dashboard/department"],
   requireAnyOfficer(),
   async (req, res, next) => {
     try {

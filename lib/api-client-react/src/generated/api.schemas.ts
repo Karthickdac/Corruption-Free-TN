@@ -572,6 +572,14 @@ limit?: number;
 offset?: number;
 };
 
+export type GetDepartmentDashboardParams = {
+status?: string;
+priority?: string;
+assignedToMe?: boolean;
+limit?: number;
+offset?: number;
+};
+
 export type PostAuthSession200 = {
   ok: boolean;
 };

@@ -803,6 +803,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /dashboard/department:
+    get:
+      operationId: getDepartmentDashboard
+      tags: [dashboard]
+      summary: Alias of /dashboard/complaints — complaints for the officer's jurisdiction/department
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: priority
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: assignedToMe
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dashboard complaint list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardComplaintsResponse"
+        "403":
+          description: Insufficient role
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /dashboard/officer:
     get:
       operationId: getOfficerDashboard

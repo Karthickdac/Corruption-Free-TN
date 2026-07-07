@@ -168,8 +168,8 @@ function UsersContent() {
                         districtId: u.districtId ?? null,
                       });
                       setNewRole(u.role);
-                      setNewDeptId(u.departmentId ? String(u.departmentId) : "");
-                      setNewDistrictId(u.districtId ? String(u.districtId) : "");
+                      setNewDeptId(u.departmentId ? String(u.departmentId) : "none");
+                      setNewDistrictId(u.districtId ? String(u.districtId) : "none");
                     }}
                   >
                     <Edit className="h-3.5 w-3.5" />
@@ -236,7 +236,7 @@ function UsersContent() {
                     <SelectValue placeholder="Select department..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {(departments ?? []).map((d) => (
                       <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                     ))}
@@ -250,7 +250,7 @@ function UsersContent() {
                     <SelectValue placeholder="Select district..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {(districts ?? []).map((d) => (
                       <SelectItem key={d.id} value={String(d.id)}>{d.name}</SelectItem>
                     ))}
@@ -269,8 +269,8 @@ function UsersContent() {
                   userId: editUser.id,
                   data: {
                     role: newRole as UpdateUserRoleInputRole,
-                    departmentId: newDeptId ? Number(newDeptId) : null,
-                    districtId: newDistrictId ? Number(newDistrictId) : null,
+                    departmentId: newDeptId && newDeptId !== "none" ? Number(newDeptId) : null,
+                    districtId: newDistrictId && newDistrictId !== "none" ? Number(newDistrictId) : null,
                   },
                 });
               }}

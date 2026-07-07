@@ -45,6 +45,7 @@ import type {
   EvidenceItem,
   ForbiddenResponse,
   GetDashboardComplaintsParams,
+  GetDepartmentDashboardParams,
   HealthStatus,
   InvestigationReport,
   InvestigationReportInput,
@@ -2482,6 +2483,90 @@ export function useGetDashboardComplaints<TData = Awaited<ReturnType<typeof getD
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetDashboardComplaintsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetDepartmentDashboardUrl = (params?: GetDepartmentDashboardParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/dashboard/department?${stringifiedParams}` : `/api/dashboard/department`
+}
+
+/**
+ * @summary Alias of /dashboard/complaints — complaints for the officer's jurisdiction/department
+ */
+export const getDepartmentDashboard = async (params?: GetDepartmentDashboardParams, options?: RequestInit): Promise<DashboardComplaintsResponse> => {
+
+  return customFetch<DashboardComplaintsResponse>(getGetDepartmentDashboardUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetDepartmentDashboardQueryKey = (params?: GetDepartmentDashboardParams,) => {
+    return [
+    `/api/dashboard/department`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetDepartmentDashboardQueryOptions = <TData = Awaited<ReturnType<typeof getDepartmentDashboard>>, TError = ErrorType<ErrorResponse>>(params?: GetDepartmentDashboardParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDepartmentDashboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDepartmentDashboardQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDepartmentDashboard>>> = ({ signal }) => getDepartmentDashboard(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDepartmentDashboard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetDepartmentDashboardQueryResult = NonNullable<Awaited<ReturnType<typeof getDepartmentDashboard>>>
+export type GetDepartmentDashboardQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Alias of /dashboard/complaints — complaints for the officer's jurisdiction/department
+ */
+
+export function useGetDepartmentDashboard<TData = Awaited<ReturnType<typeof getDepartmentDashboard>>, TError = ErrorType<ErrorResponse>>(
+ params?: GetDepartmentDashboardParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getDepartmentDashboard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetDepartmentDashboardQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

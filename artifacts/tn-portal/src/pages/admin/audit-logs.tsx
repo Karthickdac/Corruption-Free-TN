@@ -13,13 +13,16 @@ import {
 } from "@/components/ui/select";
 import { ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
 
+// Keys must match audit `action` values written by the API server
 const ACTION_COLORS: Record<string, string> = {
   status_change: "bg-blue-500/10 text-blue-400",
   assignment: "bg-purple-500/10 text-purple-400",
   case_note_added: "bg-green-500/10 text-green-400",
   role_update: "bg-orange-500/10 text-orange-400",
-  complaint_created: "bg-teal-500/10 text-teal-400",
-  evidence_uploaded: "bg-indigo-500/10 text-indigo-400",
+  evidence_upload: "bg-indigo-500/10 text-indigo-400",
+  evidence_download: "bg-indigo-500/10 text-indigo-400",
+  investigation_report_submitted: "bg-teal-500/10 text-teal-400",
+  login: "bg-slate-500/10 text-slate-400",
 };
 
 const ACTION_LABELS: Record<string, string> = {
@@ -27,8 +30,10 @@ const ACTION_LABELS: Record<string, string> = {
   assignment: "Assignment",
   case_note_added: "Case Note",
   role_update: "Role Update",
-  complaint_created: "Complaint Created",
-  evidence_uploaded: "Evidence Uploaded",
+  evidence_upload: "Evidence Uploaded",
+  evidence_download: "Evidence Downloaded",
+  investigation_report_submitted: "Report Submitted",
+  login: "Login",
 };
 
 const ENTITY_TYPES = ["complaint", "user", "evidence", "rti_request"];
