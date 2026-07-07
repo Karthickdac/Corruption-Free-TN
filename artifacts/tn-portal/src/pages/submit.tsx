@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateComplaint, useRequestUploadUrl, useAddEvidence } from "@workspace/api-client-react";
+import { useUser } from "@clerk/react";
 import { useListDistricts, useListTaluks, useListDepartments, useListComplaintCategories, getListTaluksQueryKey } from "@workspace/api-client-react";
 import {
   ChevronRight, ChevronLeft, Building, MapPin, User, Tag, FileText, CheckCircle, Paperclip, X, Upload
@@ -182,10 +183,13 @@ export default function Submit() {
   const { t, isTa } = useI18n();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { isSignedIn } = useUser();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(empty);
   const [evidenceFiles, setEvidenceFiles] = useState<UploadedFile[]>([]);
   const [result, setResult] = useState<{ complaintNumber: string; id: number } | null>(null);
+
+  const canUploadEvidence = isSignedIn && !form.isAnonymous;
 
   const { data: departments } = useListDepartments();
   const { data: categories } = useListComplaintCategories();
@@ -230,6 +234,7 @@ export default function Submit() {
         },
       });
 
+      let evidenceFailed = 0;
       for (const f of evidenceFiles) {
         try {
           await addEvidence.mutateAsync({
@@ -237,8 +242,15 @@ export default function Submit() {
             data: { fileUrl: f.objectPath, fileType: f.fileType, fileHash: f.fileHash, description: f.name },
           });
         } catch {
-          // non-fatal
+          evidenceFailed++;
         }
+      }
+
+      if (evidenceFailed > 0) {
+        toast({
+          title: t("evidence_error"),
+          variant: "destructive",
+        });
       }
 
       setResult({ complaintNumber: created.complaintNumber, id: created.id });
@@ -535,13 +547,24 @@ export default function Submit() {
               </div>
               <div className="space-y-2">
                 <Label>{t("evidence_label")}</Label>
-                <EvidenceUploader files={evidenceFiles} onChange={setEvidenceFiles} />
+                {canUploadEvidence ? (
+                  <EvidenceUploader files={evidenceFiles} onChange={setEvidenceFiles} />
+                ) : (
+                  <div className="rounded-lg border border-border/40 bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+                    {!isSignedIn
+                      ? t("evidence_auth_notice")
+                      : t("evidence_anon_notice")}
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-3 bg-muted/20 border border-border/40 p-4 rounded-lg">
                 <Checkbox
                   id="anon"
                   checked={form.isAnonymous}
-                  onCheckedChange={(v) => upd("isAnonymous", !!v)}
+                  onCheckedChange={(v) => {
+                    upd("isAnonymous", !!v);
+                    if (!!v) setEvidenceFiles([]);
+                  }}
                 />
                 <div>
                   <Label htmlFor="anon" className="cursor-pointer font-semibold">
