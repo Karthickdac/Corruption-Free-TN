@@ -163,7 +163,7 @@ router.get("/analytics/department-performance", async (req, res, next) => {
   }
 });
 
-router.get("/analytics/officer-performance", requireAnyOfficer(), async (req, res, next) => {
+router.get("/analytics/officer-performance", async (req, res, next) => {
   try {
     const { from, to, limit: limitStr } = req.query as Record<string, string | undefined>;
     const dateConds = dateFilter(from, to);

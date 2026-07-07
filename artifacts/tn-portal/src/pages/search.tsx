@@ -45,6 +45,7 @@ type Filters = {
   talukId: string;
   categoryId: string;
   priority: string;
+  officerName: string;
   from: string;
   to: string;
   minAmount: string;
@@ -55,8 +56,8 @@ type Filters = {
 
 const emptyFilters: Filters = {
   q: "", complaintNumber: "", status: "", departmentId: "", districtId: "",
-  talukId: "", categoryId: "", priority: "", from: "", to: "", minAmount: "", maxAmount: "",
-  sortBy: "createdAt", sortDir: "desc",
+  talukId: "", categoryId: "", priority: "", officerName: "", from: "", to: "",
+  minAmount: "", maxAmount: "", sortBy: "createdAt", sortDir: "desc",
 };
 
 function buildApiUrl(filters: Filters, page: number, limit: number, format = "json") {
@@ -70,6 +71,7 @@ function buildApiUrl(filters: Filters, page: number, limit: number, format = "js
   if (filters.talukId) p.set("talukId", filters.talukId);
   if (filters.categoryId) p.set("categoryId", filters.categoryId);
   if (filters.priority) p.set("priority", filters.priority);
+  if (filters.officerName) p.set("officerName", filters.officerName);
   if (filters.from) p.set("from", filters.from);
   if (filters.to) p.set("to", filters.to);
   if (filters.minAmount) p.set("minAmount", filters.minAmount);
@@ -132,9 +134,9 @@ export default function SearchPage() {
     window.open(buildApiUrl(applied, 1, 5000, "xlsx"), "_blank");
   }, [applied]);
 
-  const handlePrint = useCallback(() => {
-    window.print();
-  }, []);
+  const handleExportPdf = useCallback(() => {
+    window.open(buildApiUrl(applied, 1, 5000, "pdf"), "_blank");
+  }, [applied]);
 
   const totalPages = data ? Math.ceil(data.total / limit) : 0;
   const activeFilters = Object.entries(applied).filter(([k, v]) => v && k !== "sortBy" && k !== "sortDir").length;
@@ -159,7 +161,7 @@ export default function SearchPage() {
             <FileSpreadsheet className="h-3.5 w-3.5 mr-1" />
             Excel
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint} className="text-xs uppercase tracking-wider font-bold print:hidden">
+          <Button variant="outline" size="sm" onClick={handleExportPdf} className="text-xs uppercase tracking-wider font-bold">
             <Printer className="h-3.5 w-3.5 mr-1" />
             PDF
           </Button>
@@ -240,6 +242,10 @@ export default function SearchPage() {
                     {PRIORITIES.map(p => <SelectItem key={p} value={p}>{humanStatus(p)}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Officer Name</Label>
+                <Input className="mt-1 text-sm" placeholder="Search by officer name…" value={filters.officerName} onChange={e => upd("officerName", e.target.value)} onKeyDown={e => e.key === "Enter" && apply()} />
               </div>
               <div>
                 <Label className="text-xs">From Date</Label>

@@ -13,10 +13,11 @@ import { Button } from "@/components/ui/button";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend,
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  AreaChart, Area, Treemap,
+  AreaChart, Area,
 } from "recharts";
-import { ShieldAlert, CheckCircle2, Clock, AlertTriangle, Map, X } from "lucide-react";
+import { ShieldAlert, CheckCircle2, Clock, AlertTriangle, Map } from "lucide-react";
 import { Link } from "wouter";
+import TNDistrictMap from "@/components/TNDistrictMap";
 
 const PIE_COLORS = ["#cca360","#475569","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#14b8a6","#ef4444","#6b7280"];
 
@@ -30,30 +31,9 @@ function humanStatus(s: string) {
   return s.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 }
 
-type MapDistrict = { name: string; total: number; resolved: number; districtId: number };
-
-function TreemapCell(props: any) {
-  const { x, y, width, height, name, rate, size } = props;
-  const r = rate < 30 ? 239 : rate < 60 ? 251 : 16;
-  const g = rate < 30 ? 68  : rate < 60 ? 146 : 185;
-  const b = rate < 30 ? 68  : rate < 60 ? 60  : 129;
-  const fill = `rgb(${r},${g},${b})`;
-  const textFits = width > 50 && height > 28;
-  return (
-    <g style={{ cursor: "pointer" }}>
-      <rect x={x} y={y} width={width} height={height} fill={fill} fillOpacity={0.85} rx={3} />
-      {textFits && <>
-        <text x={x + width / 2} y={y + height / 2 - 6} textAnchor="middle" fill="#fff" fontSize={Math.min(13, width / 8)} fontWeight={600}>{name}</text>
-        <text x={x + width / 2} y={y + height / 2 + 10} textAnchor="middle" fill="#fff" fontSize={Math.min(10, width / 9)} opacity={0.8}>{size} complaints</text>
-      </>}
-    </g>
-  );
-}
-
 export default function Transparency() {
   const { t } = useI18n();
   const [gran, setGran] = useState<"monthly"|"yearly">("monthly");
-  const [mapDistrict, setMapDistrict] = useState<MapDistrict | null>(null);
 
   const { data: stats, isLoading: statsLoading } = useGetPublicStats();
   const { data: overview } = useGetAnalyticsOverview({});
@@ -235,74 +215,17 @@ export default function Transparency() {
         </Card>
       </div>
 
-      {/* TN District Heat Map (Treemap) */}
+      {/* TN District Geographic Heat Map */}
       <Card className="mb-6">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 uppercase tracking-wider text-xs font-bold text-muted-foreground">
-            <Map className="h-4 w-4" /> TN District Complaints Heat Map
+            <Map className="h-4 w-4" /> TN District Complaints Geographic Heat Map
           </CardTitle>
-          <span className="text-xs text-muted-foreground">Click a district to drill down</span>
+          <span className="text-xs text-muted-foreground">Click a district to drill down → taluks → complaints</span>
         </CardHeader>
         <CardContent>
           {mapData && mapData.length > 0 ? (
-            <div className="relative">
-              <ResponsiveContainer width="100%" height={360}>
-                <Treemap
-                  data={mapData.map(d => ({
-                    name: d.districtName,
-                    size: d.total || 1,
-                    rate: d.total > 0 ? Math.round(((d.resolved ?? 0) / d.total) * 100) : 0,
-                    total: d.total,
-                    resolved: d.resolved ?? 0,
-                    districtId: d.districtId,
-                  }))}
-                  dataKey="size"
-                  aspectRatio={4 / 3}
-                  stroke="hsl(var(--background))"
-                  onClick={(node: any) => {
-                    if (node && node.name) {
-                      setMapDistrict({ name: node.name, total: node.total ?? 0, resolved: node.resolved ?? 0, districtId: node.districtId ?? 0 });
-                    }
-                  }}
-                  content={<TreemapCell />}
-                />
-              </ResponsiveContainer>
-              <div className="flex items-center gap-4 mt-3 justify-center text-xs text-muted-foreground flex-wrap">
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: "rgb(239,68,68)" }} /> Low resolution (&lt;30%)</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: "rgb(251,146,60)" }} /> Medium (30–60%)</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded" style={{ background: "rgb(16,185,129)" }} /> High (&gt;60%)</span>
-              </div>
-              {mapDistrict && (
-                <div className="mt-4 p-4 rounded-lg border border-border bg-muted/30 relative">
-                  <button onClick={() => setMapDistrict(null)} className="absolute top-3 right-3 p-1 rounded hover:bg-muted transition-colors">
-                    <X className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                  <h4 className="font-bold text-sm mb-2">{mapDistrict.name} District</h4>
-                  <div className="grid grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Total</p>
-                      <p className="text-2xl font-mono font-bold">{mapDistrict.total}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Resolved</p>
-                      <p className="text-2xl font-mono font-bold text-emerald-500">{mapDistrict.resolved}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider">Rate</p>
-                      {(() => {
-                        const rate = mapDistrict.total > 0 ? Math.round((mapDistrict.resolved / mapDistrict.total) * 100) : 0;
-                        return <p className={`text-2xl font-mono font-bold ${rate >= 60 ? "text-emerald-500" : rate >= 30 ? "text-amber-500" : "text-red-500"}`}>{rate}%</p>;
-                      })()}
-                    </div>
-                  </div>
-                  <Link href={`/search?districtId=${mapDistrict.districtId}`}>
-                    <Button variant="outline" size="sm" className="mt-3 text-xs">
-                      View complaints from {mapDistrict.name} →
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
+            <TNDistrictMap mapData={mapData} />
           ) : (
             <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
               No district data available yet
