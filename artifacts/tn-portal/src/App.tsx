@@ -148,7 +148,7 @@ function ClerkProviderWithRoutes() {
       appearance={{
         theme: dark,
         cssLayerName: "clerk",
-        variables: { colorPrimary: "#e11d48" }
+        variables: { colorPrimary: "#cca360" }
       }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}

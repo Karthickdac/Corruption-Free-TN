@@ -8,7 +8,7 @@ export default function Transparency() {
   const { t, isTa } = useI18n();
   const { data: stats, isLoading } = useGetPublicStats();
 
-  const COLORS = ['#e11d48', '#f59e0b', '#8b5cf6', '#10b981', '#3b82f6', '#64748b'];
+  const COLORS = ['#cca360', '#475569', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'];
 
   if (isLoading || !stats) {
     return (

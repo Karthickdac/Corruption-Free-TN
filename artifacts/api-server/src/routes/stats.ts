@@ -59,10 +59,15 @@ router.get("/stats/public", async (_req, res, next) => {
 
     const data = GetPublicStatsResponse.parse({
       totalComplaints,
-      resolved: statusCount("resolved"),
+      resolved: statusCount("closed") + statusCount("action_taken"),
       pending:
-        statusCount("submitted") + statusCount("under_review"),
-      underInvestigation: statusCount("under_investigation"),
+        statusCount("submitted") +
+        statusCount("under_review") +
+        statusCount("evidence_verification") +
+        statusCount("forwarded") +
+        statusCount("department_response") +
+        statusCount("reopened"),
+      underInvestigation: statusCount("investigation"),
       totalDistricts: totalDistricts[0]?.count ?? 0,
       totalDepartments: totalDepartments[0]?.count ?? 0,
       byStatus,
