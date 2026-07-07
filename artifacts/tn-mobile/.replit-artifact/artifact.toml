@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/tn-mobile/"
+title = "TNCorruptions Mobile"
+version = "1.0.0"
+id = "artifacts/tn-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/tn-mobile/" ]
+localPort = 22451
+
+[services.development]
+run = "pnpm --filter @workspace/tn-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tn-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/tn-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "22451"
+BASE_PATH = "/tn-mobile/"

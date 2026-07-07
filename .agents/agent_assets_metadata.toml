@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "DFYMn17aUL9LhcBOgHuIM"
+uri = "file://artifacts/tn-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
