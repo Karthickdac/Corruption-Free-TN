@@ -1015,6 +1015,17 @@ export const GetOfficerDashboardResponse = zod.object({
 
 
 /**
+ * @summary List investigation officers available for assignment (accessible to any officer role)
+ */
+export const ListAssignableOfficersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish()
+})
+export const ListAssignableOfficersResponse = zod.array(ListAssignableOfficersResponseItem)
+
+
+/**
  * @summary Submit a final investigation report for a complaint
  */
 export const SubmitInvestigationReportParams = zod.object({

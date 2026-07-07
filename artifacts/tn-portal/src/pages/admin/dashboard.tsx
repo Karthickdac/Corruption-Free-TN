@@ -7,8 +7,8 @@ import {
   useUpdateComplaintStatus,
   useAssignComplaint,
   getGetDashboardComplaintsQueryKey,
-  useListAdminUsers,
-  getListAdminUsersQueryKey,
+  useListAssignableOfficers,
+  getListAssignableOfficersQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -70,11 +70,12 @@ const PRIORITY_COLORS: Record<string, string> = {
   low: "bg-green-500/20 text-green-600",
 };
 
+// Keep in sync with WORKFLOW_TRANSITIONS in artifacts/api-server/src/middlewares/rbac.ts
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   submitted: ["under_review", "rejected"],
-  under_review: ["evidence_verification", "forwarded", "rejected"],
-  evidence_verification: ["forwarded", "under_review"],
-  forwarded: ["department_response", "investigation"],
+  under_review: ["evidence_verification", "forwarded", "rejected", "closed"],
+  evidence_verification: ["forwarded", "under_review", "rejected"],
+  forwarded: ["department_response", "investigation", "rejected"],
   department_response: ["investigation", "action_taken", "closed"],
   investigation: ["action_taken", "closed"],
   action_taken: ["closed"],
@@ -118,9 +119,8 @@ function DashboardContent() {
     { query: { queryKey: getGetDashboardComplaintsQueryKey({ status: statusFilter !== "all" ? statusFilter : undefined, priority: priorityFilter !== "all" ? priorityFilter : undefined, assignedToMe: assignedToMe || undefined }) } },
   );
 
-  const { data: officersData } = useListAdminUsers(
-    { role: "investigation_officer" },
-    { query: { staleTime: 60000, queryKey: getListAdminUsersQueryKey({ role: "investigation_officer" }) } },
+  const { data: officersData } = useListAssignableOfficers(
+    { query: { staleTime: 60000, queryKey: getListAssignableOfficersQueryKey() } },
   );
 
   const updateStatus = useUpdateComplaintStatus({
@@ -381,7 +381,7 @@ function DashboardContent() {
                     <SelectValue placeholder="Select officer..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {(officersData?.users ?? []).map((u) => (
+                    {(officersData ?? []).map((u) => (
                       <SelectItem key={u.id} value={String(u.id)}>
                         {u.name ?? u.email ?? `Officer #${u.id}`}
                       </SelectItem>

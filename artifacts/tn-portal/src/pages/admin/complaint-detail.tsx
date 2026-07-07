@@ -49,11 +49,12 @@ const STATUS_LABELS: Record<string, string> = {
   action_taken: "Action Taken", closed: "Closed", rejected: "Rejected", reopened: "Reopened",
 };
 
+// Keep in sync with WORKFLOW_TRANSITIONS in artifacts/api-server/src/middlewares/rbac.ts
 const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   submitted: ["under_review", "rejected"],
-  under_review: ["evidence_verification", "forwarded", "rejected"],
-  evidence_verification: ["forwarded", "under_review"],
-  forwarded: ["department_response", "investigation"],
+  under_review: ["evidence_verification", "forwarded", "rejected", "closed"],
+  evidence_verification: ["forwarded", "under_review", "rejected"],
+  forwarded: ["department_response", "investigation", "rejected"],
   department_response: ["investigation", "action_taken", "closed"],
   investigation: ["action_taken", "closed"],
   action_taken: ["closed"],

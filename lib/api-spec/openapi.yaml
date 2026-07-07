@@ -817,6 +817,20 @@ paths:
                 $ref: "#/components/schemas/OfficerDashboardResponse"
         "403":
           $ref: "#/components/responses/Forbidden"
+  /dashboard/assignable-officers:
+    get:
+      operationId: listAssignableOfficers
+      tags: [dashboard]
+      summary: List investigation officers available for assignment (accessible to any officer role)
+      responses:
+        "200":
+          description: Assignable investigation officers
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssignableOfficersResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /complaints/{complaintId}/report:
     post:
       operationId: submitInvestigationReport
@@ -1460,6 +1474,20 @@ components:
         total:
           type: integer
       required: [users, total]
+    AssignableOfficer:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+      required: [id]
+    AssignableOfficersResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/AssignableOfficer"
     UpdateUserRoleInput:
       type: object
       properties:

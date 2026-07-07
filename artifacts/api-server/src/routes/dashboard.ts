@@ -13,6 +13,7 @@ import {
   GetDashboardComplaintsQueryParams,
   GetDashboardComplaintsResponse,
   GetOfficerDashboardResponse,
+  ListAssignableOfficersResponse,
 } from "@workspace/api-zod";
 import { requireAnyOfficer } from "../middlewares/rbac";
 
@@ -251,6 +252,27 @@ router.get(
           recentComplaints: recent.map(toApiComplaint),
         }),
       );
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  "/dashboard/assignable-officers",
+  requireAnyOfficer(),
+  async (_req, res, next) => {
+    try {
+      const rows = await db
+        .select({
+          id: usersTable.id,
+          name: usersTable.name,
+          email: usersTable.email,
+        })
+        .from(usersTable)
+        .where(eq(usersTable.role, "investigation_officer"))
+        .orderBy(usersTable.name);
+      res.json(ListAssignableOfficersResponse.parse(rows));
     } catch (err) {
       next(err);
     }

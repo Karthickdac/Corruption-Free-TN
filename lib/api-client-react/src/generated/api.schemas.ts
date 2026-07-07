@@ -151,6 +151,16 @@ export interface AdminUsersResponse {
   total: number;
 }
 
+export interface AssignableOfficer {
+  id: number;
+  /** @nullable */
+  name?: string | null;
+  /** @nullable */
+  email?: string | null;
+}
+
+export type AssignableOfficersResponse = AssignableOfficer[];
+
 export type UpdateUserRoleInputRole = typeof UpdateUserRoleInputRole[keyof typeof UpdateUserRoleInputRole];
 
 

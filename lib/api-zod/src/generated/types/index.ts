@@ -10,6 +10,8 @@ export * from './adminCategory';
 export * from './adminDistrict';
 export * from './adminUser';
 export * from './adminUsersResponse';
+export * from './assignableOfficer';
+export * from './assignableOfficersResponse';
 export * from './assignComplaintInput';
 export * from './auditLogEntry';
 export * from './auditLogEntryDetails';

@@ -25,6 +25,7 @@ import type {
   AdminUser,
   AdminUsersResponse,
   AssignComplaintInput,
+  AssignableOfficersResponse,
   AuditLogsResponse,
   BadRequestResponse,
   Block,
@@ -2558,6 +2559,83 @@ export function useGetOfficerDashboard<TData = Awaited<ReturnType<typeof getOffi
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetOfficerDashboardQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListAssignableOfficersUrl = () => {
+
+
+
+
+  return `/api/dashboard/assignable-officers`
+}
+
+/**
+ * @summary List investigation officers available for assignment (accessible to any officer role)
+ */
+export const listAssignableOfficers = async ( options?: RequestInit): Promise<AssignableOfficersResponse> => {
+
+  return customFetch<AssignableOfficersResponse>(getListAssignableOfficersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAssignableOfficersQueryKey = () => {
+    return [
+    `/api/dashboard/assignable-officers`
+    ] as const;
+    }
+
+
+export const getListAssignableOfficersQueryOptions = <TData = Awaited<ReturnType<typeof listAssignableOfficers>>, TError = ErrorType<ForbiddenResponse>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAssignableOfficers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAssignableOfficersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAssignableOfficers>>> = ({ signal }) => listAssignableOfficers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAssignableOfficers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAssignableOfficersQueryResult = NonNullable<Awaited<ReturnType<typeof listAssignableOfficers>>>
+export type ListAssignableOfficersQueryError = ErrorType<ForbiddenResponse>
+
+
+/**
+ * @summary List investigation officers available for assignment (accessible to any officer role)
+ */
+
+export function useListAssignableOfficers<TData = Awaited<ReturnType<typeof listAssignableOfficers>>, TError = ErrorType<ForbiddenResponse>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAssignableOfficers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAssignableOfficersQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
