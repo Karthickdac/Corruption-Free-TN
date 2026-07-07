@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { ComposableMap, Geographies, Geography } from "react-simple-maps";
-import { useListTaluksByDistrict } from "@workspace/api-client-react";
+import { useListTaluksByDistrict, useListDepartments } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, MapPin, ChevronRight } from "lucide-react";
+import { X, MapPin, ChevronRight, Building2 } from "lucide-react";
 import { Link } from "wouter";
 
 type DistrictPoint = {
@@ -22,14 +22,14 @@ type Props = {
 
 const GEO_URL = "/tn-districts.geojson";
 
-function heatColor(rate: number, hasData: boolean): string {
-  if (!hasData) return "#1e3a5f";
-  if (rate === 0) return "#dc2626";
-  if (rate < 20) return "#ef4444";
-  if (rate < 40) return "#f97316";
-  if (rate < 60) return "#f59e0b";
-  if (rate < 80) return "#22c55e";
-  return "#10b981";
+function densityColor(density: number, maxDensity: number): string {
+  if (density === 0) return "#1e3a5f";
+  const pct = maxDensity > 0 ? density / maxDensity : 0;
+  if (pct < 0.2) return "#fde68a";
+  if (pct < 0.4) return "#fb923c";
+  if (pct < 0.6) return "#f97316";
+  if (pct < 0.8) return "#dc2626";
+  return "#991b1b";
 }
 
 function DrilldownPanel({
@@ -42,10 +42,12 @@ function DrilldownPanel({
   const { data: taluks, isLoading: taluksLoading } = useListTaluksByDistrict(
     districtPoint.districtId
   );
+  const { data: departments } = useListDepartments();
 
   const resolved = districtPoint.resolved ?? 0;
   const total = districtPoint.total;
   const rate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+  const did = districtPoint.districtId;
 
   return (
     <div className="mt-4 border border-border rounded-lg bg-muted/20 p-4 relative animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -81,13 +83,13 @@ function DrilldownPanel({
       {taluksLoading ? (
         <p className="text-xs text-muted-foreground">Loading taluks…</p>
       ) : taluks && taluks.length > 0 ? (
-        <div>
+        <div className="mb-3">
           <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2">Taluks</p>
           <div className="flex flex-wrap gap-2">
             {taluks.map((taluk) => (
               <Link
                 key={taluk.id}
-                href={`/search?districtId=${districtPoint.districtId}&talukId=${taluk.id}`}
+                href={`/search?districtId=${did}&talukId=${taluk.id}`}
               >
                 <Badge
                   variant="outline"
@@ -102,10 +104,39 @@ function DrilldownPanel({
         </div>
       ) : null}
 
-      <div className="mt-3 pt-3 border-t border-border/40 flex gap-2">
-        <Link href={`/search?districtId=${districtPoint.districtId}`}>
+      {departments && departments.length > 0 && (
+        <div className="mb-3">
+          <p className="text-xs uppercase font-bold tracking-wider text-muted-foreground mb-2 flex items-center gap-1">
+            <Building2 className="h-3 w-3" /> By Department
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {departments.slice(0, 8).map((dept) => (
+              <Link
+                key={dept.id}
+                href={`/search?districtId=${did}&departmentId=${dept.id}`}
+              >
+                <Badge
+                  variant="secondary"
+                  className="cursor-pointer hover:bg-primary/10 transition-colors text-xs gap-1"
+                >
+                  {dept.name.replace(/\s*Department\s*$/i, "").slice(0, 22)}
+                  <ChevronRight className="h-2.5 w-2.5" />
+                </Badge>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mt-3 pt-3 border-t border-border/40 flex gap-2 flex-wrap">
+        <Link href={`/search?districtId=${did}`}>
           <Button variant="outline" size="sm" className="text-xs">
-            View all complaints →
+            All complaints →
+          </Button>
+        </Link>
+        <Link href={`/search?districtId=${did}&q=village`}>
+          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground">
+            Search by village
           </Button>
         </Link>
       </div>
@@ -115,14 +146,13 @@ function DrilldownPanel({
 
 export default function TNDistrictMap({ mapData }: Props) {
   const [selected, setSelected] = useState<DistrictPoint | null>(null);
-  const [hovered, setHovered] = useState<string | null>(null);
 
   const dataByName: Record<string, DistrictPoint> = {};
   for (const d of mapData) {
     dataByName[d.districtName.toLowerCase()] = d;
   }
 
-  const maxTotal = Math.max(1, ...mapData.map((d) => d.total));
+  const maxDensity = Math.max(1, ...mapData.map((d) => d.density ?? d.total));
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -139,26 +169,20 @@ export default function TNDistrictMap({ mapData }: Props) {
               geographies.map((geo) => {
                 const name: string = geo.properties.district ?? "";
                 const point = dataByName[name.toLowerCase()];
-                const hasData = !!(point && point.total > 0);
-                const resolved = point?.resolved ?? 0;
-                const total = point?.total ?? 0;
-                const rate = total > 0 ? (resolved / total) * 100 : 0;
+                const density = point?.density ?? point?.total ?? 0;
                 const isSelected = selected?.districtName.toLowerCase() === name.toLowerCase();
-                const fill = heatColor(rate, hasData);
+                const fill = densityColor(density, maxDensity);
 
                 return (
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
                     onClick={() => {
-                      if (point) {
-                        setSelected(isSelected ? null : point);
-                      } else {
-                        setSelected(isSelected ? null : { districtId: 0, districtName: name, total: 0 });
-                      }
+                      const next = point ?? { districtId: 0, districtName: name, total: 0 };
+                      setSelected(isSelected ? null : next);
                     }}
-                    onMouseEnter={() => setHovered(name)}
-                    onMouseLeave={() => setHovered(null)}
+                    onMouseEnter={() => {}}
+                    onMouseLeave={() => {}}
                     style={{
                       default: {
                         fill,
@@ -192,11 +216,11 @@ export default function TNDistrictMap({ mapData }: Props) {
         <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground justify-center">
           {[
             { label: "No complaints", color: "#1e3a5f" },
-            { label: "0% resolved", color: "#dc2626" },
-            { label: "<40% resolved", color: "#f97316" },
-            { label: "40–60%", color: "#f59e0b" },
-            { label: "60–80%", color: "#22c55e" },
-            { label: ">80%", color: "#10b981" },
+            { label: "Very low", color: "#fde68a" },
+            { label: "Low", color: "#fb923c" },
+            { label: "Medium", color: "#f97316" },
+            { label: "High", color: "#dc2626" },
+            { label: "Highest", color: "#991b1b" },
           ].map((l) => (
             <span key={l.label} className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm inline-block" style={{ background: l.color }} />
@@ -216,6 +240,7 @@ export default function TNDistrictMap({ mapData }: Props) {
               .sort((a, b) => b.total - a.total)
               .slice(0, 10)
               .map((d) => {
+                const maxTotal = Math.max(1, ...mapData.map((x) => x.total));
                 const pct = Math.round((d.total / maxTotal) * 100);
                 const resolved = d.resolved ?? 0;
                 const rate = d.total > 0 ? Math.round((resolved / d.total) * 100) : 0;
@@ -239,7 +264,7 @@ export default function TNDistrictMap({ mapData }: Props) {
                     <div className="w-full bg-muted rounded-full h-1.5">
                       <div
                         className="h-1.5 rounded-full"
-                        style={{ width: `${pct}%`, background: heatColor(rate, true) }}
+                        style={{ width: `${pct}%`, background: densityColor(d.density ?? d.total, maxDensity) }}
                       />
                     </div>
                     <div className="flex justify-between mt-0.5 text-muted-foreground">

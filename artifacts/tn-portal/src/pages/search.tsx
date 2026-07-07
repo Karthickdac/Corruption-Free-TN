@@ -108,6 +108,7 @@ export default function SearchPage() {
     talukId: applied.talukId ? Number(applied.talukId) : undefined,
     categoryId: applied.categoryId ? Number(applied.categoryId) : undefined,
     priority: applied.priority || undefined,
+    officerName: applied.officerName || undefined,
     from: applied.from || undefined,
     to: applied.to || undefined,
     minAmount: applied.minAmount ? Number(applied.minAmount) : undefined,
