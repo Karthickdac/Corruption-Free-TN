@@ -1335,7 +1335,7 @@ paths:
     get:
       operationId: getAnalyticsOfficerPerformance
       tags: [analytics]
-      summary: Officer performance table (admin-only)
+      summary: Officer performance table (public transparency)
       parameters:
         - name: from
           in: query
@@ -1361,8 +1361,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/OfficerPerformance"
-        "403":
-          $ref: "#/components/responses/Forbidden"
 
   /analytics/trends:
     get:
@@ -2376,8 +2374,6 @@ components:
         officerId:
           type: integer
         officerName:
-          type: ["string", "null"]
-        officerEmail:
           type: ["string", "null"]
         total:
           type: integer

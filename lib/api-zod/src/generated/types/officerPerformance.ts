@@ -10,8 +10,6 @@ export interface OfficerPerformance {
   officerId: number;
   /** @nullable */
   officerName: string | null;
-  /** @nullable */
-  officerEmail?: string | null;
   total: number;
   resolved: number;
   pending: number;

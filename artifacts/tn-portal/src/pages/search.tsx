@@ -84,9 +84,30 @@ function buildApiUrl(filters: Filters, page: number, limit: number, format = "js
   return `${base}?${p.toString()}`;
 }
 
+function filtersFromSearch(): Filters {
+  const p = new URLSearchParams(window.location.search);
+  return {
+    q: p.get("q") ?? "",
+    complaintNumber: p.get("complaintNumber") ?? "",
+    status: p.get("status") ?? "",
+    departmentId: p.get("departmentId") ?? "",
+    districtId: p.get("districtId") ?? "",
+    talukId: p.get("talukId") ?? "",
+    categoryId: p.get("categoryId") ?? "",
+    priority: p.get("priority") ?? "",
+    officerName: p.get("officerName") ?? "",
+    from: p.get("from") ?? "",
+    to: p.get("to") ?? "",
+    minAmount: p.get("minAmount") ?? "",
+    maxAmount: p.get("maxAmount") ?? "",
+    sortBy: p.get("sortBy") ?? "createdAt",
+    sortDir: (p.get("sortDir") as "asc" | "desc") || "desc",
+  };
+}
+
 export default function SearchPage() {
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
-  const [applied, setApplied] = useState<Filters>(emptyFilters);
+  const [filters, setFilters] = useState<Filters>(() => filtersFromSearch());
+  const [applied, setApplied] = useState<Filters>(() => filtersFromSearch());
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(true);
   const limit = 20;

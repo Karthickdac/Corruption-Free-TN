@@ -131,6 +131,8 @@ router.get("/analytics/department-performance", async (req, res, next) => {
       FROM complaints c
       JOIN departments d ON c.department_id = d.id
       WHERE c.status IN ('closed', 'action_taken')
+      ${from ? sql`AND c.created_at >= ${new Date(from)}` : sql``}
+      ${to ? sql`AND c.created_at <= ${new Date(to)}` : sql``}
       GROUP BY d.id
     `);
     const avgByDept: Record<number, number | null> = {};
@@ -173,14 +175,13 @@ router.get("/analytics/officer-performance", async (req, res, next) => {
       .select({
         officerId: usersTable.id,
         officerName: usersTable.name,
-        officerEmail: usersTable.email,
         status: complaintsTable.status,
         count: count(),
       })
       .from(complaintsTable)
       .innerJoin(usersTable, eq(complaintsTable.assignedOfficerId, usersTable.id))
       .where(dateConds.length ? and(...dateConds) : undefined)
-      .groupBy(usersTable.id, usersTable.name, usersTable.email, complaintsTable.status);
+      .groupBy(usersTable.id, usersTable.name, complaintsTable.status);
 
     const avgRows = await db.execute(sql`
       SELECT u.id as officer_id,
@@ -188,6 +189,8 @@ router.get("/analytics/officer-performance", async (req, res, next) => {
       FROM complaints c
       JOIN users u ON c.assigned_officer_id = u.id
       WHERE c.status IN ('closed', 'action_taken')
+      ${from ? sql`AND c.created_at >= ${new Date(from)}` : sql``}
+      ${to ? sql`AND c.created_at <= ${new Date(to)}` : sql``}
       GROUP BY u.id
     `);
     const avgByOfficer: Record<number, number | null> = {};
@@ -195,10 +198,10 @@ router.get("/analytics/officer-performance", async (req, res, next) => {
       avgByOfficer[r.officer_id as number] = r.avg_days ? Number(r.avg_days) : null;
     }
 
-    const byOfficer: Record<number, { officerId: number; officerName: string | null; officerEmail: string | null; total: number; resolved: number; pending: number }> = {};
+    const byOfficer: Record<number, { officerId: number; officerName: string | null; total: number; resolved: number; pending: number }> = {};
     for (const row of rows) {
       if (!byOfficer[row.officerId]) {
-        byOfficer[row.officerId] = { officerId: row.officerId, officerName: row.officerName, officerEmail: row.officerEmail, total: 0, resolved: 0, pending: 0 };
+        byOfficer[row.officerId] = { officerId: row.officerId, officerName: row.officerName, total: 0, resolved: 0, pending: 0 };
       }
       byOfficer[row.officerId].total += row.count;
       if (RESOLVED_STATUSES.includes(row.status)) byOfficer[row.officerId].resolved += row.count;

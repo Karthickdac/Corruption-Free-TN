@@ -1488,7 +1488,6 @@ export const GetAnalyticsOfficerPerformanceQueryParams = zod.object({
 export const GetAnalyticsOfficerPerformanceResponseItem = zod.object({
   "officerId": zod.number(),
   "officerName": zod.string().nullable(),
-  "officerEmail": zod.string().nullish(),
   "total": zod.number(),
   "resolved": zod.number(),
   "pending": zod.number(),
