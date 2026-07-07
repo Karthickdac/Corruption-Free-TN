@@ -10,6 +10,7 @@ import {
   complaintCategoriesTable,
   usersTable,
   auditLogsTable,
+  evidenceTable,
 } from "@workspace/db";
 import {
   ListComplaintsResponse,
@@ -24,7 +25,10 @@ import {
   AddEvidenceBody,
   AddEvidenceResponse,
 } from "@workspace/api-zod";
-import { evidenceTable } from "@workspace/db";
+import { ObjectStorageService } from "../lib/objectStorage";
+import { ObjectPermission } from "../lib/objectAcl";
+
+const objectStorageService = new ObjectStorageService();
 
 const router: IRouter = Router();
 
@@ -302,12 +306,17 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
+    // Anonymous complaints have no owner — evidence access is not permitted
+    if (complaint[0].userId === null) {
+      res.status(403).json({ error: "Evidence access is not available for anonymous complaints" });
+      return;
+    }
     const localUser = await db
       .select({ id: usersTable.id })
       .from(usersTable)
       .where(eq(usersTable.clerkId, auth.userId));
     const localUserId = localUser[0]?.id;
-    if (complaint[0].userId !== null && complaint[0].userId !== localUserId) {
+    if (complaint[0].userId !== localUserId) {
       res.status(403).json({ error: "Access denied" });
       return;
     }
@@ -346,6 +355,14 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       res.status(400).json({ error: parsed.error.issues[0]?.message ?? "Invalid input" });
       return;
     }
+
+    // Validate fileUrl is a normalized internal object path from our upload flow
+    const fileUrl = parsed.data.fileUrl;
+    if (!fileUrl.startsWith("/objects/")) {
+      res.status(400).json({ error: "Invalid file reference: must be an internal object path from the upload flow" });
+      return;
+    }
+
     const complaint = await db
       .select({ id: complaintsTable.id, userId: complaintsTable.userId })
       .from(complaintsTable)
@@ -354,26 +371,43 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
+    // Anonymous complaints have no owner — evidence upload is not permitted
+    if (complaint[0].userId === null) {
+      res.status(403).json({ error: "Evidence upload is not available for anonymous complaints" });
+      return;
+    }
     const localUser = await db
       .select({ id: usersTable.id })
       .from(usersTable)
       .where(eq(usersTable.clerkId, auth.userId));
     const localUserId = localUser[0]?.id;
-    if (complaint[0].userId !== null && complaint[0].userId !== localUserId) {
+    if (complaint[0].userId !== localUserId) {
       res.status(403).json({ error: "Access denied" });
       return;
     }
+
     const inserted = await db
       .insert(evidenceTable)
       .values({
         complaintId: params.complaintId,
-        fileUrl: parsed.data.fileUrl,
+        fileUrl,
         fileType: parsed.data.fileType ?? null,
         fileHash: parsed.data.fileHash ?? null,
         description: parsed.data.description ?? null,
       })
       .returning();
     const e = inserted[0]!;
+
+    // Set ACL so only the uploader can retrieve this file via /storage/objects/*
+    try {
+      await objectStorageService.trySetObjectEntityAclPolicy(fileUrl, {
+        owner: auth.userId,
+        visibility: "private",
+      });
+    } catch (aclErr) {
+      req.log.warn({ err: aclErr, fileUrl }, "Failed to set ACL on evidence file — file may be inaccessible");
+    }
+
     res.status(201).json(
       AddEvidenceResponse.parse({
         id: e.id,
