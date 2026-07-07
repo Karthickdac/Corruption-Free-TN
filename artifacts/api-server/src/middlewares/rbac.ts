@@ -177,8 +177,8 @@ export function canAccessComplaint(
 
   if (user.role === "department_officer" || user.role === "ministry_officer") {
     if (!user.departmentId) return false;
-    if (complaint.departmentId !== null && complaint.departmentId !== user.departmentId) return false;
-    return true;
+    // Require explicit match — complaints with null departmentId are not accessible
+    return complaint.departmentId !== null && complaint.departmentId === user.departmentId;
   }
 
   if (
@@ -187,8 +187,8 @@ export function canAccessComplaint(
     user.role === "village_officer"
   ) {
     if (!user.districtId) return false;
-    if (complaint.districtId !== null && complaint.districtId !== user.districtId) return false;
-    return true;
+    // Require explicit match — complaints with null districtId are not accessible
+    return complaint.districtId !== null && complaint.districtId === user.districtId;
   }
 
   if (user.role === "investigation_officer") {
