@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "TNCorruptions Portal"
+version = "1.0.0"
+id = "artifacts/tn-portal"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23218
+
+[services.development]
+run = "pnpm --filter @workspace/tn-portal run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/tn-portal", "run", "build" ]
+publicDir = "artifacts/tn-portal/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23218"
+BASE_PATH = "/"

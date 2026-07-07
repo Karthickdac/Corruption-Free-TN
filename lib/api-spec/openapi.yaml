@@ -3,13 +3,21 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: CorruptionFreeTN API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: masterdata
+    description: Tamil Nadu administrative master data
+  - name: complaints
+    description: Complaint operations
+  - name: stats
+    description: Public statistics
+  - name: users
+    description: User operations
 paths:
   /healthz:
     get:
@@ -24,6 +32,206 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /districts:
+    get:
+      operationId: listDistricts
+      tags: [masterdata]
+      summary: List all Tamil Nadu districts
+      responses:
+        "200":
+          description: List of districts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/District"
+  /districts/{districtId}/taluks:
+    get:
+      operationId: listTaluksByDistrict
+      tags: [masterdata]
+      summary: List taluks in a district
+      parameters:
+        - name: districtId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of taluks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Taluk"
+        "404":
+          description: District not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /ministries:
+    get:
+      operationId: listMinistries
+      tags: [masterdata]
+      summary: List all ministries
+      responses:
+        "200":
+          description: List of ministries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ministry"
+  /departments:
+    get:
+      operationId: listDepartments
+      tags: [masterdata]
+      summary: List all government departments
+      parameters:
+        - name: ministryId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of departments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Department"
+  /complaint-categories:
+    get:
+      operationId: listComplaintCategories
+      tags: [masterdata]
+      summary: List all complaint categories
+      responses:
+        "200":
+          description: List of complaint categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ComplaintCategory"
+  /stats/public:
+    get:
+      operationId: getPublicStats
+      tags: [stats]
+      summary: Public transparency statistics
+      responses:
+        "200":
+          description: Public statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicStats"
+  /me:
+    get:
+      operationId: getCurrentUser
+      tags: [users]
+      summary: Get the current authenticated user profile
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /complaints:
+    get:
+      operationId: listComplaints
+      tags: [complaints]
+      summary: List complaints (public, redacted)
+      parameters:
+        - name: districtId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: departmentId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of complaints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Complaint"
+    post:
+      operationId: createComplaint
+      tags: [complaints]
+      summary: Submit a new complaint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplaintInput"
+      responses:
+        "201":
+          description: Complaint created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /complaints/track/{complaintNumber}:
+    get:
+      operationId: trackComplaint
+      tags: [complaints]
+      summary: Track a complaint by its complaint number
+      parameters:
+        - name: complaintNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Complaint details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+        "404":
+          description: Complaint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +241,233 @@ components:
           type: string
       required:
         - status
-
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+    District:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameTa:
+          type: string
+        code:
+          type: string
+      required: [id, name, nameTa, code]
+    Taluk:
+      type: object
+      properties:
+        id:
+          type: integer
+        districtId:
+          type: integer
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+      required: [id, districtId, name]
+    Ministry:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+        ministerName:
+          type: ["string", "null"]
+      required: [id, name]
+    Department:
+      type: object
+      properties:
+        id:
+          type: integer
+        ministryId:
+          type: ["integer", "null"]
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+        secretary:
+          type: ["string", "null"]
+        commissioner:
+          type: ["string", "null"]
+        contactEmail:
+          type: ["string", "null"]
+        contactPhone:
+          type: ["string", "null"]
+      required: [id, name]
+    ComplaintCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+        description:
+          type: ["string", "null"]
+      required: [id, name]
+    PublicStats:
+      type: object
+      properties:
+        totalComplaints:
+          type: integer
+        resolved:
+          type: integer
+        pending:
+          type: integer
+        underInvestigation:
+          type: integer
+        totalDistricts:
+          type: integer
+        totalDepartments:
+          type: integer
+        byStatus:
+          type: array
+          items:
+            $ref: "#/components/schemas/StatusCount"
+        topDistricts:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedCount"
+        topDepartments:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedCount"
+        topCategories:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamedCount"
+      required:
+        [
+          totalComplaints,
+          resolved,
+          pending,
+          underInvestigation,
+          totalDistricts,
+          totalDepartments,
+          byStatus,
+          topDistricts,
+          topDepartments,
+          topCategories,
+        ]
+    StatusCount:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+      required: [status, count]
+    NamedCount:
+      type: object
+      properties:
+        name:
+          type: string
+        count:
+          type: integer
+      required: [name, count]
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkId:
+          type: string
+        name:
+          type: ["string", "null"]
+        email:
+          type: ["string", "null"]
+        role:
+          type: string
+      required: [id, clerkId, role]
+    Complaint:
+      type: object
+      properties:
+        id:
+          type: integer
+        complaintNumber:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+        priority:
+          type: string
+        isAnonymous:
+          type: boolean
+        districtId:
+          type: ["integer", "null"]
+        districtName:
+          type: ["string", "null"]
+        talukId:
+          type: ["integer", "null"]
+        talukName:
+          type: ["string", "null"]
+        departmentId:
+          type: ["integer", "null"]
+        departmentName:
+          type: ["string", "null"]
+        categoryId:
+          type: ["integer", "null"]
+        categoryName:
+          type: ["string", "null"]
+        officeName:
+          type: ["string", "null"]
+        officerName:
+          type: ["string", "null"]
+        amountInvolved:
+          type: ["number", "null"]
+        incidentDate:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        [id, complaintNumber, title, description, status, priority, isAnonymous, createdAt]
+    ComplaintInput:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 5
+        description:
+          type: string
+          minLength: 20
+        isAnonymous:
+          type: boolean
+        districtId:
+          type: integer
+        talukId:
+          type: integer
+        departmentId:
+          type: integer
+        categoryId:
+          type: integer
+        officeName:
+          type: string
+        officerName:
+          type: string
+        officerDesignation:
+          type: string
+        amountInvolved:
+          type: number
+        incidentDate:
+          type: string
+        location:
+          type: string
+        witnesses:
+          type: string
+      required: [title, description, isAnonymous]
