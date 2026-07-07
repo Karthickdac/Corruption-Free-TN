@@ -365,15 +365,8 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
       .from(evidenceTable)
       .where(eq(evidenceTable.complaintId, params.complaintId));
 
-    // Audit: download event
-    await logAudit({
-      req,
-      userId: localUser[0]?.id ?? null,
-      action: "evidence_download",
-      entityType: "complaint",
-      entityId: params.complaintId,
-      details: { fileCount: rows.length },
-    });
+    // Note: evidence_download is audited in the actual file download path
+    // (GET /storage/objects/*), not on metadata listing.
 
     res.json(
       ListEvidenceResponse.parse(
@@ -476,7 +469,9 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       details: { evidenceId: e.id, fileUrl, fileType: parsed.data.fileType ?? null },
     });
 
-    // Set ACL so only the uploader can retrieve this file via /storage/objects/*
+    // Set a private uploader ACL as the fallback policy. Actual evidence
+    // access via /storage/objects/* is authorized by complaint context
+    // (owner + jurisdiction-authorized officers), which takes precedence.
     try {
       await objectStorageService.trySetObjectEntityAclPolicy(fileUrl, {
         owner: auth.userId,

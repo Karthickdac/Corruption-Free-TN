@@ -1,12 +1,16 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Readable } from "stream";
 import { getAuth } from "@clerk/express";
+import { eq } from "drizzle-orm";
+import { db, evidenceTable, complaintsTable } from "@workspace/db";
 import {
   RequestUploadUrlBody,
   RequestUploadUrlResponse,
 } from "@workspace/api-zod";
 import { ObjectStorageService, ObjectNotFoundError } from "../lib/objectStorage";
 import { ObjectPermission } from "../lib/objectAcl";
+import { canAccessComplaint } from "../middlewares/rbac";
+import { logAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 const objectStorageService = new ObjectStorageService();
@@ -105,14 +109,58 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     const objectPath = `/objects/${wildcardPath}`;
     const objectFile = await objectStorageService.getObjectEntityFile(objectPath);
 
-    const canAccess = await objectStorageService.canAccessObjectEntity({
-      userId: auth.userId,
-      objectFile,
-      requestedPermission: ObjectPermission.READ,
-    });
-    if (!canAccess) {
-      res.status(403).json({ error: "Access denied" });
-      return;
+    // Complaint evidence files are authorized by complaint context (owner,
+    // assigned investigator, jurisdiction-authorized officer roles) rather
+    // than uploader-only object ACL.
+    const evidenceRows = await db
+      .select({
+        evidenceId: evidenceTable.id,
+        complaintId: complaintsTable.id,
+        complaintUserId: complaintsTable.userId,
+        departmentId: complaintsTable.departmentId,
+        districtId: complaintsTable.districtId,
+        assignedOfficerId: complaintsTable.assignedOfficerId,
+      })
+      .from(evidenceTable)
+      .innerJoin(complaintsTable, eq(evidenceTable.complaintId, complaintsTable.id))
+      .where(eq(evidenceTable.fileUrl, objectPath))
+      .limit(1);
+
+    if (evidenceRows[0]) {
+      const ev = evidenceRows[0];
+      const user = req.localUser;
+      if (!user) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
+      const allowed =
+        user.role !== "citizen"
+          ? canAccessComplaint(user, ev)
+          : ev.complaintUserId !== null && ev.complaintUserId === user.id;
+      if (!allowed) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
+      // Audit the actual file download (not just metadata listing)
+      await logAudit({
+        req,
+        userId: user.id,
+        action: "evidence_download",
+        entityType: "evidence",
+        entityId: ev.evidenceId,
+        details: { complaintId: ev.complaintId, objectPath },
+      });
+    } else {
+      // Non-evidence objects: fall back to per-object ACL (fails closed)
+      const canAccess = await objectStorageService.canAccessObjectEntity({
+        userId: auth.userId,
+        objectFile,
+        requestedPermission: ObjectPermission.READ,
+      });
+      if (!canAccess) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
     }
 
     const response = await objectStorageService.downloadObject(objectFile);
