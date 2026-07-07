@@ -6,7 +6,7 @@ import { GetCurrentUserResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-router.get("/me", async (req, res, next) => {
+router.get("/auth/me", async (req, res, next) => {
   try {
     const auth = getAuth(req);
     if (!auth.userId) {

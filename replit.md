@@ -44,3 +44,4 @@ Tamil Nadu Public Corruption Complaint & Transparency Portal — citizens report
 ## User preferences
 
 - App name: CorruptionFreeTN (renamed from TNCorruptions)
+- Tamil UI text must use plain, everyday spoken Tamil that ordinary people understand — never formal/literary Tamil (e.g. "பெயர் இல்லாமல்" not "அநாமதேயமாக", "கட்டாயம் இல்லை" not "விருப்பத்திற்குரியது")

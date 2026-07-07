@@ -61,3 +61,21 @@ export const insertComplaintSchema = createInsertSchema(complaintsTable).omit({
 });
 export type InsertComplaint = z.infer<typeof insertComplaintSchema>;
 export type Complaint = typeof complaintsTable.$inferSelect;
+
+export const evidenceTable = pgTable("evidence", {
+  id: serial("id").primaryKey(),
+  complaintId: integer("complaint_id")
+    .notNull()
+    .references(() => complaintsTable.id),
+  fileUrl: text("file_url").notNull(),
+  fileType: text("file_type"),
+  description: text("description"),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+});
+
+export const insertEvidenceSchema = createInsertSchema(evidenceTable).omit({
+  id: true,
+  uploadedAt: true,
+});
+export type InsertEvidence = z.infer<typeof insertEvidenceSchema>;
+export type Evidence = typeof evidenceTable.$inferSelect;

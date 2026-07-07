@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './block';
 export * from './complaint';
 export * from './complaintCategory';
 export * from './complaintInput';
@@ -13,10 +14,14 @@ export * from './department';
 export * from './district';
 export * from './errorResponse';
 export * from './healthStatus';
+export * from './listBlocksParams';
 export * from './listComplaintsParams';
 export * from './listDepartmentsParams';
+export * from './listOfficesParams';
+export * from './listTaluksParams';
 export * from './ministry';
 export * from './namedCount';
+export * from './office';
 export * from './publicStats';
 export * from './statusCount';
 export * from './taluk';

@@ -19,7 +19,7 @@ tags:
   - name: users
     description: User operations
 paths:
-  /healthz:
+  /health:
     get:
       operationId: healthCheck
       tags: [health]
@@ -72,6 +72,76 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /taluks:
+    get:
+      operationId: listTaluks
+      tags: [masterdata]
+      summary: List all taluks, optionally filtered by district
+      parameters:
+        - name: districtId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of taluks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Taluk"
+  /blocks:
+    get:
+      operationId: listBlocks
+      tags: [masterdata]
+      summary: List blocks, optionally filtered by district or taluk
+      parameters:
+        - name: districtId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: talukId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of blocks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Block"
+  /offices:
+    get:
+      operationId: listOffices
+      tags: [masterdata]
+      summary: List government offices, optionally filtered
+      parameters:
+        - name: districtId
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: departmentId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of offices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Office"
   /ministries:
     get:
       operationId: listMinistries
@@ -132,7 +202,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PublicStats"
-  /me:
+  /auth/me:
     get:
       operationId: getCurrentUser
       tags: [users]
@@ -272,6 +342,42 @@ components:
         nameTa:
           type: ["string", "null"]
       required: [id, districtId, name]
+    Block:
+      type: object
+      properties:
+        id:
+          type: integer
+        districtId:
+          type: integer
+        talukId:
+          type: ["integer", "null"]
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+      required: [id, districtId, name]
+    Office:
+      type: object
+      properties:
+        id:
+          type: integer
+        departmentId:
+          type: ["integer", "null"]
+        districtId:
+          type: ["integer", "null"]
+        talukId:
+          type: ["integer", "null"]
+        name:
+          type: string
+        nameTa:
+          type: ["string", "null"]
+        address:
+          type: ["string", "null"]
+        contactEmail:
+          type: ["string", "null"]
+        contactPhone:
+          type: ["string", "null"]
+      required: [id, name]
     Ministry:
       type: object
       properties:

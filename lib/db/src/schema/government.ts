@@ -32,3 +32,21 @@ export const insertDepartmentSchema = createInsertSchema(
 ).omit({ id: true });
 export type InsertDepartment = z.infer<typeof insertDepartmentSchema>;
 export type Department = typeof departmentsTable.$inferSelect;
+
+export const officesTable = pgTable("offices", {
+  id: serial("id").primaryKey(),
+  departmentId: integer("department_id").references(() => departmentsTable.id),
+  districtId: integer("district_id"),
+  talukId: integer("taluk_id"),
+  name: text("name").notNull(),
+  nameTa: text("name_ta"),
+  address: text("address"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+});
+
+export const insertOfficeSchema = createInsertSchema(officesTable).omit({
+  id: true,
+});
+export type InsertOffice = z.infer<typeof insertOfficeSchema>;
+export type Office = typeof officesTable.$inferSelect;

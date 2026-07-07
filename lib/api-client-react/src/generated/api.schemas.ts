@@ -28,6 +28,35 @@ export interface Taluk {
   nameTa?: string | null;
 }
 
+export interface Block {
+  id: number;
+  districtId: number;
+  /** @nullable */
+  talukId?: number | null;
+  name: string;
+  /** @nullable */
+  nameTa?: string | null;
+}
+
+export interface Office {
+  id: number;
+  /** @nullable */
+  departmentId?: number | null;
+  /** @nullable */
+  districtId?: number | null;
+  /** @nullable */
+  talukId?: number | null;
+  name: string;
+  /** @nullable */
+  nameTa?: string | null;
+  /** @nullable */
+  address?: string | null;
+  /** @nullable */
+  contactEmail?: string | null;
+  /** @nullable */
+  contactPhone?: string | null;
+}
+
 export interface Ministry {
   id: number;
   name: string;
@@ -151,6 +180,20 @@ export interface ComplaintInput {
   location?: string;
   witnesses?: string;
 }
+
+export type ListTaluksParams = {
+districtId?: number;
+};
+
+export type ListBlocksParams = {
+districtId?: number;
+talukId?: number;
+};
+
+export type ListOfficesParams = {
+districtId?: number;
+departmentId?: number;
+};
 
 export type ListDepartmentsParams = {
 ministryId?: number;

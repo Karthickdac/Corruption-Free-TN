@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  Block,
   Complaint,
   ComplaintCategory,
   ComplaintInput,
@@ -27,9 +28,13 @@ import type {
   District,
   ErrorResponse,
   HealthStatus,
+  ListBlocksParams,
   ListComplaintsParams,
   ListDepartmentsParams,
+  ListOfficesParams,
+  ListTaluksParams,
   Ministry,
+  Office,
   PublicStats,
   Taluk,
   UserProfile
@@ -67,7 +72,7 @@ export const getHealthCheckUrl = () => {
 
 
 
-  return `/api/healthz`
+  return `/api/health`
 }
 
 /**
@@ -91,7 +96,7 @@ export const healthCheck = async ( options?: RequestInit): Promise<HealthStatus>
 
 export const getHealthCheckQueryKey = () => {
     return [
-    `/api/healthz`
+    `/api/health`
     ] as const;
     }
 
@@ -282,6 +287,258 @@ export function useListTaluksByDistrict<TData = Awaited<ReturnType<typeof listTa
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getListTaluksByDistrictQueryOptions(districtId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListTaluksUrl = (params?: ListTaluksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/taluks?${stringifiedParams}` : `/api/taluks`
+}
+
+/**
+ * @summary List all taluks, optionally filtered by district
+ */
+export const listTaluks = async (params?: ListTaluksParams, options?: RequestInit): Promise<Taluk[]> => {
+
+  return customFetch<Taluk[]>(getListTaluksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTaluksQueryKey = (params?: ListTaluksParams,) => {
+    return [
+    `/api/taluks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListTaluksQueryOptions = <TData = Awaited<ReturnType<typeof listTaluks>>, TError = ErrorType<unknown>>(params?: ListTaluksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTaluks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTaluksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTaluks>>> = ({ signal }) => listTaluks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTaluks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTaluksQueryResult = NonNullable<Awaited<ReturnType<typeof listTaluks>>>
+export type ListTaluksQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all taluks, optionally filtered by district
+ */
+
+export function useListTaluks<TData = Awaited<ReturnType<typeof listTaluks>>, TError = ErrorType<unknown>>(
+ params?: ListTaluksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTaluks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTaluksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListBlocksUrl = (params?: ListBlocksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/blocks?${stringifiedParams}` : `/api/blocks`
+}
+
+/**
+ * @summary List blocks, optionally filtered by district or taluk
+ */
+export const listBlocks = async (params?: ListBlocksParams, options?: RequestInit): Promise<Block[]> => {
+
+  return customFetch<Block[]>(getListBlocksUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBlocksQueryKey = (params?: ListBlocksParams,) => {
+    return [
+    `/api/blocks`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListBlocksQueryOptions = <TData = Awaited<ReturnType<typeof listBlocks>>, TError = ErrorType<unknown>>(params?: ListBlocksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBlocksQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBlocks>>> = ({ signal }) => listBlocks(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBlocks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListBlocksQueryResult = NonNullable<Awaited<ReturnType<typeof listBlocks>>>
+export type ListBlocksQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List blocks, optionally filtered by district or taluk
+ */
+
+export function useListBlocks<TData = Awaited<ReturnType<typeof listBlocks>>, TError = ErrorType<unknown>>(
+ params?: ListBlocksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listBlocks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListBlocksQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListOfficesUrl = (params?: ListOfficesParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/offices?${stringifiedParams}` : `/api/offices`
+}
+
+/**
+ * @summary List government offices, optionally filtered
+ */
+export const listOffices = async (params?: ListOfficesParams, options?: RequestInit): Promise<Office[]> => {
+
+  return customFetch<Office[]>(getListOfficesUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListOfficesQueryKey = (params?: ListOfficesParams,) => {
+    return [
+    `/api/offices`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOfficesQueryOptions = <TData = Awaited<ReturnType<typeof listOffices>>, TError = ErrorType<unknown>>(params?: ListOfficesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listOffices>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOfficesQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOffices>>> = ({ signal }) => listOffices(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOffices>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListOfficesQueryResult = NonNullable<Awaited<ReturnType<typeof listOffices>>>
+export type ListOfficesQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List government offices, optionally filtered
+ */
+
+export function useListOffices<TData = Awaited<ReturnType<typeof listOffices>>, TError = ErrorType<unknown>>(
+ params?: ListOfficesParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listOffices>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListOfficesQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -614,7 +871,7 @@ export const getGetCurrentUserUrl = () => {
 
 
 
-  return `/api/me`
+  return `/api/auth/me`
 }
 
 /**
@@ -637,7 +894,7 @@ export const getCurrentUser = async ( options?: RequestInit): Promise<UserProfil
 
 export const getGetCurrentUserQueryKey = () => {
     return [
-    `/api/me`
+    `/api/auth/me`
     ] as const;
     }
 

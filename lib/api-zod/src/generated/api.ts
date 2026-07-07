@@ -46,6 +46,62 @@ export const ListTaluksByDistrictResponse = zod.array(ListTaluksByDistrictRespon
 
 
 /**
+ * @summary List all taluks, optionally filtered by district
+ */
+export const ListTaluksQueryParams = zod.object({
+  "districtId": zod.coerce.number().optional()
+})
+
+export const ListTaluksResponseItem = zod.object({
+  "id": zod.number(),
+  "districtId": zod.number(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish()
+})
+export const ListTaluksResponse = zod.array(ListTaluksResponseItem)
+
+
+/**
+ * @summary List blocks, optionally filtered by district or taluk
+ */
+export const ListBlocksQueryParams = zod.object({
+  "districtId": zod.coerce.number().optional(),
+  "talukId": zod.coerce.number().optional()
+})
+
+export const ListBlocksResponseItem = zod.object({
+  "id": zod.number(),
+  "districtId": zod.number(),
+  "talukId": zod.number().nullish(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish()
+})
+export const ListBlocksResponse = zod.array(ListBlocksResponseItem)
+
+
+/**
+ * @summary List government offices, optionally filtered
+ */
+export const ListOfficesQueryParams = zod.object({
+  "districtId": zod.coerce.number().optional(),
+  "departmentId": zod.coerce.number().optional()
+})
+
+export const ListOfficesResponseItem = zod.object({
+  "id": zod.number(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish(),
+  "talukId": zod.number().nullish(),
+  "name": zod.string(),
+  "nameTa": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "contactEmail": zod.string().nullish(),
+  "contactPhone": zod.string().nullish()
+})
+export const ListOfficesResponse = zod.array(ListOfficesResponseItem)
+
+
+/**
  * @summary List all ministries
  */
 export const ListMinistriesResponseItem = zod.object({

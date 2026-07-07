@@ -1,9 +1,11 @@
 import { Router, type IRouter } from "express";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and, type SQL } from "drizzle-orm";
 import {
   db,
   districtsTable,
   taluksTable,
+  blocksTable,
+  officesTable,
   ministriesTable,
   departmentsTable,
   complaintCategoriesTable,
@@ -11,6 +13,12 @@ import {
 import {
   ListDistrictsResponse,
   ListTaluksByDistrictResponse,
+  ListTaluksResponse,
+  ListTaluksQueryParams,
+  ListBlocksResponse,
+  ListBlocksQueryParams,
+  ListOfficesResponse,
+  ListOfficesQueryParams,
   ListMinistriesResponse,
   ListDepartmentsResponse,
   ListDepartmentsQueryParams,
@@ -52,6 +60,64 @@ router.get("/districts/:districtId/taluks", async (req, res, next) => {
       .where(eq(taluksTable.districtId, districtId))
       .orderBy(asc(taluksTable.name));
     res.json(ListTaluksByDistrictResponse.parse(rows));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/taluks", async (req, res, next) => {
+  try {
+    const params = ListTaluksQueryParams.parse(req.query);
+    const query = db.select().from(taluksTable);
+    const rows =
+      params.districtId !== undefined
+        ? await query
+            .where(eq(taluksTable.districtId, params.districtId))
+            .orderBy(asc(taluksTable.name))
+        : await query.orderBy(asc(taluksTable.name));
+    res.json(ListTaluksResponse.parse(rows));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/blocks", async (req, res, next) => {
+  try {
+    const params = ListBlocksQueryParams.parse(req.query);
+    const conditions: SQL[] = [];
+    if (params.districtId !== undefined) {
+      conditions.push(eq(blocksTable.districtId, params.districtId));
+    }
+    if (params.talukId !== undefined) {
+      conditions.push(eq(blocksTable.talukId, params.talukId));
+    }
+    const query = db.select().from(blocksTable);
+    const rows =
+      conditions.length > 0
+        ? await query.where(and(...conditions)).orderBy(asc(blocksTable.name))
+        : await query.orderBy(asc(blocksTable.name));
+    res.json(ListBlocksResponse.parse(rows));
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/offices", async (req, res, next) => {
+  try {
+    const params = ListOfficesQueryParams.parse(req.query);
+    const conditions: SQL[] = [];
+    if (params.districtId !== undefined) {
+      conditions.push(eq(officesTable.districtId, params.districtId));
+    }
+    if (params.departmentId !== undefined) {
+      conditions.push(eq(officesTable.departmentId, params.departmentId));
+    }
+    const query = db.select().from(officesTable);
+    const rows =
+      conditions.length > 0
+        ? await query.where(and(...conditions)).orderBy(asc(officesTable.name))
+        : await query.orderBy(asc(officesTable.name));
+    res.json(ListOfficesResponse.parse(rows));
   } catch (err) {
     next(err);
   }
