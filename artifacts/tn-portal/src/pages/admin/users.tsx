@@ -8,6 +8,7 @@ import {
   useListDistricts,
   getListAdminUsersQueryKey,
 } from "@workspace/api-client-react";
+import { UpdateUserRoleInputRole } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -267,7 +268,7 @@ function UsersContent() {
                 updateRole.mutate({
                   userId: editUser.id,
                   data: {
-                    role: newRole,
+                    role: newRole as UpdateUserRoleInputRole,
                     departmentId: newDeptId ? Number(newDeptId) : null,
                     districtId: newDistrictId ? Number(newDistrictId) : null,
                   },

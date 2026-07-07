@@ -233,6 +233,17 @@ export const ListComplaintsResponseItem = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 export const ListComplaintsResponse = zod.array(ListComplaintsResponseItem)
@@ -299,6 +310,17 @@ export const CreateComplaintResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 
@@ -340,6 +362,17 @@ export const ListMyComplaintsResponseItem = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 export const ListMyComplaintsResponse = zod.array(ListMyComplaintsResponseItem)
@@ -386,6 +419,17 @@ export const GetComplaintByIdResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 
@@ -481,6 +525,17 @@ export const UpdateComplaintStatusResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 
@@ -531,6 +586,17 @@ export const AssignComplaintResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 
@@ -625,6 +691,17 @@ export const TrackComplaintResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })
 
@@ -763,7 +840,7 @@ export const UpdateUserRoleParams = zod.object({
 })
 
 export const UpdateUserRoleBody = zod.object({
-  "role": zod.string(),
+  "role": zod.enum(['citizen', 'village_officer', 'taluk_officer', 'district_officer', 'department_officer', 'ministry_officer', 'state_administrator', 'super_admin', 'investigation_officer', 'moderator', 'auditor', 'legal_officer']),
   "departmentId": zod.number().nullish(),
   "districtId": zod.number().nullish()
 })
@@ -855,6 +932,17 @@ export const GetDashboardComplaintsResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 })),
   "total": zod.number(),
@@ -910,6 +998,17 @@ export const GetOfficerDashboardResponse = zod.object({
   "content": zod.string(),
   "createdAt": zod.string()
 })).optional(),
+  "investigationReport": zod.object({
+  "id": zod.number(),
+  "complaintId": zod.number(),
+  "authorId": zod.number().nullable(),
+  "authorName": zod.string().nullish(),
+  "summary": zod.string(),
+  "findings": zod.string(),
+  "recommendation": zod.string(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
   "createdAt": zod.string()
 }))
 })

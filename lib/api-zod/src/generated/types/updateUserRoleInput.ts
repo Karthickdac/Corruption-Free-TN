@@ -5,9 +5,10 @@
  * CorruptionFreeTN API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { UpdateUserRoleInputRole } from './updateUserRoleInputRole';
 
 export interface UpdateUserRoleInput {
-  role: string;
+  role: UpdateUserRoleInputRole;
   /** @nullable */
   departmentId?: number | null;
   /** @nullable */

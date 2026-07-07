@@ -7,6 +7,7 @@ import {
   useListCaseNotes,
   useAddCaseNote,
   useUpdateComplaintStatus,
+  useSubmitInvestigationReport,
   getListCaseNotesQueryKey,
   getGetComplaintByIdQueryKey,
 } from "@workspace/api-client-react";
@@ -25,7 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, MessageSquare, Eye, EyeOff, Clock } from "lucide-react";
+import { ArrowLeft, FileText, MessageSquare, Eye, EyeOff, Clock, ShieldCheck } from "lucide-react";
 import { Link } from "wouter";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -91,6 +92,10 @@ function ComplaintDetailContent() {
   const [isInternal, setIsInternal] = useState(true);
   const [newStatus, setNewStatus] = useState("");
   const [statusNote, setStatusNote] = useState("");
+  const [reportSummary, setReportSummary] = useState("");
+  const [reportFindings, setReportFindings] = useState("");
+  const [reportRecommendation, setReportRecommendation] = useState("");
+  const [reportNotes, setReportNotes] = useState("");
 
   const { data: complaint, isLoading: complaintLoading } = useGetComplaintById(
     complaintId,
@@ -111,6 +116,22 @@ function ComplaintDetailContent() {
       },
       onError: (err: { message?: string }) => {
         toast({ title: "Failed to add note", description: err?.message, variant: "destructive" });
+      },
+    },
+  });
+
+  const submitReport = useSubmitInvestigationReport({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetComplaintByIdQueryKey(complaintId) });
+        toast({ title: "Investigation report submitted" });
+        setReportSummary("");
+        setReportFindings("");
+        setReportRecommendation("");
+        setReportNotes("");
+      },
+      onError: (err: { message?: string }) => {
+        toast({ title: "Failed to submit report", description: err?.message, variant: "destructive" });
       },
     },
   });
@@ -175,6 +196,9 @@ function ComplaintDetailContent() {
           </TabsTrigger>
           <TabsTrigger value="workflow" className="gap-1">
             <Clock className="h-3.5 w-3.5" /> Workflow
+          </TabsTrigger>
+          <TabsTrigger value="report" className="gap-1">
+            <ShieldCheck className="h-3.5 w-3.5" /> Investigation Report
           </TabsTrigger>
         </TabsList>
 
@@ -359,6 +383,118 @@ function ComplaintDetailContent() {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="report" className="space-y-4 mt-4">
+          {complaint.investigationReport ? (
+            <Card className="bg-muted/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                  Submitted Investigation Report
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm">
+                <div>
+                  <div className="text-xs text-muted-foreground mb-0.5">Summary</div>
+                  <p className="text-foreground whitespace-pre-wrap">{complaint.investigationReport.summary}</p>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-0.5">Findings</div>
+                  <p className="text-foreground whitespace-pre-wrap">{complaint.investigationReport.findings}</p>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground mb-0.5">Recommendation</div>
+                  <Badge variant="outline" className="capitalize text-xs">
+                    {complaint.investigationReport.recommendation.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+                {complaint.investigationReport.notes && (
+                  <div>
+                    <div className="text-xs text-muted-foreground mb-0.5">Notes</div>
+                    <p className="text-foreground whitespace-pre-wrap">{complaint.investigationReport.notes}</p>
+                  </div>
+                )}
+                <div className="text-xs text-muted-foreground">
+                  Submitted by {complaint.investigationReport.authorName ?? "Officer"} ·{" "}
+                  {new Date(complaint.investigationReport.createdAt).toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="bg-muted/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Submit Investigation Report</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Summary *</label>
+                  <Textarea
+                    placeholder="Brief summary of the investigation (min 10 chars)..."
+                    value={reportSummary}
+                    onChange={(e) => setReportSummary(e.target.value)}
+                    rows={3}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Findings *</label>
+                  <Textarea
+                    placeholder="Detailed findings from the investigation (min 10 chars)..."
+                    value={reportFindings}
+                    onChange={(e) => setReportFindings(e.target.value)}
+                    rows={4}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Recommendation *</label>
+                  <Select value={reportRecommendation} onValueChange={setReportRecommendation}>
+                    <SelectTrigger className="text-sm">
+                      <SelectValue placeholder="Select recommendation..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="substantiated">Substantiated</SelectItem>
+                      <SelectItem value="unsubstantiated">Unsubstantiated</SelectItem>
+                      <SelectItem value="partially_substantiated">Partially Substantiated</SelectItem>
+                      <SelectItem value="referred_to_authority">Referred to Authority</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">Additional Notes (optional)</label>
+                  <Textarea
+                    placeholder="Any additional notes..."
+                    value={reportNotes}
+                    onChange={(e) => setReportNotes(e.target.value)}
+                    rows={2}
+                    className="text-sm"
+                  />
+                </div>
+                <Button
+                  disabled={
+                    reportSummary.length < 10 ||
+                    reportFindings.length < 10 ||
+                    !reportRecommendation ||
+                    submitReport.isPending
+                  }
+                  onClick={() =>
+                    submitReport.mutate({
+                      complaintId,
+                      data: {
+                        summary: reportSummary,
+                        findings: reportFindings,
+                        recommendation: reportRecommendation as "substantiated" | "unsubstantiated" | "partially_substantiated" | "referred_to_authority",
+                        notes: reportNotes || undefined,
+                      },
+                    })
+                  }
+                >
+                  {submitReport.isPending ? "Submitting..." : "Submit Report"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

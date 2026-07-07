@@ -63,6 +63,7 @@ export * from './statusHistoryItem';
 export * from './taluk';
 export * from './updateStatusInput';
 export * from './updateUserRoleInput';
+export * from './updateUserRoleInputRole';
 export * from './uploadUrlRequest';
 export * from './uploadUrlResponse';
 export * from './userProfile';

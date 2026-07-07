@@ -5,6 +5,7 @@
  * CorruptionFreeTN API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { InvestigationReport } from './investigationReport';
 import type { PublicDepartmentResponse } from './publicDepartmentResponse';
 import type { StatusHistoryItem } from './statusHistoryItem';
 
@@ -50,5 +51,6 @@ export interface Complaint {
   assignedOfficerName?: string | null;
   statusHistory?: StatusHistoryItem[];
   departmentResponses?: PublicDepartmentResponse[];
+  investigationReport?: InvestigationReport | null;
   createdAt: string;
 }

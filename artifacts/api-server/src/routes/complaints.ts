@@ -570,7 +570,41 @@ router.get(
         return;
       }
       const statusHistory = await getStatusHistory(params.data.complaintId);
-      res.json(GetComplaintByIdResponse.parse(toApiComplaint(row, statusHistory)));
+      const reportRows = await db
+        .select({
+          id: investigationReportsTable.id,
+          complaintId: investigationReportsTable.complaintId,
+          authorId: investigationReportsTable.authorId,
+          authorName: usersTable.name,
+          summary: investigationReportsTable.summary,
+          findings: investigationReportsTable.findings,
+          recommendation: investigationReportsTable.recommendation,
+          notes: investigationReportsTable.notes,
+          createdAt: investigationReportsTable.createdAt,
+        })
+        .from(investigationReportsTable)
+        .leftJoin(usersTable, eq(investigationReportsTable.authorId, usersTable.id))
+        .where(eq(investigationReportsTable.complaintId, params.data.complaintId))
+        .limit(1);
+      const report = reportRows[0] ?? null;
+      res.json(
+        GetComplaintByIdResponse.parse({
+          ...toApiComplaint(row, statusHistory),
+          investigationReport: report
+            ? {
+                id: report.id,
+                complaintId: report.complaintId,
+                authorId: report.authorId,
+                authorName: report.authorName ?? null,
+                summary: report.summary,
+                findings: report.findings,
+                recommendation: report.recommendation,
+                notes: report.notes ?? null,
+                createdAt: report.createdAt.toISOString(),
+              }
+            : null,
+        }),
+      );
     } catch (err) {
       next(err);
     }

@@ -1465,6 +1465,19 @@ components:
       properties:
         role:
           type: string
+          enum:
+            - citizen
+            - village_officer
+            - taluk_officer
+            - district_officer
+            - department_officer
+            - ministry_officer
+            - state_administrator
+            - super_admin
+            - investigation_officer
+            - moderator
+            - auditor
+            - legal_officer
         departmentId:
           type: ["integer", "null"]
         districtId:
@@ -1653,6 +1666,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PublicDepartmentResponse"
+        investigationReport:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/InvestigationReport"
         createdAt:
           type: string
       required:

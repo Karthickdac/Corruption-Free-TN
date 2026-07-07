@@ -10,7 +10,7 @@ import { I18nProvider } from "@/contexts/i18n";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/layout";
 import { useEffect, useRef } from "react";
-import { usePostAuthSession } from "@workspace/api-client-react";
+import { usePostAuthSession, useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
 
 // Pages
 import Home from "@/pages/home";
@@ -109,6 +109,33 @@ function AuthSessionLogger() {
   return null;
 }
 
+const CITIZEN_ROLE = "citizen";
+
+/**
+ * After sign-in, redirects the user to the role-appropriate dashboard:
+ * - Officers/admins (any non-citizen role) → /admin/dashboard
+ * - Citizens → stay on current route (citizen portal)
+ * Only fires once per mount when the user is signed in and on a non-admin path.
+ */
+function RoleRedirect() {
+  const { isSignedIn } = useAuth();
+  const [location, setLocation] = useLocation();
+  const { data: profile } = useGetCurrentUser({
+    query: { enabled: !!isSignedIn, queryKey: getGetCurrentUserQueryKey() },
+  });
+
+  useEffect(() => {
+    if (!isSignedIn || !profile) return;
+    const isOfficer = profile.role && profile.role !== CITIZEN_ROLE;
+    const onAdminRoute = location.startsWith("/admin");
+    if (isOfficer && !onAdminRoute) {
+      setLocation("/admin/dashboard");
+    }
+  }, [isSignedIn, profile, location, setLocation]);
+
+  return null;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
 
@@ -131,6 +158,7 @@ function ClerkProviderWithRoutes() {
           <I18nProvider>
             <TooltipProvider>
               <AuthSessionLogger />
+              <RoleRedirect />
               <Router />
               <Toaster />
             </TooltipProvider>

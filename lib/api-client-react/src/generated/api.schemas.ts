@@ -151,8 +151,26 @@ export interface AdminUsersResponse {
   total: number;
 }
 
+export type UpdateUserRoleInputRole = typeof UpdateUserRoleInputRole[keyof typeof UpdateUserRoleInputRole];
+
+
+export const UpdateUserRoleInputRole = {
+  citizen: 'citizen',
+  village_officer: 'village_officer',
+  taluk_officer: 'taluk_officer',
+  district_officer: 'district_officer',
+  department_officer: 'department_officer',
+  ministry_officer: 'ministry_officer',
+  state_administrator: 'state_administrator',
+  super_admin: 'super_admin',
+  investigation_officer: 'investigation_officer',
+  moderator: 'moderator',
+  auditor: 'auditor',
+  legal_officer: 'legal_officer',
+} as const;
+
 export interface UpdateUserRoleInput {
-  role: string;
+  role: UpdateUserRoleInputRole;
   /** @nullable */
   departmentId?: number | null;
   /** @nullable */
@@ -198,6 +216,21 @@ export interface PublicDepartmentResponse {
   createdAt: string;
 }
 
+export interface InvestigationReport {
+  id: number;
+  complaintId: number;
+  /** @nullable */
+  authorId: number | null;
+  /** @nullable */
+  authorName?: string | null;
+  summary: string;
+  findings: string;
+  recommendation: string;
+  /** @nullable */
+  notes?: string | null;
+  createdAt: string;
+}
+
 export interface Complaint {
   id: number;
   complaintNumber: string;
@@ -240,6 +273,7 @@ export interface Complaint {
   assignedOfficerName?: string | null;
   statusHistory?: StatusHistoryItem[];
   departmentResponses?: PublicDepartmentResponse[];
+  investigationReport?: InvestigationReport | null;
   createdAt: string;
 }
 
@@ -400,21 +434,6 @@ export interface InvestigationReportInput {
   findings: string;
   recommendation: InvestigationReportInputRecommendation;
   notes?: string;
-}
-
-export interface InvestigationReport {
-  id: number;
-  complaintId: number;
-  /** @nullable */
-  authorId: number | null;
-  /** @nullable */
-  authorName?: string | null;
-  summary: string;
-  findings: string;
-  recommendation: string;
-  /** @nullable */
-  notes?: string | null;
-  createdAt: string;
 }
 
 export interface DepartmentInput {
