@@ -228,6 +228,11 @@ export const ListComplaintsResponseItem = zod.object({
   "changedAt": zod.string(),
   "note": zod.string().nullish()
 })).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
   "createdAt": zod.string()
 })
 export const ListComplaintsResponse = zod.array(ListComplaintsResponseItem)
@@ -289,6 +294,11 @@ export const CreateComplaintResponse = zod.object({
   "changedAt": zod.string(),
   "note": zod.string().nullish()
 })).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
   "createdAt": zod.string()
 })
 
@@ -325,9 +335,59 @@ export const ListMyComplaintsResponseItem = zod.object({
   "changedAt": zod.string(),
   "note": zod.string().nullish()
 })).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
   "createdAt": zod.string()
 })
 export const ListMyComplaintsResponse = zod.array(ListMyComplaintsResponseItem)
+
+
+/**
+ * @summary Get a complaint by ID (officer-scoped, jurisdiction enforced)
+ */
+export const GetComplaintByIdParams = zod.object({
+  "complaintId": zod.coerce.number()
+})
+
+export const GetComplaintByIdResponse = zod.object({
+  "id": zod.number(),
+  "complaintNumber": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "status": zod.string(),
+  "priority": zod.string(),
+  "isAnonymous": zod.boolean(),
+  "districtId": zod.number().nullish(),
+  "districtName": zod.string().nullish(),
+  "talukId": zod.number().nullish(),
+  "talukName": zod.string().nullish(),
+  "departmentId": zod.number().nullish(),
+  "departmentName": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "officeName": zod.string().nullish(),
+  "officerName": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "location": zod.string().nullish(),
+  "amountInvolved": zod.number().nullish(),
+  "incidentDate": zod.string().nullish(),
+  "assignedOfficerId": zod.number().nullish(),
+  "assignedOfficerName": zod.string().nullish(),
+  "statusHistory": zod.array(zod.object({
+  "status": zod.string(),
+  "changedAt": zod.string(),
+  "note": zod.string().nullish()
+})).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
+  "createdAt": zod.string()
+})
 
 
 /**
@@ -416,6 +476,11 @@ export const UpdateComplaintStatusResponse = zod.object({
   "changedAt": zod.string(),
   "note": zod.string().nullish()
 })).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
   "createdAt": zod.string()
 })
 
@@ -460,6 +525,11 @@ export const AssignComplaintResponse = zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
   "note": zod.string().nullish()
+})).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
 })).optional(),
   "createdAt": zod.string()
 })
@@ -549,6 +619,11 @@ export const TrackComplaintResponse = zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
   "note": zod.string().nullish()
+})).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
 })).optional(),
   "createdAt": zod.string()
 })
@@ -775,6 +850,11 @@ export const GetDashboardComplaintsResponse = zod.object({
   "changedAt": zod.string(),
   "note": zod.string().nullish()
 })).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
+})).optional(),
   "createdAt": zod.string()
 })),
   "total": zod.number(),
@@ -824,6 +904,11 @@ export const GetOfficerDashboardResponse = zod.object({
   "status": zod.string(),
   "changedAt": zod.string(),
   "note": zod.string().nullish()
+})).optional(),
+  "departmentResponses": zod.array(zod.object({
+  "id": zod.number(),
+  "content": zod.string(),
+  "createdAt": zod.string()
 })).optional(),
   "createdAt": zod.string()
 }))

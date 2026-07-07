@@ -192,6 +192,12 @@ export interface StatusHistoryItem {
   note?: string | null;
 }
 
+export interface PublicDepartmentResponse {
+  id: number;
+  content: string;
+  createdAt: string;
+}
+
 export interface Complaint {
   id: number;
   complaintNumber: string;
@@ -233,6 +239,7 @@ export interface Complaint {
   /** @nullable */
   assignedOfficerName?: string | null;
   statusHistory?: StatusHistoryItem[];
+  departmentResponses?: PublicDepartmentResponse[];
   createdAt: string;
 }
 

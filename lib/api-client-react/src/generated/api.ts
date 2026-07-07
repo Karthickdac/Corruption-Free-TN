@@ -1207,6 +1207,83 @@ export function useListMyComplaints<TData = Awaited<ReturnType<typeof listMyComp
 
 
 
+export const getGetComplaintByIdUrl = (complaintId: number,) => {
+
+
+
+
+  return `/api/complaints/${complaintId}`
+}
+
+/**
+ * @summary Get a complaint by ID (officer-scoped, jurisdiction enforced)
+ */
+export const getComplaintById = async (complaintId: number, options?: RequestInit): Promise<Complaint> => {
+
+  return customFetch<Complaint>(getGetComplaintByIdUrl(complaintId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetComplaintByIdQueryKey = (complaintId: number,) => {
+    return [
+    `/api/complaints/${complaintId}`
+    ] as const;
+    }
+
+
+export const getGetComplaintByIdQueryOptions = <TData = Awaited<ReturnType<typeof getComplaintById>>, TError = ErrorType<ForbiddenResponse | ErrorResponse>>(complaintId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getComplaintById>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetComplaintByIdQueryKey(complaintId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getComplaintById>>> = ({ signal }) => getComplaintById(complaintId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: complaintId !== null && complaintId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getComplaintById>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetComplaintByIdQueryResult = NonNullable<Awaited<ReturnType<typeof getComplaintById>>>
+export type GetComplaintByIdQueryError = ErrorType<ForbiddenResponse | ErrorResponse>
+
+
+/**
+ * @summary Get a complaint by ID (officer-scoped, jurisdiction enforced)
+ */
+
+export function useGetComplaintById<TData = Awaited<ReturnType<typeof getComplaintById>>, TError = ErrorType<ForbiddenResponse | ErrorResponse>>(
+ complaintId: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getComplaintById>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetComplaintByIdQueryOptions(complaintId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getListEvidenceUrl = (complaintId: number,) => {
 
 

@@ -308,6 +308,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /complaints/{complaintId}:
+    get:
+      operationId: getComplaintById
+      tags: [complaints, admin]
+      summary: Get a complaint by ID (officer-scoped, jurisdiction enforced)
+      parameters:
+        - name: complaintId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Complaint details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Complaint not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /complaints/{complaintId}/evidence:
     get:
       operationId: listEvidence
@@ -1623,10 +1649,24 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/StatusHistoryItem"
+        departmentResponses:
+          type: array
+          items:
+            $ref: "#/components/schemas/PublicDepartmentResponse"
         createdAt:
           type: string
       required:
         [id, complaintNumber, title, description, status, priority, isAnonymous, createdAt]
+    PublicDepartmentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        content:
+          type: string
+        createdAt:
+          type: string
+      required: [id, content, createdAt]
     ComplaintInput:
       type: object
       properties:

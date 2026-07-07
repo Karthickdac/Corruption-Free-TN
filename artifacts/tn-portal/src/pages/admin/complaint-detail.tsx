@@ -3,12 +3,12 @@ import { useParams, useLocation } from "wouter";
 import AdminLayout, { RoleGate } from "@/components/admin-layout";
 import { OFFICER_ROLES } from "@/constants/roles";
 import {
-  useGetDashboardComplaints,
+  useGetComplaintById,
   useListCaseNotes,
   useAddCaseNote,
   useUpdateComplaintStatus,
   getListCaseNotesQueryKey,
-  getGetDashboardComplaintsQueryKey,
+  getGetComplaintByIdQueryKey,
 } from "@workspace/api-client-react";
 import { CaseNoteInputNoteType } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,12 +92,10 @@ function ComplaintDetailContent() {
   const [newStatus, setNewStatus] = useState("");
   const [statusNote, setStatusNote] = useState("");
 
-  const { data: dashData } = useGetDashboardComplaints(
-    {},
-    { query: { staleTime: 0, queryKey: getGetDashboardComplaintsQueryKey({}) } },
+  const { data: complaint, isLoading: complaintLoading } = useGetComplaintById(
+    complaintId,
+    { query: { enabled: !!complaintId && !isNaN(complaintId), queryKey: getGetComplaintByIdQueryKey(complaintId), staleTime: 0 } },
   );
-
-  const complaint = dashData?.complaints?.find((c) => c.id === complaintId);
 
   const { data: caseNotes = [], isLoading: notesLoading } = useListCaseNotes(
     complaintId,
@@ -120,7 +118,7 @@ function ComplaintDetailContent() {
   const updateStatus = useUpdateComplaintStatus({
     mutation: {
       onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["getDashboardComplaints"] });
+        queryClient.invalidateQueries({ queryKey: getGetComplaintByIdQueryKey(complaintId) });
         toast({ title: "Status updated" });
         setNewStatus("");
         setStatusNote("");

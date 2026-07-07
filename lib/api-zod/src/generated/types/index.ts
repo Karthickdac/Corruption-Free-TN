@@ -52,6 +52,7 @@ export * from './notificationItem';
 export * from './office';
 export * from './officerDashboardResponse';
 export * from './postAuthSession200';
+export * from './publicDepartmentResponse';
 export * from './publicStats';
 export * from './rtiInput';
 export * from './rtiRequest';

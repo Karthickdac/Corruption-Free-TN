@@ -40,6 +40,8 @@ import {
   SubmitInvestigationReportParams,
   SubmitInvestigationReportBody,
   SubmitInvestigationReportResponse,
+  GetComplaintByIdParams,
+  GetComplaintByIdResponse,
 } from "@workspace/api-zod";
 import { ObjectStorageService } from "../lib/objectStorage";
 import { ObjectPermission } from "../lib/objectAcl";
@@ -320,26 +322,42 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
     }
     const params = ListEvidenceParams.parse({ complaintId: Number(req.params.complaintId) });
     const complaint = await db
-      .select({ id: complaintsTable.id, userId: complaintsTable.userId })
+      .select({
+        id: complaintsTable.id,
+        userId: complaintsTable.userId,
+        departmentId: complaintsTable.departmentId,
+        districtId: complaintsTable.districtId,
+        assignedOfficerId: complaintsTable.assignedOfficerId,
+      })
       .from(complaintsTable)
       .where(eq(complaintsTable.id, params.complaintId));
     if (!complaint[0]) {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
-    // Anonymous complaints have no owner — evidence access is not permitted
-    if (complaint[0].userId === null) {
-      res.status(403).json({ error: "Evidence access is not available for anonymous complaints" });
-      return;
-    }
+
     const localUser = await db
       .select({ id: usersTable.id })
       .from(usersTable)
       .where(eq(usersTable.clerkId, auth.userId));
     const localUserId = localUser[0]?.id;
-    if (complaint[0].userId !== localUserId) {
-      res.status(403).json({ error: "Access denied" });
-      return;
+
+    if (req.localUser) {
+      // Officer path: enforce jurisdiction
+      if (!canAccessComplaint(req.localUser, complaint[0])) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
+        return;
+      }
+    } else {
+      // Citizen path: must be the complaint owner
+      if (complaint[0].userId === null) {
+        res.status(403).json({ error: "Evidence access is not available for anonymous complaints" });
+        return;
+      }
+      if (complaint[0].userId !== localUserId) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
     }
     const rows = await db
       .select()
@@ -396,26 +414,42 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
     }
 
     const complaint = await db
-      .select({ id: complaintsTable.id, userId: complaintsTable.userId })
+      .select({
+        id: complaintsTable.id,
+        userId: complaintsTable.userId,
+        departmentId: complaintsTable.departmentId,
+        districtId: complaintsTable.districtId,
+        assignedOfficerId: complaintsTable.assignedOfficerId,
+      })
       .from(complaintsTable)
       .where(eq(complaintsTable.id, params.complaintId));
     if (!complaint[0]) {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
-    // Anonymous complaints have no owner — evidence upload is not permitted
-    if (complaint[0].userId === null) {
-      res.status(403).json({ error: "Evidence upload is not available for anonymous complaints" });
-      return;
-    }
+
     const localUser = await db
       .select({ id: usersTable.id })
       .from(usersTable)
       .where(eq(usersTable.clerkId, auth.userId));
     const localUserId = localUser[0]?.id;
-    if (complaint[0].userId !== localUserId) {
-      res.status(403).json({ error: "Access denied" });
-      return;
+
+    if (req.localUser) {
+      // Officer path: enforce jurisdiction
+      if (!canAccessComplaint(req.localUser, complaint[0])) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
+        return;
+      }
+    } else {
+      // Citizen path: must be the complaint owner
+      if (complaint[0].userId === null) {
+        res.status(403).json({ error: "Evidence upload is not available for anonymous complaints" });
+        return;
+      }
+      if (complaint[0].userId !== localUserId) {
+        res.status(403).json({ error: "Access denied" });
+        return;
+      }
     }
 
     const inserted = await db
@@ -477,12 +511,71 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
-    const statusHistory = await getStatusHistory(row.complaint.id);
-    res.json(TrackComplaintResponse.parse(toApiComplaint(row, statusHistory)));
+    const [statusHistory, publicNotes] = await Promise.all([
+      getStatusHistory(row.complaint.id),
+      db
+        .select({ id: caseNotesTable.id, content: caseNotesTable.content, createdAt: caseNotesTable.createdAt })
+        .from(caseNotesTable)
+        .where(
+          and(
+            eq(caseNotesTable.complaintId, row.complaint.id),
+            eq(caseNotesTable.noteType, "department_response"),
+            eq(caseNotesTable.isInternal, false),
+          ),
+        )
+        .orderBy(caseNotesTable.createdAt),
+    ]);
+    res.json(
+      TrackComplaintResponse.parse({
+        ...toApiComplaint(row, statusHistory),
+        departmentResponses: publicNotes.map((n) => ({
+          id: n.id,
+          content: n.content,
+          createdAt: n.createdAt.toISOString(),
+        })),
+      }),
+    );
   } catch (err) {
     next(err);
   }
 });
+
+router.get(
+  "/complaints/:complaintId",
+  requireAnyOfficer(),
+  async (req, res, next) => {
+    try {
+      const params = GetComplaintByIdParams.safeParse({
+        complaintId: Number(req.params.complaintId),
+      });
+      if (!params.success) {
+        res.status(400).json({ error: "Invalid complaint id" });
+        return;
+      }
+      const rows = await complaintSelection().where(
+        eq(complaintsTable.id, params.data.complaintId),
+      );
+      if (!rows[0]) {
+        res.status(404).json({ error: "Complaint not found" });
+        return;
+      }
+      const row = rows[0];
+      const complaint = row.complaint;
+      if (req.localUser && !canAccessComplaint(req.localUser, {
+        departmentId: complaint.departmentId,
+        districtId: complaint.districtId,
+        assignedOfficerId: complaint.assignedOfficerId,
+      })) {
+        res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
+        return;
+      }
+      const statusHistory = await getStatusHistory(params.data.complaintId);
+      res.json(GetComplaintByIdResponse.parse(toApiComplaint(row, statusHistory)));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 router.patch(
   "/complaints/:complaintId/status",
