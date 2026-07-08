@@ -8,16 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChevronRight, FileText } from "lucide-react";
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  under_review: "bg-amber-500/10 text-amber-500 border-amber-500/20",
-  evidence_verification: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  submitted: "bg-stone-500/10 text-stone-600 border-stone-500/20",
+  under_review: "bg-amber-600/10 text-amber-600 border-amber-600/20",
+  evidence_verification: "bg-pink-600/10 text-pink-600 border-pink-600/20",
   forwarded: "bg-lime-600/10 text-lime-600 border-lime-600/20",
-  department_response: "bg-pink-500/10 text-pink-500 border-pink-500/20",
-  investigation: "bg-rose-500/10 text-rose-500 border-rose-500/20",
-  action_taken: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  closed: "bg-green-500/10 text-green-500 border-green-500/20",
-  rejected: "bg-red-500/10 text-red-500 border-red-500/20",
-  reopened: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  department_response: "bg-emerald-600/10 text-emerald-600 border-emerald-600/20",
+  investigation: "bg-orange-600/10 text-orange-600 border-orange-600/20",
+  action_taken: "bg-green-500/10 text-green-600 border-green-500/20",
+  closed: "bg-stone-600/10 text-stone-600 border-stone-600/20",
+  rejected: "bg-red-600/10 text-red-600 border-red-600/20",
+  reopened: "bg-rose-600/10 text-rose-600 border-rose-600/20",
 };
 
 const STATUS_LABELS: Record<string, string> = {

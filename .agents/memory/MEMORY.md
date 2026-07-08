@@ -4,3 +4,4 @@
 - [orval-codegen-quirk](orval-codegen-quirk.md) — filtered pnpm codegen script can fail silently; run npx orval directly in lib/api-spec instead.
 - [Orval codegen pitfalls](orval-codegen-pitfalls.md) — request bodies must be $ref components (inline bodies collide with zod consts); API errors are `{error}` not `{message}`.
 - [TN district geojson matching](tn-district-geojson.md) — map joins by exact district name; 2011-source names were normalized and Mayiladuthurai is an approximate carve-out
+- [Expo web e2e testing quirks](expo-web-e2e-testing.md) — reload through transient 404/blank while the dev bundle warms; log in by setting localStorage session_token; testID → data-testid.

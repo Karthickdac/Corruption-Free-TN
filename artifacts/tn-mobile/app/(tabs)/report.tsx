@@ -1,15 +1,22 @@
 import { Feather } from "@expo/vector-icons";
 import {
+  useAddEvidence,
   useCreateComplaint,
   useListComplaintCategories,
   useListDistricts,
+  useRequestUploadUrl,
   type DuplicateCheckResponse,
 } from "@workspace/api-client-react";
+import { File as FSFile } from "expo-file-system";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { fetch as expoFetch } from "expo/fetch";
+import React, { useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
+  Linking,
   Platform,
   Pressable,
   StyleSheet,
@@ -23,12 +30,38 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
 import { OptionPicker } from "@/components/OptionPicker";
 import colors from "@/constants/colors";
+import { useAuth } from "@/contexts/auth";
 import { useColors } from "@/hooks/useColors";
 
 interface ApiErrorLike {
   status?: number;
   data?: unknown;
   message?: string;
+}
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_ATTACHMENTS = 5;
+
+interface Attachment {
+  id: string;
+  uri: string;
+  name: string;
+  mimeType: string;
+  status: "uploading" | "done" | "error";
+  objectPath?: string;
+  recorded?: boolean;
+}
+
+async function readUploadBody(
+  uri: string,
+): Promise<{ body: Blob | Uint8Array; size: number }> {
+  if (Platform.OS === "web") {
+    const res = await fetch(uri);
+    const blob = await res.blob();
+    return { body: blob, size: blob.size };
+  }
+  const bytes = await new FSFile(uri).bytes();
+  return { body: bytes, size: bytes.byteLength };
 }
 
 export default function ReportScreen() {
@@ -48,10 +81,26 @@ export default function ReportScreen() {
     DuplicateCheckResponse["duplicates"] | null
   >(null);
   const [submittedNumber, setSubmittedNumber] = useState<string | null>(null);
+  const [submittedId, setSubmittedId] = useState<number | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachError, setAttachError] = useState<string | null>(null);
+  const [cameraBlocked, setCameraBlocked] = useState(false);
+  const [evidenceFailed, setEvidenceFailed] = useState(0);
+  const [retryingEvidence, setRetryingEvidence] = useState(false);
 
+  const { isSignedIn } = useAuth();
   const { data: districts } = useListDistricts();
   const { data: categories } = useListComplaintCategories();
   const createComplaint = useCreateComplaint();
+  const requestUpload = useRequestUploadUrl();
+  const addEvidence = useAddEvidence();
+  const [cameraPermission, requestCameraPermission] =
+    ImagePicker.useCameraPermissions();
+
+  const canAttach = isSignedIn && !isAnonymous;
+  const anyUploading = attachments.some((a) => a.status === "uploading");
+  const attachmentsRef = useRef<Attachment[]>(attachments);
+  attachmentsRef.current = attachments;
 
   const topPad = Platform.OS === "web" ? 67 + 12 : insets.top + 12;
 
@@ -65,6 +114,151 @@ export default function ReportScreen() {
     setIsAnonymous(true);
     setDuplicates(null);
     setFormError(null);
+    setAttachments([]);
+    setAttachError(null);
+    setCameraBlocked(false);
+    setEvidenceFailed(0);
+    setSubmittedId(null);
+  };
+
+  const uploadAttachment = async (att: {
+    id: string;
+    uri: string;
+    name: string;
+    mimeType: string;
+  }) => {
+    setAttachments((prev) =>
+      prev.map((a) => (a.id === att.id ? { ...a, status: "uploading" } : a)),
+    );
+    try {
+      const { body, size } = await readUploadBody(att.uri);
+      if (size > MAX_FILE_SIZE) {
+        setAttachments((prev) => prev.filter((a) => a.id !== att.id));
+        setAttachError("Photos must be under 20MB.");
+        return;
+      }
+      const { uploadURL, objectPath } = await requestUpload.mutateAsync({
+        data: {
+          name: att.name,
+          size: Math.max(size, 1),
+          contentType: att.mimeType,
+        },
+      });
+      const putRes = await expoFetch(uploadURL, {
+        method: "PUT",
+        body: body as never,
+        headers: { "Content-Type": att.mimeType },
+      });
+      if (!putRes.ok) {
+        throw new Error(`Upload failed (${putRes.status})`);
+      }
+      setAttachments((prev) =>
+        prev.map((a) =>
+          a.id === att.id ? { ...a, status: "done", objectPath } : a,
+        ),
+      );
+    } catch {
+      setAttachments((prev) =>
+        prev.map((a) => (a.id === att.id ? { ...a, status: "error" } : a)),
+      );
+    }
+  };
+
+  const addAssets = (assets: ImagePicker.ImagePickerAsset[]) => {
+    setAttachError(null);
+    const room = MAX_ATTACHMENTS - attachmentsRef.current.length;
+    if (assets.length > Math.max(room, 0)) {
+      setAttachError(`You can attach up to ${MAX_ATTACHMENTS} photos.`);
+    }
+    for (const asset of assets.slice(0, Math.max(room, 0))) {
+      if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
+        setAttachError("Photos must be under 20MB.");
+        continue;
+      }
+      const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const att = {
+        id,
+        uri: asset.uri,
+        name: asset.fileName ?? `evidence-${Date.now()}.jpg`,
+        mimeType: asset.mimeType ?? "image/jpeg",
+      };
+      setAttachments((prev) => [...prev, { ...att, status: "uploading" }]);
+      void uploadAttachment(att);
+    }
+  };
+
+  const pickFromCamera = async () => {
+    setAttachError(null);
+    setCameraBlocked(false);
+    let perm = cameraPermission;
+    if (!perm?.granted) {
+      perm = await requestCameraPermission();
+    }
+    if (!perm?.granted) {
+      if (perm && !perm.canAskAgain && Platform.OS !== "web") {
+        setCameraBlocked(true);
+        setAttachError(
+          "Camera access is blocked. Enable it in Settings to take photos.",
+        );
+      } else {
+        setAttachError("Camera permission is needed to take a photo.");
+      }
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
+    if (!result.canceled) addAssets(result.assets);
+  };
+
+  const pickFromLibrary = async () => {
+    setAttachError(null);
+    setCameraBlocked(false);
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        quality: 0.7,
+        allowsMultipleSelection: true,
+        selectionLimit: 5,
+      });
+      if (!result.canceled) addAssets(result.assets);
+    } catch {
+      setAttachError("Could not open the photo library.");
+    }
+  };
+
+  const recordEvidence = async (complaintId: number) => {
+    const pending = attachmentsRef.current.filter(
+      (a) => a.status === "done" && a.objectPath && !a.recorded,
+    );
+    let failed = 0;
+    for (const a of pending) {
+      try {
+        await addEvidence.mutateAsync({
+          complaintId,
+          data: {
+            fileUrl: a.objectPath!,
+            fileType: a.mimeType,
+            description: a.name,
+          },
+        });
+        setAttachments((prev) =>
+          prev.map((it) => (it.id === a.id ? { ...it, recorded: true } : it)),
+        );
+      } catch {
+        failed++;
+      }
+    }
+    return failed;
+  };
+
+  const retryEvidence = async () => {
+    if (submittedId === null) return;
+    setRetryingEvidence(true);
+    try {
+      const failed = await recordEvidence(submittedId);
+      setEvidenceFailed(failed);
+    } finally {
+      setRetryingEvidence(false);
+    }
   };
 
   const submit = (confirmDuplicate: boolean) => {
@@ -80,6 +274,10 @@ export default function ReportScreen() {
     const parsedAmount = amount.trim() ? Number(amount.trim()) : undefined;
     if (parsedAmount !== undefined && Number.isNaN(parsedAmount)) {
       setFormError("Amount must be a number.");
+      return;
+    }
+    if (anyUploading) {
+      setFormError("Please wait for photos to finish uploading.");
       return;
     }
 
@@ -99,11 +297,16 @@ export default function ReportScreen() {
         },
       },
       {
-        onSuccess: (complaint) => {
+        onSuccess: async (complaint) => {
           if (Platform.OS !== "web") {
             Haptics.notificationAsync(
               Haptics.NotificationFeedbackType.Success,
             );
+          }
+          setSubmittedId(complaint.id);
+          if (canAttach) {
+            const failed = await recordEvidence(complaint.id);
+            setEvidenceFailed(failed);
           }
           setSubmittedNumber(complaint.complaintNumber);
           setDuplicates(null);
@@ -180,6 +383,71 @@ export default function ReportScreen() {
             {submittedNumber}
           </Text>
         </View>
+        {attachments.some((a) => a.recorded) && evidenceFailed === 0 ? (
+          <View style={styles.evidenceStatusRow}>
+            <Feather name="paperclip" size={14} color={c.success} />
+            <Text
+              testID="evidence-attached-count"
+              style={{
+                color: c.mutedForeground,
+                fontSize: 13,
+                fontFamily: "Inter_500Medium",
+              }}
+            >
+              {attachments.filter((a) => a.recorded).length} photo
+              {attachments.filter((a) => a.recorded).length > 1 ? "s" : ""}{" "}
+              attached
+            </Text>
+          </View>
+        ) : null}
+        {evidenceFailed > 0 ? (
+          <View
+            style={[
+              styles.errorBox,
+              {
+                backgroundColor: `${c.warning}15`,
+                borderColor: c.warning,
+                alignSelf: "stretch",
+              },
+            ]}
+          >
+            <Feather name="alert-triangle" size={16} color={c.warning} />
+            <Text
+              testID="evidence-failed"
+              style={{
+                color: c.foreground,
+                fontSize: 13,
+                flex: 1,
+                fontFamily: "Inter_500Medium",
+              }}
+            >
+              {evidenceFailed} photo{evidenceFailed > 1 ? "s" : ""} could not
+              be attached.
+            </Text>
+            <Pressable
+              testID="retry-evidence"
+              disabled={retryingEvidence}
+              onPress={retryEvidence}
+              style={({ pressed }) => [
+                { opacity: retryingEvidence ? 0.5 : pressed ? 0.6 : 1 },
+              ]}
+            >
+              {retryingEvidence ? (
+                <ActivityIndicator size="small" color={c.primary} />
+              ) : (
+                <Text
+                  style={{
+                    color: c.primary,
+                    fontSize: 13,
+                    fontFamily: "Inter_600SemiBold",
+                  }}
+                >
+                  Retry
+                </Text>
+              )}
+            </Pressable>
+          </View>
+        ) : null}
         <Pressable
           testID="go-track"
           onPress={() => {
@@ -369,6 +637,197 @@ export default function ReportScreen() {
             },
           ]}
         />
+      </View>
+
+      <View style={styles.field}>
+        <Text style={[styles.label, { color: c.foreground }]}>
+          Photo Evidence
+        </Text>
+        {canAttach ? (
+          <>
+            <View style={{ flexDirection: "row", gap: 10 }}>
+              {Platform.OS !== "web" ? (
+                <Pressable
+                  testID="attach-camera"
+                  onPress={pickFromCamera}
+                  style={({ pressed }) => [
+                    styles.attachButton,
+                    {
+                      backgroundColor: c.card,
+                      borderColor: c.border,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <Feather name="camera" size={16} color={c.primary} />
+                  <Text
+                    style={{
+                      color: c.foreground,
+                      fontSize: 13,
+                      fontFamily: "Inter_500Medium",
+                    }}
+                  >
+                    Take Photo
+                  </Text>
+                </Pressable>
+              ) : null}
+              <Pressable
+                testID="attach-gallery"
+                onPress={pickFromLibrary}
+                style={({ pressed }) => [
+                  styles.attachButton,
+                  {
+                    backgroundColor: c.card,
+                    borderColor: c.border,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Feather name="image" size={16} color={c.primary} />
+                <Text
+                  style={{
+                    color: c.foreground,
+                    fontSize: 13,
+                    fontFamily: "Inter_500Medium",
+                  }}
+                >
+                  Choose Photo
+                </Text>
+              </Pressable>
+            </View>
+            {attachments.map((a) => (
+              <View
+                key={a.id}
+                testID={`attachment-${a.status}`}
+                style={[
+                  styles.attachmentRow,
+                  {
+                    backgroundColor: c.card,
+                    borderColor:
+                      a.status === "error" ? c.destructive : c.border,
+                  },
+                ]}
+              >
+                <Image
+                  source={{ uri: a.uri }}
+                  style={styles.attachmentThumb}
+                />
+                <Text
+                  numberOfLines={1}
+                  style={{
+                    flex: 1,
+                    color: c.foreground,
+                    fontSize: 13,
+                    fontFamily: "Inter_400Regular",
+                  }}
+                >
+                  {a.name}
+                </Text>
+                {a.status === "uploading" ? (
+                  <ActivityIndicator size="small" color={c.primary} />
+                ) : a.status === "done" ? (
+                  <Feather name="check-circle" size={16} color={c.success} />
+                ) : (
+                  <Pressable
+                    testID={`retry-upload-${a.id}`}
+                    onPress={() => uploadAttachment(a)}
+                    style={({ pressed }) => [
+                      styles.retryChip,
+                      {
+                        borderColor: c.destructive,
+                        opacity: pressed ? 0.6 : 1,
+                      },
+                    ]}
+                  >
+                    <Feather name="rotate-cw" size={12} color={c.destructive} />
+                    <Text
+                      style={{
+                        color: c.destructive,
+                        fontSize: 12,
+                        fontFamily: "Inter_600SemiBold",
+                      }}
+                    >
+                      Retry
+                    </Text>
+                  </Pressable>
+                )}
+                <Pressable
+                  testID={`remove-attachment-${a.id}`}
+                  onPress={() =>
+                    setAttachments((prev) =>
+                      prev.filter((it) => it.id !== a.id),
+                    )
+                  }
+                  style={({ pressed }) => [
+                    { opacity: pressed ? 0.5 : 1, padding: 4 },
+                  ]}
+                >
+                  <Feather name="x" size={16} color={c.mutedForeground} />
+                </Pressable>
+              </View>
+            ))}
+          </>
+        ) : (
+          <View
+            style={[
+              styles.attachHint,
+              { backgroundColor: c.card, borderColor: c.border },
+            ]}
+          >
+            <Feather name="lock" size={14} color={c.mutedForeground} />
+            <Text
+              testID="attach-hint"
+              style={{
+                flex: 1,
+                color: c.mutedForeground,
+                fontSize: 12,
+                fontFamily: "Inter_400Regular",
+              }}
+            >
+              {!isSignedIn
+                ? "Sign in to attach photo evidence."
+                : "Turn off anonymous mode to attach photo evidence."}
+            </Text>
+          </View>
+        )}
+        {attachError ? (
+          <View style={styles.attachErrorRow}>
+            <Text
+              testID="attach-error"
+              style={{
+                flex: 1,
+                color: c.destructive,
+                fontSize: 12,
+                fontFamily: "Inter_500Medium",
+              }}
+            >
+              {attachError}
+            </Text>
+            {cameraBlocked && Platform.OS !== "web" ? (
+              <Pressable
+                testID="open-settings"
+                onPress={() => {
+                  try {
+                    Linking.openSettings();
+                  } catch {
+                    // Settings can't be opened on this platform.
+                  }
+                }}
+                style={({ pressed }) => [{ opacity: pressed ? 0.6 : 1 }]}
+              >
+                <Text
+                  style={{
+                    color: c.primary,
+                    fontSize: 12,
+                    fontFamily: "Inter_600SemiBold",
+                  }}
+                >
+                  Open Settings
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
 
       <View
@@ -636,5 +1095,56 @@ const styles = StyleSheet.create({
     borderRadius: colors.radius,
     paddingHorizontal: 24,
     paddingVertical: 14,
+  },
+  attachButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: colors.radius,
+    paddingVertical: 12,
+  },
+  attachmentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderWidth: 1,
+    borderRadius: colors.radius,
+    padding: 8,
+  },
+  attachmentThumb: {
+    width: 40,
+    height: 40,
+    borderRadius: 4,
+    backgroundColor: "#00000010",
+  },
+  attachHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: colors.radius,
+    padding: 12,
+  },
+  attachErrorRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  retryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  evidenceStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
 });

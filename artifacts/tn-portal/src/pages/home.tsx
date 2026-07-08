@@ -44,9 +44,9 @@ export default function Home() {
       <section className="relative min-h-[90vh] flex items-center border-b border-border/40 overflow-hidden bg-background">
         {/* Background Texture & Glows */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/15 via-background to-background" />
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-rose-500/10 blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-orange-400/10 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-[350px] h-[350px] rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-emerald-600/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-stone-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-[350px] h-[350px] rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-noise opacity-[0.15] mix-blend-overlay pointer-events-none" />
 
         <div className="container relative z-10 mx-auto px-4 md:px-8 py-20 flex flex-col md:flex-row items-center justify-between gap-12">
@@ -69,7 +69,7 @@ export default function Home() {
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-6 w-full">
               <Link href="/submit">
-                <Button size="lg" className="w-full sm:w-auto text-base md:text-lg h-14 px-8 font-medium tracking-wide shadow-[0_0_30px_-10px_rgba(234,88,12,0.5)] hover:shadow-[0_0_40px_-10px_rgba(234,88,12,0.7)] transition-all duration-300">
+                <Button size="lg" className="w-full sm:w-auto text-base md:text-lg h-14 px-8 font-medium tracking-wide shadow-[0_0_30px_-10px_rgba(4,120,87,0.5)] hover:shadow-[0_0_40px_-10px_rgba(4,120,87,0.7)] transition-all duration-300">
                   <Megaphone className="mr-2 h-5 w-5" />
                   {t("cta_report")}
                 </Button>
@@ -89,7 +89,7 @@ export default function Home() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="flex-1 hidden lg:flex justify-end items-center"
           >
-            <div className="relative w-full max-w-md aspect-square rounded-full border-2 border-primary/20 flex items-center justify-center p-12 bg-gradient-to-br from-primary/10 via-card/30 to-orange-400/10 backdrop-blur-sm shadow-2xl">
+            <div className="relative w-full max-w-md aspect-square rounded-full border-2 border-primary/20 flex items-center justify-center p-12 bg-gradient-to-br from-primary/10 via-card/30 to-stone-400/10 backdrop-blur-sm shadow-2xl">
               <div className="absolute inset-0 bg-primary/5 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
               <div className="relative z-10 text-primary opacity-90 flex flex-col items-center">
                 <Landmark className="w-32 h-32 mb-6" strokeWidth={1} />
@@ -166,7 +166,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="md:pr-12 md:text-right flex flex-col md:items-end">
-              <div className="h-16 w-16 bg-orange-500/10 text-orange-600 flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-orange-500/20">03</div>
+              <div className="h-16 w-16 bg-amber-600/10 text-amber-600 flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-amber-600/20">03</div>
               <h3 className="text-2xl font-bold uppercase tracking-tight mb-4">{t("home_step3_title")}</h3>
               <p className="text-muted-foreground text-lg">{t("home_step3_desc")}</p>
             </motion.div>
@@ -300,9 +300,9 @@ export default function Home() {
       </section>
 
       {/* 6. CTA Section */}
-      <section className="py-32 bg-gradient-to-br from-orange-600 via-rose-600 to-red-700 relative overflow-hidden text-primary-foreground">
+      <section className="py-32 bg-gradient-to-br from-emerald-950 via-stone-900 to-emerald-900 relative overflow-hidden text-primary-foreground">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-black/30 via-transparent to-transparent pointer-events-none" />
-        <div className="absolute -top-20 right-10 w-[300px] h-[300px] rounded-full bg-orange-400/20 blur-3xl pointer-events-none" />
+        <div className="absolute -top-20 right-10 w-[300px] h-[300px] rounded-full bg-emerald-700/20 blur-3xl pointer-events-none" />
         
         <div className="container mx-auto px-4 md:px-8 relative z-10 text-center">
           <motion.div 

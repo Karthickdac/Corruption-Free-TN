@@ -23,9 +23,9 @@ import TNDistrictMap from "@/components/TNDistrictMap";
 const PIE_COLORS = ["#cca360","#78716c","#f43f5e","#10b981","#f59e0b","#db2777","#ec4899","#059669","#ef4444","#6b7280"];
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted:"#ea580c", under_review:"#f59e0b", evidence_verification:"#db2777",
-  forwarded:"#f43f5e", department_response:"#eab308", investigation:"#f97316",
-  action_taken:"#10b981", closed:"#22c55e", reopened:"#ef4444", rejected:"#6b7280",
+  submitted:"#78716c", under_review:"#d97706", evidence_verification:"#db2777",
+  forwarded:"#65a30d", department_response:"#059669", investigation:"#ea580c",
+  action_taken:"#16a34a", closed:"#57534e", reopened:"#e11d48", rejected:"#dc2626",
 };
 
 function humanStatus(s: string) {

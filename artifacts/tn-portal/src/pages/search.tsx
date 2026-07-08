@@ -17,16 +17,16 @@ function humanStatus(s: string) {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-orange-500/10 text-orange-600",
-  under_review: "bg-amber-500/10 text-amber-600",
-  evidence_verification: "bg-rose-500/10 text-rose-600",
+  submitted: "bg-stone-500/10 text-stone-600",
+  under_review: "bg-amber-600/10 text-amber-600",
+  evidence_verification: "bg-pink-600/10 text-pink-600",
   forwarded: "bg-lime-600/10 text-lime-600",
-  department_response: "bg-pink-500/10 text-pink-600",
-  investigation: "bg-rose-500/10 text-rose-600",
-  action_taken: "bg-emerald-500/10 text-emerald-600",
-  closed: "bg-green-500/10 text-green-600",
-  reopened: "bg-red-500/10 text-red-600",
-  rejected: "bg-muted text-muted-foreground",
+  department_response: "bg-emerald-600/10 text-emerald-600",
+  investigation: "bg-orange-600/10 text-orange-600",
+  action_taken: "bg-green-600/10 text-green-600",
+  closed: "bg-stone-600/10 text-stone-600",
+  reopened: "bg-rose-600/10 text-rose-600",
+  rejected: "bg-red-600/10 text-red-600",
 };
 
 const PRIORITY_COLORS: Record<string, string> = {

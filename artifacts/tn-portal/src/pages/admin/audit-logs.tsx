@@ -15,14 +15,14 @@ import { ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Keys must match audit `action` values written by the API server
 const ACTION_COLORS: Record<string, string> = {
-  status_change: "bg-orange-500/10 text-orange-400",
-  assignment: "bg-rose-500/10 text-rose-400",
-  case_note_added: "bg-green-500/10 text-green-400",
-  role_update: "bg-orange-500/10 text-orange-400",
-  evidence_upload: "bg-lime-600/10 text-lime-500",
-  evidence_download: "bg-lime-600/10 text-lime-500",
-  investigation_report_submitted: "bg-emerald-500/10 text-emerald-400",
-  login: "bg-slate-500/10 text-slate-400",
+  status_change: "bg-orange-600/10 text-orange-600",
+  assignment: "bg-rose-600/10 text-rose-600",
+  case_note_added: "bg-emerald-600/10 text-emerald-600",
+  role_update: "bg-orange-600/10 text-orange-600",
+  evidence_upload: "bg-lime-600/10 text-lime-600",
+  evidence_download: "bg-lime-600/10 text-lime-600",
+  investigation_report_submitted: "bg-emerald-600/10 text-emerald-600",
+  login: "bg-stone-500/10 text-stone-600",
 };
 
 const ACTION_LABELS: Record<string, string> = {

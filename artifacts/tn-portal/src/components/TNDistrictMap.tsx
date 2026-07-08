@@ -29,11 +29,11 @@ const GEO_URL = "/tn-districts.geojson";
 function densityColor(density: number, maxDensity: number): string {
   if (density === 0) return "#e7e5e4";
   const pct = maxDensity > 0 ? density / maxDensity : 0;
-  if (pct < 0.2) return "#fde68a";
-  if (pct < 0.4) return "#fb923c";
-  if (pct < 0.6) return "#f97316";
-  if (pct < 0.8) return "#dc2626";
-  return "#991b1b";
+  if (pct < 0.2) return "#a7f3d0";
+  if (pct < 0.4) return "#34d399";
+  if (pct < 0.6) return "#10b981";
+  if (pct < 0.8) return "#047857";
+  return "#064e3b";
 }
 
 function useVillages(districtId: number, talukId: number | null) {
@@ -343,11 +343,11 @@ export default function TNDistrictMap({ mapData }: Props) {
         <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground justify-center">
           {[
             { label: "No complaints", color: "#e7e5e4" },
-            { label: "Very low", color: "#fde68a" },
-            { label: "Low", color: "#fb923c" },
-            { label: "Medium", color: "#f97316" },
-            { label: "High", color: "#dc2626" },
-            { label: "Highest", color: "#991b1b" },
+            { label: "Very low", color: "#a7f3d0" },
+            { label: "Low", color: "#34d399" },
+            { label: "Medium", color: "#10b981" },
+            { label: "High", color: "#047857" },
+            { label: "Highest", color: "#064e3b" },
           ].map((l) => (
             <span key={l.label} className="flex items-center gap-1">
               <span className="w-3 h-3 rounded-sm inline-block" style={{ background: l.color }} />

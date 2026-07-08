@@ -39,21 +39,21 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <header className="sticky top-0 z-50 w-full relative bg-gradient-to-r from-rose-700 via-orange-600 to-amber-600 text-white shadow-lg shadow-orange-900/20">
-        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-300 via-lime-400 to-emerald-400" />
+      <header className="sticky top-0 z-50 w-full relative bg-gradient-to-r from-stone-900 via-emerald-950 to-emerald-900 text-white shadow-lg shadow-emerald-900/20">
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500 via-amber-300 to-stone-400" />
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5 group">
               <span className="relative flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                 <Shield className="h-8 w-8 text-white fill-white" />
-                <span className="absolute font-black text-sm leading-none text-orange-600 pb-0.5">!</span>
+                <span className="absolute font-black text-sm leading-none text-emerald-700 pb-0.5">!</span>
               </span>
               <span className="hidden sm:block w-0.5 h-9 bg-white/60 rounded-full" />
               <span className="hidden sm:flex flex-col leading-tight">
                 <span className="font-sans font-extrabold text-lg tracking-tight text-white whitespace-nowrap">
                   Corruption Free TN
                 </span>
-                <span className="text-[11px] text-orange-100 -mt-0.5 whitespace-nowrap">
+                <span className="text-[11px] text-stone-300 -mt-0.5 whitespace-nowrap">
                   ஊழல் இல்லாத தமிழ்நாடு
                 </span>
               </span>
@@ -67,7 +67,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     className={`h-9 text-sm font-medium rounded-full px-4 no-default-hover-elevate ${
                       location === link.href
                         ? "bg-white/20 text-white hover:bg-white/25"
-                        : "text-orange-50 hover:text-white hover:bg-white/10"
+                        : "text-stone-300 hover:text-white hover:bg-white/10"
                     }`}
                   >
                     {link.label}
@@ -78,7 +78,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/admin/dashboard">
                   <Button
                     variant="ghost"
-                    className={`h-9 text-sm font-medium gap-1.5 rounded-full px-4 no-default-hover-elevate text-amber-100 font-semibold hover:text-white hover:bg-white/10 ${
+                    className={`h-9 text-sm font-medium gap-1.5 rounded-full px-4 no-default-hover-elevate text-stone-200 font-semibold hover:text-white hover:bg-white/10 ${
                       location.startsWith("/admin") ? "bg-white/20" : ""
                     }`}
                   >
@@ -93,7 +93,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             <NotificationBell />
 
-            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-9 w-9 text-orange-100 hover:text-white hover:bg-white/10 no-default-hover-elevate">
+            <Button variant="ghost" size="icon" onClick={toggleLanguage} className="h-9 w-9 text-stone-300 hover:text-white hover:bg-white/10 no-default-hover-elevate">
               <Languages className="h-4 w-4" />
               <span className="sr-only">Toggle Language</span>
             </Button>
@@ -101,13 +101,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="ml-2 pl-2 border-l border-white/25 flex items-center gap-2">
               {isSignedIn ? (
                 <>
-                  <span className="hidden sm:inline-block text-sm font-medium text-orange-100 max-w-[140px] truncate">
+                  <span className="hidden sm:inline-block text-sm font-medium text-stone-300 max-w-[140px] truncate">
                     {user?.name || user?.email || user?.phone || "Account"}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-9 w-9 text-orange-100 hover:text-white hover:bg-white/10 no-default-hover-elevate"
+                    className="h-9 w-9 text-stone-300 hover:text-white hover:bg-white/10 no-default-hover-elevate"
                     disabled={logout.isPending}
                     onClick={() => logout.mutate()}
                     data-testid="button-sign-out"
@@ -118,14 +118,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </>
               ) : (
                 <Link href="/sign-in">
-                  <Button className="h-9 bg-white text-orange-700 hover:bg-orange-50 border-0 font-semibold no-default-hover-elevate" size="sm">Sign In</Button>
+                  <Button className="h-9 bg-white text-emerald-950 hover:bg-stone-100 border-0 font-semibold no-default-hover-elevate" size="sm">Sign In</Button>
                 </Link>
               )}
             </div>
 
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden ml-2 h-9 w-9 text-orange-100 hover:text-white hover:bg-white/10 no-default-hover-elevate">
+                <Button variant="ghost" size="icon" className="md:hidden ml-2 h-9 w-9 text-stone-300 hover:text-white hover:bg-white/10 no-default-hover-elevate">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>

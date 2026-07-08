@@ -24,13 +24,13 @@ export default function Complaints() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'submitted': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'under_review': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      case 'under_investigation': return 'bg-rose-500/10 text-rose-500 border-rose-500/20';
-      case 'action_taken': return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
-      case 'resolved': return 'bg-green-500/10 text-green-500 border-green-500/20';
-      case 'rejected': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+      case 'submitted': return 'bg-stone-500/10 text-stone-600 border-stone-500/20';
+      case 'under_review': return 'bg-amber-600/10 text-amber-600 border-amber-600/20';
+      case 'under_investigation': return 'bg-orange-600/10 text-orange-600 border-orange-600/20';
+      case 'action_taken': return 'bg-green-500/10 text-green-600 border-green-500/20';
+      case 'resolved': return 'bg-emerald-600/10 text-emerald-600 border-emerald-600/20';
+      case 'rejected': return 'bg-red-600/10 text-red-600 border-red-600/20';
+      default: return 'bg-stone-500/10 text-stone-500 border-stone-500/20';
     }
   };
 

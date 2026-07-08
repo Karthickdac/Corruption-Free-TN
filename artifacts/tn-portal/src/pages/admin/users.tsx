@@ -26,15 +26,15 @@ import { Users, Edit, Search, ChevronLeft, ChevronRight } from "lucide-react";
 const ALL_ROLES = Object.keys(ROLE_LABELS);
 
 const ROLE_COLORS: Record<string, string> = {
-  citizen: "bg-gray-500/10 text-gray-400",
-  super_admin: "bg-red-500/10 text-red-400",
-  state_administrator: "bg-orange-500/10 text-orange-400",
-  investigation_officer: "bg-rose-500/10 text-rose-400",
-  department_officer: "bg-orange-500/10 text-orange-400",
-  district_officer: "bg-lime-600/10 text-lime-500",
-  auditor: "bg-emerald-500/10 text-emerald-400",
-  moderator: "bg-yellow-500/10 text-yellow-400",
-  legal_officer: "bg-pink-500/10 text-pink-400",
+  citizen: "bg-stone-500/10 text-stone-500",
+  super_admin: "bg-red-600/10 text-red-600",
+  state_administrator: "bg-orange-600/10 text-orange-600",
+  investigation_officer: "bg-rose-600/10 text-rose-600",
+  department_officer: "bg-orange-600/10 text-orange-600",
+  district_officer: "bg-lime-600/10 text-lime-600",
+  auditor: "bg-emerald-600/10 text-emerald-600",
+  moderator: "bg-yellow-600/10 text-yellow-600",
+  legal_officer: "bg-pink-600/10 text-pink-600",
 };
 
 export default function AdminUsers() {

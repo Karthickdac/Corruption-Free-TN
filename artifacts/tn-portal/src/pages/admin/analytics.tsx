@@ -58,10 +58,10 @@ export default function AdminAnalytics() {
                         <tr key={d.departmentId} className="border-b border-border/50 hover:bg-muted/20">
                           <td className="py-2 pr-4 font-medium">{d.departmentName}</td>
                           <td className="py-2 px-2 text-right font-mono">{d.total}</td>
-                          <td className="py-2 px-2 text-right font-mono text-emerald-500">{d.resolved}</td>
-                          <td className="py-2 px-2 text-right font-mono text-amber-500">{d.pending}</td>
+                          <td className="py-2 px-2 text-right font-mono text-emerald-600">{d.resolved}</td>
+                          <td className="py-2 px-2 text-right font-mono text-amber-600">{d.pending}</td>
                           <td className="py-2 px-2 text-right">
-                            <Badge variant="secondary" className={d.resolutionRate>=70?"bg-emerald-500/10 text-emerald-600":d.resolutionRate>=40?"bg-amber-500/10 text-amber-600":"bg-red-500/10 text-red-600"}>
+                            <Badge variant="secondary" className={d.resolutionRate>=70?"bg-emerald-600/10 text-emerald-600":d.resolutionRate>=40?"bg-amber-600/10 text-amber-600":"bg-red-600/10 text-red-600"}>
                               {d.resolutionRate}%
                             </Badge>
                           </td>
@@ -107,8 +107,8 @@ export default function AdminAnalytics() {
                             <div className="font-medium">{o.officerName ?? "—"}</div>
                           </td>
                           <td className="py-2 px-2 text-right font-mono">{o.total}</td>
-                          <td className="py-2 px-2 text-right font-mono text-emerald-500">{o.resolved}</td>
-                          <td className="py-2 px-2 text-right font-mono text-amber-500">{o.pending}</td>
+                          <td className="py-2 px-2 text-right font-mono text-emerald-600">{o.resolved}</td>
+                          <td className="py-2 px-2 text-right font-mono text-amber-600">{o.pending}</td>
                           <td className="py-2 pl-2 text-right text-muted-foreground font-mono text-xs">
                             {o.avgResolutionDays!=null?`${o.avgResolutionDays.toFixed(1)}d`:"—"}
                           </td>

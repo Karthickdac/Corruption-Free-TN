@@ -371,7 +371,7 @@ export default function Submit() {
     return (
       <div className="container mx-auto px-4 py-16 max-w-xl text-center">
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <CheckCircle className="h-20 w-20 text-green-500 mx-auto mb-6" />
+          <CheckCircle className="h-20 w-20 text-emerald-600 mx-auto mb-6" />
           <h1 className="text-3xl font-serif font-bold text-foreground mb-3">
             {t("submit_success_title")}
           </h1>
@@ -667,7 +667,7 @@ export default function Submit() {
                           }}
                           className={`text-xs px-2 py-1 rounded-full border transition-colors inline-flex items-center gap-1 ${
                             isApplied
-                              ? "border-emerald-500/60 bg-emerald-500/10 text-emerald-600"
+                              ? "border-emerald-600/60 bg-emerald-600/10 text-emerald-600"
                               : matched
                                 ? "border-primary/40 bg-primary/5 text-primary hover:bg-primary/10"
                                 : "border-border/40 bg-muted/20 text-muted-foreground cursor-default"
@@ -808,7 +808,7 @@ export default function Submit() {
               )}
 
               {form.isAnonymous && (
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3 text-sm text-amber-600 font-medium">
+                <div className="bg-amber-600/10 border border-amber-600/20 rounded-lg px-4 py-3 text-sm text-amber-600 font-medium">
                   {t("form_anon_label")}
                 </div>
               )}

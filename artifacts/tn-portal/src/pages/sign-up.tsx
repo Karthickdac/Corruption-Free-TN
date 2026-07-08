@@ -85,8 +85,8 @@ export default function SignUpPage() {
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-2">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-orange-100">
-            <Shield className="h-6 w-6 text-orange-600" />
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <Shield className="h-6 w-6 text-primary" />
           </div>
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>
