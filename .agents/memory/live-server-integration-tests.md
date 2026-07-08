@@ -9,4 +9,5 @@ description: Pitfalls when integration tests hit the running dev API (duplicate 
 - **Why:** The evidence-validation suite deterministically failed on its second run until `confirmDuplicate: true` was added.
 - **How to apply:** Any new integration test or scripted check that creates complaints against the live API needs this flag.
 - Complaint submission is rate-limited to 5/hour/IP and registration to 20/15min — repeated validation runs from localhost can 429 in setup. Interpret 429s in test setup as the limiter, not a regression.
-- These tests create real users/complaints/objects in the shared dev DB (visible in public stats) — no teardown exists; keep payloads clearly labeled as test data.
+- These tests create real users/complaints/objects in the shared dev DB (visible in public stats). The evidence suite now has an `afterAll` DB teardown that deletes everything matching the reserved `evidence-test-%@example.com` email pattern (including leftovers from older runs). Any new suite that creates data must either reuse that pattern or ship its own teardown — otherwise test data pollutes public transparency lists and the heat map.
+- Teardown deletion order matters: child rows first (evidence, case_notes, investigation_reports, rti_requests → complaints; notifications/audit_logs/sessions → users) because of FK constraints.

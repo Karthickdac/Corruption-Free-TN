@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 
 /**
  * Integration tests for evidence file-reference validation.
@@ -77,6 +77,63 @@ beforeAll(async () => {
   );
   complaintId = ((await complaint.json()) as ComplaintResponse).id;
   expect(complaintId).toBeGreaterThan(0);
+}, 30000);
+
+/**
+ * Teardown: remove every user/complaint this suite has ever created (matched
+ * by the reserved `evidence-test-*@example.com` email pattern) so automated
+ * test data never pollutes public transparency lists, district stats, or the
+ * heat map in the shared dev database. Also cleans up leftovers from runs
+ * that predate this teardown.
+ */
+afterAll(async () => {
+  const { pool } = await import("@workspace/db");
+  try {
+    const users = await pool.query<{ id: number }>(
+      `SELECT id FROM users WHERE email LIKE 'evidence-test-%@example.com'`,
+    );
+    const userIds = users.rows.map((r) => r.id);
+    if (userIds.length === 0) return;
+
+    const complaints = await pool.query<{ id: number }>(
+      `SELECT id FROM complaints WHERE user_id = ANY($1)`,
+      [userIds],
+    );
+    const complaintIds = complaints.rows.map((r) => r.id);
+
+    if (complaintIds.length > 0) {
+      await pool.query(`DELETE FROM evidence WHERE complaint_id = ANY($1)`, [
+        complaintIds,
+      ]);
+      await pool.query(`DELETE FROM case_notes WHERE complaint_id = ANY($1)`, [
+        complaintIds,
+      ]);
+      await pool.query(
+        `DELETE FROM investigation_reports WHERE complaint_id = ANY($1)`,
+        [complaintIds],
+      );
+      await pool.query(
+        `DELETE FROM rti_requests WHERE complaint_id = ANY($1)`,
+        [complaintIds],
+      );
+      await pool.query(`DELETE FROM complaints WHERE id = ANY($1)`, [
+        complaintIds,
+      ]);
+    }
+
+    await pool.query(`DELETE FROM notifications WHERE user_id = ANY($1)`, [
+      userIds,
+    ]);
+    await pool.query(`DELETE FROM audit_logs WHERE user_id = ANY($1)`, [
+      userIds,
+    ]);
+    await pool.query(`DELETE FROM sessions WHERE user_id = ANY($1)`, [
+      userIds,
+    ]);
+    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [userIds]);
+  } finally {
+    await pool.end();
+  }
 }, 30000);
 
 describe("POST /complaints/:complaintId/evidence file-reference validation", () => {
