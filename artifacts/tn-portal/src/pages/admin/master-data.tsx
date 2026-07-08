@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Pencil, Trash2, Plus, Building2, MapPin, Tag, Settings } from "lucide-react";
+import { PageHeader } from "@/components/admin/page-header";
 
 type Tab = "departments" | "districts" | "categories" | "settings";
 

@@ -186,7 +186,7 @@ function AnalyticsContent() {
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} allowDecimals={false} />
                   <YAxis dataKey="name" type="category" width={130} stroke="hsl(var(--muted-foreground))" fontSize={11} />
                   <RechartsTooltip contentStyle={TOOLTIP_STYLE} />
-                  <Bar dataKey="count" name="Complaints" fill="#0d9488" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" name="Complaints" fill="#ea580c" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             )}

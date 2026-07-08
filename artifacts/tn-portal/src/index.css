@@ -166,6 +166,63 @@
   --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.05);
 }
 
+.admin-theme {
+  --background: 40 10% 96%;
+  --foreground: 20 15% 10%;
+  --border: 20 15% 10%;
+  --input: 20 15% 10%;
+  --ring: 15 80% 45%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 20 15% 10%;
+  --card-border: 20 15% 10%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 20 15% 10%;
+  --popover-border: 20 15% 10%;
+
+  --primary: 15 80% 45%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 40 10% 90%;
+  --secondary-foreground: 20 15% 10%;
+
+  --muted: 40 10% 90%;
+  --muted-foreground: 25 10% 40%;
+
+  --accent: 15 80% 45%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 75% 45%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --radius: 0; /* Sharp corners for authoritative look */
+}
+
+.admin-theme * {
+  border-color: hsl(var(--border));
+}
+
+.admin-theme .rounded-md,
+.admin-theme .rounded-lg,
+.admin-theme .rounded-sm,
+.admin-theme .rounded-full {
+  border-radius: 0 !important;
+}
+
+.admin-theme .border {
+  border-width: 2px !important;
+}
+
+.admin-theme .shadow-sm,
+.admin-theme [data-radix-popper-content-wrapper] > div {
+  box-shadow: 4px 4px 0px 0px rgba(0,0,0,0.15) !important;
+}
+
+.admin-theme .hover\:bg-muted\/30:hover {
+  background-color: hsl(var(--secondary)) !important;
+}
+
 @layer base {
   * {
     @apply border-border;
