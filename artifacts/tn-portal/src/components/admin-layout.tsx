@@ -9,6 +9,7 @@ import {
   Shield,
   AlertCircle,
   BarChart2,
+  LogOut
 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
@@ -81,32 +82,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     location === href || location.startsWith(href + "/");
 
   return (
-    <div className="admin-theme font-sans text-foreground bg-background flex min-h-[100dvh]">
-      {/* Desktop sidebar - Command Center Brutalist */}
-      <aside className="hidden md:flex w-64 shrink-0 border-r-4 border-stone-800 bg-stone-950 text-stone-300 flex-col">
-        <div className="p-6 border-b border-stone-800">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 bg-primary flex items-center justify-center border-2 border-stone-700 shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
-              <Shield className="h-5 w-5 text-primary-foreground" />
+    <div className="admin-theme font-sans text-foreground bg-stone-50 flex min-h-[100dvh]">
+      {/* Desktop sidebar - Premium Modern Dark */}
+      <aside className="hidden md:flex w-64 shrink-0 bg-[#2C1318] text-stone-300 flex-col border-r border-[#3d1a22] shadow-xl relative z-10">
+        <div className="p-6 border-b border-[#3d1a22]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="h-10 w-10 bg-primary/20 text-primary flex items-center justify-center rounded-xl border border-primary/30 shadow-inner">
+              <Shield className="h-5 w-5 text-red-300" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-bold uppercase tracking-widest text-stone-100 font-serif">
-                CorruptionFreeTN
+              <div className="text-base font-semibold tracking-tight text-white">
+                TN Portal
               </div>
-              <div className="text-[10px] uppercase tracking-wider text-primary font-bold truncate">
-                Command Center
+              <div className="text-[11px] font-medium tracking-wide text-red-300/80 uppercase truncate">
+                Admin Console
               </div>
             </div>
           </div>
-          <div className="bg-stone-900 border border-stone-800 p-3 flex flex-col gap-1">
-            <div className="text-[10px] uppercase tracking-wider text-stone-500 font-semibold">Active Officer</div>
-            <div className="text-xs text-stone-200 truncate">{user?.email || "Unknown"}</div>
-            <div className="text-xs font-mono text-primary truncate mt-1">[{ROLE_LABELS[role] ?? role}]</div>
+          
+          <div className="bg-[#1f0d11] rounded-xl border border-[#3d1a22] p-4 flex flex-col gap-1.5 shadow-inner">
+            <div className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">Signed In</div>
+            <div className="text-sm font-medium text-stone-200 truncate">{user?.email || "Unknown User"}</div>
+            <div className="inline-flex items-center mt-1">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/20 text-red-300 border border-primary/30 font-medium truncate">
+                {ROLE_LABELS[role] ?? role}
+              </span>
+            </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          <div className="text-[10px] uppercase tracking-widest text-stone-500 font-bold mb-3 pl-2">Operations</div>
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+          <div className="text-[10px] uppercase font-semibold text-stone-500 tracking-wider mb-4 px-2">Navigation</div>
           {visibleItems.map((item) => {
             const active = isActive(item.href);
             return (
@@ -114,49 +120,50 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Button
                   variant="ghost"
                   className={cn(
-                    "w-full justify-start gap-3 h-10 text-sm font-bold rounded-none border border-transparent transition-all",
+                    "w-full justify-start gap-3 h-10 text-sm font-medium rounded-lg transition-all border border-transparent",
                     active
-                      ? "bg-stone-800 text-stone-100 border-l-4 border-l-primary"
-                      : "text-stone-400 hover:text-stone-100 hover:bg-stone-900 hover:border-stone-700",
+                      ? "bg-[#3d1a22] text-white border-[#4d212b] shadow-sm"
+                      : "text-stone-400 hover:text-stone-100 hover:bg-[#3d1a22]/50",
                   )}
                 >
                   {item.icon}
-                  <span className="uppercase tracking-wider text-xs">{item.label}</span>
+                  <span>{item.label}</span>
                 </Button>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-stone-800 bg-stone-950">
+        <div className="p-4 border-t border-[#3d1a22] bg-[#2C1318]">
           <Link href="/">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="w-full justify-start text-xs uppercase font-bold tracking-widest bg-stone-900 border-stone-700 text-stone-300 hover:bg-stone-800 hover:text-white rounded-none"
+              className="w-full justify-start text-xs font-medium bg-[#1f0d11] text-stone-400 hover:bg-[#3d1a22] hover:text-white rounded-lg border border-[#3d1a22]"
             >
-              ← Public Portal
+              <LogOut className="h-3.5 w-3.5 mr-2" />
+              Exit to Public Portal
             </Button>
           </Link>
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 flex flex-col relative">
+      <div className="flex-1 min-w-0 flex flex-col relative bg-background">
         {/* Mobile top nav */}
-        <div className="md:hidden sticky top-0 z-20 border-b-2 border-stone-800 bg-stone-950 px-2 py-2 overflow-x-auto shadow-md">
+        <div className="md:hidden sticky top-0 z-20 border-b border-border/50 bg-background/95 backdrop-blur-sm px-2 py-2 overflow-x-auto shadow-sm">
           <div className="flex items-center gap-2 min-w-max">
             {visibleItems.map((item) => {
               const active = isActive(item.href);
               return (
-                <Link key={item.href} href={item.href}>
+               <Link key={item.href} href={item.href}>
                   <Button
                     variant="ghost"
                     size="sm"
                     className={cn(
-                      "h-9 gap-1.5 text-xs font-bold uppercase tracking-wider rounded-none border border-transparent transition-all",
+                      "h-9 gap-1.5 text-xs font-medium rounded-full transition-all border",
                       active
-                        ? "bg-stone-800 text-stone-100 border-b-2 border-b-primary"
-                        : "text-stone-400 hover:text-stone-100 hover:bg-stone-900",
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/50",
                     )}
                   >
                     {item.icon}
@@ -168,8 +175,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        <main className="flex-1 overflow-auto bg-background p-4 md:p-8">
-          <div className="max-w-[1600px] mx-auto">
+        <main className="flex-1 overflow-auto p-4 md:p-8">
+          <div className="max-w-[1600px] mx-auto animate-in fade-in duration-500">
             {children}
           </div>
         </main>
@@ -190,7 +197,7 @@ export function RoleGate({
   if (!isLoaded) {
     return (
       <div className="flex justify-center items-center py-24 admin-theme bg-background min-h-[100dvh]">
-        <div className="animate-spin rounded-none h-8 w-8 border-4 border-primary border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent" />
       </div>
     );
   }
@@ -198,17 +205,18 @@ export function RoleGate({
   if (!roles.includes(role)) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center px-4 admin-theme bg-background min-h-[100dvh]">
-        <div className="border-4 border-destructive p-8 bg-card shadow-[8px_8px_0px_0px_rgba(0,0,0,0.1)] max-w-md w-full">
-          <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-          <h2 className="text-2xl font-black uppercase tracking-wider mb-2 font-serif">Clearance Denied</h2>
-          <div className="h-1 w-16 bg-destructive mx-auto mb-4"></div>
+        <div className="max-w-md w-full bg-card rounded-2xl shadow-xl border border-border/50 p-8 animate-in zoom-in-95 duration-300">
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight mb-2 text-foreground">Access Restricted</h2>
           <p className="text-muted-foreground text-sm mb-6">
-            Insufficient clearance level. Your current designation is{" "}
-            <span className="font-mono text-destructive bg-destructive/10 px-1 py-0.5 font-bold">[{ROLE_LABELS[role] ?? role}]</span>.
+            You do not have the required authorization level to view this console. Your current designation is{" "}
+            <span className="font-medium text-foreground">{ROLE_LABELS[role] ?? role}</span>.
           </p>
           <Link href="/">
-            <Button variant="default" size="lg" className="uppercase font-bold tracking-widest rounded-none shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)]">
-              Return to Base
+            <Button variant="default" size="lg" className="w-full rounded-xl">
+              Return to Public Portal
             </Button>
           </Link>
         </div>

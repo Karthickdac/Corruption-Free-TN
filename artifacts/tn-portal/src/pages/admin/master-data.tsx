@@ -24,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, Trash2, Plus, Building2, MapPin, Tag, Settings } from "lucide-react";
+import { Pencil, Trash2, Plus, Building2, MapPin, Tag, Settings, Save } from "lucide-react";
 import { PageHeader } from "@/components/admin/page-header";
 
 type Tab = "departments" | "districts" | "categories" | "settings";
@@ -107,65 +107,86 @@ function DepartmentsTab() {
     );
   }
 
-  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="py-16 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div></div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => { setNameInput(""); setAddOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Add Department
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div>
+          <h3 className="text-lg font-semibold">Government Departments</h3>
+          <p className="text-sm text-muted-foreground mt-1">Manage the list of departments available for complaints.</p>
+        </div>
+        <Button onClick={() => { setNameInput(""); setAddOpen(true); }} className="rounded-lg shadow-sm">
+          <Plus className="h-4 w-4 mr-2" /> Add Department
         </Button>
       </div>
-      <div className="rounded-md border divide-y divide-border">
+      
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         {departments.length === 0 && (
-          <div className="py-8 text-center text-muted-foreground text-sm">No departments yet.</div>
+          <div className="py-16 text-center text-muted-foreground text-sm">No departments configured yet.</div>
         )}
-        {departments.map((d) => (
-          <div key={d.id} className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm font-medium">{d.name}</span>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem({ id: d.id, name: d.name }); setNameInput(d.name); }}>
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(d.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+        <div className="divide-y divide-border/60">
+          {departments.map((d) => (
+            <div key={d.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors">
+              <span className="text-sm font-medium text-foreground">{d.name}</span>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => { setEditItem({ id: d.id, name: d.name }); setNameInput(d.name); }}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(d.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Department</DialogTitle></DialogHeader>
-          <Input placeholder="Department name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAdd()} />
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAdd} disabled={createMut.isPending}>Create</Button>
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Add Department</DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Department Name</label>
+              <Input placeholder="Enter name..." className="rounded-xl h-11" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleAdd()} />
+            </div>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm" onClick={handleAdd} disabled={createMut.isPending || !nameInput.trim()}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Edit Department</DialogTitle></DialogHeader>
-          <Input placeholder="Department name" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleEdit()} />
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditItem(null)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={updateMut.isPending}>Save</Button>
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Edit Department</DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Department Name</label>
+              <Input placeholder="Enter name..." className="rounded-xl h-11" value={nameInput} onChange={(e) => setNameInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleEdit()} />
+            </div>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setEditItem(null)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm" onClick={handleEdit} disabled={updateMut.isPending || !nameInput.trim()}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Department?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone. Complaints linked to this department may be affected.</AlertDialogDescription>
+        <AlertDialogContent className="rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <AlertDialogHeader className="px-6 pt-6 pb-2">
+            <AlertDialogTitle className="text-xl">Delete Department?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">This action cannot be undone. Complaints currently linked to this department may be affected.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          <AlertDialogFooter className="px-6 py-4 mt-4 bg-muted/30 border-t border-border/50">
+            <AlertDialogCancel className="rounded-xl mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -224,75 +245,104 @@ function DistrictsTab() {
     );
   }
 
-  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="py-16 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div></div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => { setForm({ name: "", nameTa: "", code: "" }); setAddOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Add District
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div>
+          <h3 className="text-lg font-semibold">Districts</h3>
+          <p className="text-sm text-muted-foreground mt-1">Manage geographic divisions and their identifiers.</p>
+        </div>
+        <Button onClick={() => { setForm({ name: "", nameTa: "", code: "" }); setAddOpen(true); }} className="rounded-lg shadow-sm">
+          <Plus className="h-4 w-4 mr-2" /> Add District
         </Button>
       </div>
-      <div className="rounded-md border divide-y divide-border">
-        {districts.length === 0 && <div className="py-8 text-center text-muted-foreground text-sm">No districts yet.</div>}
-        {districts.map((d) => (
-          <div key={d.id} className="flex items-center justify-between px-4 py-3">
-            <div>
-              <span className="text-sm font-medium">{d.name}</span>
-              {d.nameTa && <span className="ml-2 text-xs text-muted-foreground">{d.nameTa}</span>}
-              <Badge variant="outline" className="ml-2 text-xs">{d.code}</Badge>
+      
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        {districts.length === 0 && <div className="py-16 text-center text-muted-foreground text-sm">No districts configured yet.</div>}
+        <div className="divide-y divide-border/60">
+          {districts.map((d) => (
+            <div key={d.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-foreground">{d.name}</span>
+                {d.nameTa && <span className="ml-3 text-xs text-muted-foreground font-medium">{d.nameTa}</span>}
+                <Badge variant="outline" className="ml-3 text-[10px] font-mono rounded bg-muted/50 border-border/50 text-muted-foreground shadow-none">{d.code}</Badge>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => { setEditItem({ id: d.id, name: d.name, nameTa: d.nameTa ?? "", code: d.code }); setForm({ name: d.name, nameTa: d.nameTa ?? "", code: d.code }); }}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(d.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem({ id: d.id, name: d.name, nameTa: d.nameTa ?? "", code: d.code }); setForm({ name: d.name, nameTa: d.nameTa ?? "", code: d.code }); }}>
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(d.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add District</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Name (English)" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-            <Input placeholder="Name (Tamil)" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
-            <Input placeholder="Code (e.g. CHE)" value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} />
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Add District</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (English)</label>
+              <Input placeholder="e.g. Chennai" className="rounded-xl h-11" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (Tamil)</label>
+              <Input placeholder="e.g. சென்னை" className="rounded-xl h-11" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Code</label>
+              <Input placeholder="e.g. CHE" className="rounded-xl h-11 uppercase" value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAdd} disabled={createMut.isPending}>Create</Button>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm" onClick={handleAdd} disabled={createMut.isPending || !form.name.trim() || !form.code.trim()}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Edit District</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Name (English)" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-            <Input placeholder="Name (Tamil)" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
-            <Input placeholder="Code (e.g. CHE)" value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value }))} />
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Edit District</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (English)</label>
+              <Input placeholder="e.g. Chennai" className="rounded-xl h-11" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (Tamil)</label>
+              <Input placeholder="e.g. சென்னை" className="rounded-xl h-11" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Code</label>
+              <Input placeholder="e.g. CHE" className="rounded-xl h-11 uppercase" value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditItem(null)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={updateMut.isPending}>Save</Button>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setEditItem(null)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm" onClick={handleEdit} disabled={updateMut.isPending || !form.name.trim()}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete District?</AlertDialogTitle>
-            <AlertDialogDescription>This cannot be undone. Complaints in this district may be affected.</AlertDialogDescription>
+        <AlertDialogContent className="rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <AlertDialogHeader className="px-6 pt-6 pb-2">
+            <AlertDialogTitle className="text-xl">Delete District?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">This action cannot be undone. Complaints currently linked to this district may be affected.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          <AlertDialogFooter className="px-6 py-4 mt-4 bg-muted/30 border-t border-border/50">
+            <AlertDialogCancel className="rounded-xl mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -350,75 +400,104 @@ function CategoriesTab() {
     );
   }
 
-  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="py-16 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div></div>;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <Button size="sm" onClick={() => { setForm({ name: "", nameTa: "", description: "" }); setAddOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Add Category
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="flex justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div>
+          <h3 className="text-lg font-semibold">Complaint Categories</h3>
+          <p className="text-sm text-muted-foreground mt-1">Manage the classification options for complaints.</p>
+        </div>
+        <Button onClick={() => { setForm({ name: "", nameTa: "", description: "" }); setAddOpen(true); }} className="rounded-lg shadow-sm">
+          <Plus className="h-4 w-4 mr-2" /> Add Category
         </Button>
       </div>
-      <div className="rounded-md border divide-y divide-border">
-        {categories.length === 0 && <div className="py-8 text-center text-muted-foreground text-sm">No categories yet.</div>}
-        {categories.map((c) => (
-          <div key={c.id} className="flex items-center justify-between px-4 py-3">
-            <div>
-              <span className="text-sm font-medium">{c.name}</span>
-              {c.nameTa && <span className="ml-2 text-xs text-muted-foreground">{c.nameTa}</span>}
-              {c.description && <p className="text-xs text-muted-foreground mt-0.5">{c.description}</p>}
+      
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        {categories.length === 0 && <div className="py-16 text-center text-muted-foreground text-sm">No categories configured yet.</div>}
+        <div className="divide-y divide-border/60">
+          {categories.map((c) => (
+            <div key={c.id} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors">
+              <div>
+                <span className="text-sm font-medium text-foreground">{c.name}</span>
+                {c.nameTa && <span className="ml-3 text-xs text-muted-foreground font-medium">{c.nameTa}</span>}
+                {c.description && <p className="text-xs text-muted-foreground mt-1.5">{c.description}</p>}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10" onClick={() => { setEditItem({ id: c.id }); setForm({ name: c.name, nameTa: c.nameTa ?? "", description: c.description ?? "" }); }}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(c.id)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditItem({ id: c.id }); setForm({ name: c.name, nameTa: c.nameTa ?? "", description: c.description ?? "" }); }}>
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteId(c.id)}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Add Category</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Name (English)" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-            <Input placeholder="Name (Tamil)" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
-            <Input placeholder="Description (optional)" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Add Category</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (English)</label>
+              <Input placeholder="Enter name..." className="rounded-xl h-11" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (Tamil)</label>
+              <Input placeholder="Enter translated name..." className="rounded-xl h-11" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Description (Optional)</label>
+              <Input placeholder="Brief explanation..." className="rounded-xl h-11" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button onClick={handleAdd} disabled={createMut.isPending}>Create</Button>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setAddOpen(false)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm" onClick={handleAdd} disabled={createMut.isPending || !form.name.trim()}>Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <Dialog open={!!editItem} onOpenChange={(o) => !o && setEditItem(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Edit Category</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Name (English)" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
-            <Input placeholder="Name (Tamil)" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
-            <Input placeholder="Description (optional)" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
+          </DialogHeader>
+          <div className="p-6 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (English)</label>
+              <Input placeholder="Enter name..." className="rounded-xl h-11" value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Name (Tamil)</label>
+              <Input placeholder="Enter translated name..." className="rounded-xl h-11" value={form.nameTa} onChange={(e) => setForm((f) => ({ ...f, nameTa: e.target.value }))} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Description (Optional)</label>
+              <Input placeholder="Brief explanation..." className="rounded-xl h-11" value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
+            </div>
           </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditItem(null)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={updateMut.isPending}>Save</Button>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setEditItem(null)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm" onClick={handleEdit} disabled={updateMut.isPending || !form.name.trim()}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={deleteId !== null} onOpenChange={(o) => !o && setDeleteId(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-            <AlertDialogDescription>This cannot be undone. Complaints in this category may be affected.</AlertDialogDescription>
+        <AlertDialogContent className="rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <AlertDialogHeader className="px-6 pt-6 pb-2">
+            <AlertDialogTitle className="text-xl">Delete Category?</AlertDialogTitle>
+            <AlertDialogDescription className="text-base">This action cannot be undone. Complaints currently linked to this category may be affected.</AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          <AlertDialogFooter className="px-6 py-4 mt-4 bg-muted/30 border-t border-border/50">
+            <AlertDialogCancel className="rounded-xl mt-0">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -450,34 +529,51 @@ function SettingsTab() {
     );
   }
 
-  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading…</div>;
+  if (isLoading) return <div className="py-16 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div></div>;
 
   return (
-    <div className="space-y-4">
-      {settings.length === 0 && (
-        <div className="py-8 text-center text-muted-foreground text-sm">No settings configured.</div>
-      )}
-      <div className="rounded-md border divide-y divide-border">
-        {settings.map((s) => (
-          <div key={s.key} className="flex items-center justify-between px-4 py-3">
-            <div>
-              <span className="text-sm font-mono font-medium">{s.key}</span>
-              <p className="text-xs text-muted-foreground">{s.value ?? <em>not set</em>}</p>
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
+         <h3 className="text-lg font-semibold">System Settings</h3>
+         <p className="text-sm text-muted-foreground mt-1">Configure global application parameters and feature flags.</p>
+      </div>
+
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        {settings.length === 0 && (
+          <div className="py-16 text-center text-muted-foreground text-sm">No settings configured.</div>
+        )}
+        <div className="divide-y divide-border/60">
+          {settings.map((s) => (
+            <div key={s.key} className="flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors">
+              <div>
+                <span className="text-sm font-mono font-medium text-foreground bg-muted/50 px-2 py-0.5 rounded-md border border-border/50">{s.key}</span>
+                <p className="text-sm text-muted-foreground mt-2 font-medium">{s.value ?? <em className="opacity-50">not set</em>}</p>
+              </div>
+              <Button variant="ghost" size="sm" className="rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 gap-2 font-medium" onClick={() => { setEditKey(s.key); setValueInput(s.value ?? ""); }}>
+                <Pencil className="h-3.5 w-3.5" /> Modify
+              </Button>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditKey(s.key); setValueInput(s.value ?? ""); }}>
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       <Dialog open={!!editKey} onOpenChange={(o) => !o && setEditKey(null)}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>Edit Setting: <code>{editKey}</code></DialogTitle></DialogHeader>
-          <Input placeholder="Value" value={valueInput} onChange={(e) => setValueInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSave()} />
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEditKey(null)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={updateMut.isPending}>Save</Button>
+        <DialogContent className="sm:max-w-md rounded-2xl p-0 overflow-hidden border-border/50 shadow-xl">
+          <DialogHeader className="px-6 py-4 bg-muted/30 border-b border-border/50">
+            <DialogTitle className="text-lg font-semibold">Edit Setting</DialogTitle>
+            <CardDescription className="font-mono text-xs mt-1 text-primary">{editKey}</CardDescription>
+          </DialogHeader>
+          <div className="p-6">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Value</label>
+              <Input placeholder="Enter value..." className="rounded-xl h-11" value={valueInput} onChange={(e) => setValueInput(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleSave()} />
+            </div>
+          </div>
+          <DialogFooter className="px-6 py-4 bg-muted/30 border-t border-border/50">
+            <Button variant="ghost" className="rounded-xl" onClick={() => setEditKey(null)}>Cancel</Button>
+            <Button className="rounded-xl shadow-sm gap-2" onClick={handleSave} disabled={updateMut.isPending}>
+               <Save className="h-4 w-4" /> Save Changes
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -493,42 +589,37 @@ export default function AdminMasterData() {
   return (
     <AdminLayout>
       <RoleGate roles={["super_admin"]}>
-        <div className="p-6 max-w-4xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-bold">Master Data</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Manage reference data used across the portal — departments, districts, complaint categories, and system settings.
-            </p>
+        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+          <PageHeader
+            title="Master Data Management"
+            description="Configure and manage system reference data, geographic divisions, and global parameters."
+          />
+
+          <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden p-2">
+            <div className="flex flex-wrap gap-2">
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    activeTab === tab.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="flex gap-1 border-b border-border/60">
-            {TABS.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab.id
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tab.icon}
-                {tab.label}
-              </button>
-            ))}
+          <div className="min-h-[400px]">
+            {activeTab === "departments" && <DepartmentsTab />}
+            {activeTab === "districts" && <DistrictsTab />}
+            {activeTab === "categories" && <CategoriesTab />}
+            {activeTab === "settings" && <SettingsTab />}
           </div>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">{TABS.find((t) => t.id === activeTab)?.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activeTab === "departments" && <DepartmentsTab />}
-              {activeTab === "districts" && <DistrictsTab />}
-              {activeTab === "categories" && <CategoriesTab />}
-              {activeTab === "settings" && <SettingsTab />}
-            </CardContent>
-          </Card>
         </div>
       </RoleGate>
     </AdminLayout>

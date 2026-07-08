@@ -84,7 +84,7 @@ function ComplaintDetailContent() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListCaseNotesQueryKey(complaintId) });
         setNoteContent("");
-        toast({ title: "Note recorded" });
+        toast({ title: "Note recorded successfully" });
       },
       onError: (err: { message?: string }) => {
         toast({ title: "Operation failed", description: err?.message, variant: "destructive" });
@@ -96,14 +96,14 @@ function ComplaintDetailContent() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetComplaintByIdQueryKey(complaintId) });
-        toast({ title: "Investigation report submitted successfully" });
+        toast({ title: "Investigation report submitted" });
         setReportSummary("");
         setReportFindings("");
         setReportRecommendation("");
         setReportNotes("");
       },
       onError: (err: { message?: string }) => {
-        toast({ title: "Submission failed", description: err?.message, variant: "destructive" });
+        toast({ title: "Failed to submit report", description: err?.message, variant: "destructive" });
       },
     },
   });
@@ -124,16 +124,18 @@ function ComplaintDetailContent() {
 
   if (!complaint) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-in fade-in duration-500">
         <Link href="/admin/dashboard">
-          <Button variant="ghost" className="rounded-none font-bold uppercase tracking-wider text-xs gap-2 border-2 border-transparent hover:border-stone-300">
-            <ArrowLeft className="h-4 w-4" /> Back to Base
+          <Button variant="ghost" className="rounded-lg gap-2 font-medium">
+            <ArrowLeft className="h-4 w-4" /> Back to Dashboard
           </Button>
         </Link>
-        <div className="border-4 border-dashed border-stone-300 p-16 text-center text-stone-500 bg-white">
-          <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-          <p className="text-sm font-bold uppercase tracking-wider">
-            {isNaN(complaintId) ? "INVALID FILE IDENTIFIER." : "FILE NOT FOUND OR FETCHING DATA..."}
+        <div className="border border-dashed border-border/60 p-16 text-center text-muted-foreground bg-card rounded-2xl shadow-sm">
+          <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <p className="text-base font-medium">
+            {isNaN(complaintId) ? "Invalid file identifier" : "File not found or still fetching..."}
           </p>
         </div>
       </div>
@@ -141,82 +143,90 @@ function ComplaintDetailContent() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b-4 border-stone-800 pb-6">
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6">
         <div>
           <Link href="/admin/dashboard">
-            <Button variant="ghost" size="sm" className="mb-4 rounded-none font-bold uppercase tracking-wider text-[10px] h-7 gap-1 border-2 border-transparent hover:border-stone-300 bg-stone-100 hover:bg-white text-stone-600">
-              <ArrowLeft className="h-3 w-3" /> Dashboard
+            <Button variant="ghost" size="sm" className="mb-4 rounded-lg h-8 gap-1.5 text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="h-3.5 w-3.5" /> Dashboard
             </Button>
           </Link>
-          <div className="flex items-center gap-3 flex-wrap mb-2">
-            <span className="text-sm font-mono font-black bg-stone-900 text-white px-2 py-0.5">{complaint.complaintNumber}</span>
+          <div className="flex items-center gap-3 flex-wrap mb-3">
+            <span className="text-sm font-mono font-semibold bg-muted px-2.5 py-1 rounded-md text-foreground">
+              {complaint.complaintNumber}
+            </span>
             <StatusBadge status={complaint.status} />
             <PriorityBadge priority={complaint.priority} />
             {complaint.isOverdue && (
-              <Badge className="rounded-none bg-red-600 text-white border-red-800 text-[10px] px-1.5 py-0 font-bold uppercase tracking-widest border-2">SLA BREACH</Badge>
+              <Badge variant="destructive" className="rounded-full text-[11px] px-2.5 py-0.5 font-medium shadow-sm">
+                SLA Breach
+              </Badge>
             )}
           </div>
-          <h1 className="text-3xl font-black font-serif text-stone-900 leading-tight max-w-4xl">{complaint.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground leading-tight max-w-4xl">
+            {complaint.title}
+          </h1>
         </div>
-        <div className="text-right shrink-0">
-          <div className="text-[10px] uppercase font-bold tracking-widest text-stone-500 mb-1">Filed On</div>
-          <div className="font-mono font-bold text-stone-900">{new Date(complaint.createdAt).toLocaleDateString()} {new Date(complaint.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+        <div className="text-left md:text-right shrink-0 bg-card border border-border/50 px-4 py-3 rounded-xl shadow-sm">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Filed On</div>
+          <div className="font-medium text-foreground">
+            {new Date(complaint.createdAt).toLocaleDateString()} <span className="text-muted-foreground">at</span> {new Date(complaint.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </div>
         </div>
       </div>
 
       <Tabs defaultValue="details" className="w-full">
-        <TabsList className="w-full h-auto flex-wrap justify-start rounded-none border-b-2 border-stone-200 bg-transparent p-0 gap-2">
-          <TabsTrigger value="details" className="rounded-none border-2 border-transparent data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-white font-bold uppercase tracking-wider text-xs py-2 px-4">
-            <FileText className="h-4 w-4 mr-2" /> File Details
+        <TabsList className="w-full h-auto flex-wrap justify-start bg-transparent p-0 gap-2 border-b border-border/40 pb-px">
+          <TabsTrigger value="details" className="rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:shadow-sm px-4 py-2.5 font-medium transition-all">
+            <FileText className="h-4 w-4 mr-2 text-muted-foreground" /> File Details
           </TabsTrigger>
-          <TabsTrigger value="evidence" className="rounded-none border-2 border-transparent data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-white font-bold uppercase tracking-wider text-xs py-2 px-4" data-testid="tab-evidence">
-            <Paperclip className="h-4 w-4 mr-2" /> Evidence
+          <TabsTrigger value="evidence" className="rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:shadow-sm px-4 py-2.5 font-medium transition-all" data-testid="tab-evidence">
+            <Paperclip className="h-4 w-4 mr-2 text-muted-foreground" /> Evidence
           </TabsTrigger>
-          <TabsTrigger value="notes" className="rounded-none border-2 border-transparent data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-white font-bold uppercase tracking-wider text-xs py-2 px-4">
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Notes {caseNotes.length > 0 && <span className="ml-1 opacity-70">({caseNotes.length})</span>}
+          <TabsTrigger value="notes" className="rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:shadow-sm px-4 py-2.5 font-medium transition-all">
+            <MessageSquare className="h-4 w-4 mr-2 text-muted-foreground" />
+            Notes {caseNotes.length > 0 && <span className="ml-1.5 inline-flex items-center justify-center bg-muted text-muted-foreground text-[10px] rounded-full px-1.5 min-w-[1.25rem]">{caseNotes.length}</span>}
           </TabsTrigger>
-          <TabsTrigger value="workflow" className="rounded-none border-2 border-transparent data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-white font-bold uppercase tracking-wider text-xs py-2 px-4">
-            <Clock className="h-4 w-4 mr-2" /> Workflow
+          <TabsTrigger value="workflow" className="rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:shadow-sm px-4 py-2.5 font-medium transition-all">
+            <Clock className="h-4 w-4 mr-2 text-muted-foreground" /> Workflow
           </TabsTrigger>
-          <TabsTrigger value="report" className="rounded-none border-2 border-transparent data-[state=active]:border-stone-900 data-[state=active]:bg-stone-900 data-[state=active]:text-white font-bold uppercase tracking-wider text-xs py-2 px-4">
-            <ShieldCheck className="h-4 w-4 mr-2" /> Investigation
+          <TabsTrigger value="report" className="rounded-t-lg rounded-b-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-card data-[state=active]:shadow-sm px-4 py-2.5 font-medium transition-all">
+            <ShieldCheck className="h-4 w-4 mr-2 text-muted-foreground" /> Investigation
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="details" className="space-y-6 mt-6 outline-none">
+        <TabsContent value="details" className="space-y-6 mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-6">
-              <Card className="rounded-none border-2 border-stone-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-                <CardHeader className="bg-stone-100 border-b-2 border-stone-200 py-3">
-                  <CardTitle className="text-sm font-black uppercase tracking-widest">Incident Description</CardTitle>
+              <Card className="rounded-2xl shadow-sm border-border/50">
+                <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+                  <CardTitle className="text-base font-semibold">Incident Description</CardTitle>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <p className="whitespace-pre-wrap text-stone-800 font-medium leading-relaxed">
+                  <p className="whitespace-pre-wrap text-foreground/90 font-medium leading-relaxed text-sm md:text-base">
                     {complaint.description}
                   </p>
                 </CardContent>
               </Card>
 
               {complaint.statusHistory && complaint.statusHistory.length > 0 && (
-                <Card className="rounded-none border-2 border-stone-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-                  <CardHeader className="bg-stone-100 border-b-2 border-stone-200 py-3">
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">Chain of Custody</CardTitle>
+                <Card className="rounded-2xl shadow-sm border-border/50">
+                  <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+                    <CardTitle className="text-base font-semibold">Chain of Custody</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6">
-                    <div className="space-y-6 border-l-2 border-stone-200 pl-4 ml-2">
+                    <div className="space-y-6 border-l-2 border-muted pl-5 ml-2 relative">
                       {complaint.statusHistory.map((h, i) => (
                         <div key={i} className="relative">
-                          <div className="absolute w-3 h-3 bg-stone-900 rounded-none -left-[23px] top-1 border-2 border-white" />
-                          <div className="flex items-center gap-3 mb-1">
-                            <StatusBadge status={h.status} className="border" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">
+                          <div className="absolute w-3.5 h-3.5 bg-background rounded-full -left-[27px] top-1 border-2 border-primary shadow-sm" />
+                          <div className="flex items-center gap-3 mb-1.5">
+                            <StatusBadge status={h.status} className="shadow-none" />
+                            <span className="text-xs font-medium text-muted-foreground">
                               {new Date(h.changedAt).toLocaleString()}
                             </span>
                           </div>
                           {h.note && (
-                            <div className="mt-2 bg-stone-50 p-3 border-l-4 border-stone-300 text-sm font-medium text-stone-700">
+                            <div className="mt-2 bg-muted/30 p-3.5 rounded-xl border border-border/40 text-sm text-foreground">
                               {h.note}
                             </div>
                           )}
@@ -229,12 +239,12 @@ function ComplaintDetailContent() {
             </div>
 
             <div className="space-y-6">
-              <Card className="rounded-none border-2 border-stone-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)]">
-                <CardHeader className="bg-stone-100 border-b-2 border-stone-200 py-3">
-                  <CardTitle className="text-sm font-black uppercase tracking-widest">Metadata</CardTitle>
+              <Card className="rounded-2xl shadow-sm border-border/50">
+                <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+                  <CardTitle className="text-base font-semibold">Metadata</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <dl className="divide-y divide-stone-200">
+                  <dl className="divide-y divide-border/40">
                     {(
                       [
                         complaint.districtName ? ["District", complaint.districtName] : null,
@@ -252,9 +262,9 @@ function ComplaintDetailContent() {
                     )
                       .filter((item): item is [string, string] => item !== null)
                       .map(([label, value]) => (
-                        <div key={label} className="p-4 flex flex-col gap-1">
-                          <dt className="text-[10px] font-black uppercase tracking-widest text-stone-500">{label}</dt>
-                          <dd className="text-sm font-bold text-stone-900">{value}</dd>
+                        <div key={label} className="p-4 flex flex-col gap-1 hover:bg-muted/10 transition-colors">
+                          <dt className="text-xs font-medium text-muted-foreground">{label}</dt>
+                          <dd className="text-sm font-semibold text-foreground">{value}</dd>
                         </div>
                       ))}
                   </dl>
@@ -264,64 +274,64 @@ function ComplaintDetailContent() {
           </div>
         </TabsContent>
 
-        <TabsContent value="evidence" className="mt-6 outline-none">
+        <TabsContent value="evidence" className="mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
           <EvidenceGallery complaintId={complaintId} />
         </TabsContent>
 
-        <TabsContent value="notes" className="mt-6 outline-none">
+        <TabsContent value="notes" className="mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 order-last lg:order-first">
-              <Card className="rounded-none border-2 border-stone-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] sticky top-6">
-                <CardHeader className="bg-stone-100 border-b-2 border-stone-200 py-3">
-                  <CardTitle className="text-sm font-black uppercase tracking-widest">Append Record</CardTitle>
+              <Card className="rounded-2xl shadow-sm border-border/50 sticky top-6">
+                <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+                  <CardTitle className="text-base font-semibold">Append Record</CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 space-y-4">
+                <CardContent className="p-6 space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Record Type</label>
+                    <label className="text-sm font-medium text-foreground">Record Type</label>
                     <Select value={noteType} onValueChange={(v) => setNoteType(v as CaseNoteInputNoteType)}>
-                      <SelectTrigger className="rounded-none border-2 h-10 font-bold text-xs uppercase tracking-wider">
+                      <SelectTrigger className="rounded-xl h-11 transition-colors">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent className="rounded-none border-2">
+                      <SelectContent className="rounded-xl">
                         {Object.entries(NOTE_TYPE_LABELS).map(([v, l]) => (
-                          <SelectItem key={v} value={v} className="font-bold text-xs uppercase tracking-wider">{l}</SelectItem>
+                          <SelectItem key={v} value={v}>{l}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Visibility</label>
-                    <div className="flex bg-stone-100 border-2 border-stone-200 p-1">
+                    <label className="text-sm font-medium text-foreground">Visibility</label>
+                    <div className="flex bg-muted/50 p-1 rounded-xl">
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`flex-1 rounded-none text-xs font-bold uppercase tracking-wider h-8 ${isInternal ? 'bg-amber-100 text-amber-900 shadow-sm border-2 border-amber-300' : 'text-stone-500 hover:text-stone-900'}`}
+                        className={`flex-1 rounded-lg text-sm font-medium h-9 transition-all ${isInternal ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                         onClick={() => setIsInternal(true)}
                       >
-                        <EyeOff className="h-3 w-3 mr-2" /> Internal
+                        <EyeOff className="h-4 w-4 mr-2 text-amber-500" /> Internal
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className={`flex-1 rounded-none text-xs font-bold uppercase tracking-wider h-8 ${!isInternal ? 'bg-white text-stone-900 shadow-sm border-2 border-stone-300' : 'text-stone-500 hover:text-stone-900'}`}
+                        className={`flex-1 rounded-lg text-sm font-medium h-9 transition-all ${!isInternal ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                         onClick={() => setIsInternal(false)}
                       >
-                        <Eye className="h-3 w-3 mr-2" /> Public
+                        <Eye className="h-4 w-4 mr-2 text-emerald-500" /> Public
                       </Button>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Content</label>
+                    <label className="text-sm font-medium text-foreground">Content</label>
                     <Textarea
-                      placeholder="ENTER LOG DETAILS..."
+                      placeholder="Enter log details..."
                       value={noteContent}
                       onChange={(e) => setNoteContent(e.target.value)}
                       rows={5}
-                      className="rounded-none border-2 resize-none font-medium text-sm p-3 focus:ring-0 focus:border-stone-900"
+                      className="rounded-xl resize-none font-normal text-sm transition-colors"
                     />
                   </div>
                   <Button
-                    className="w-full rounded-none font-black uppercase tracking-widest shadow-[2px_2px_0px_0px_rgba(0,0,0,0.2)]"
+                    className="w-full rounded-xl font-medium shadow-sm"
                     disabled={!noteContent.trim() || addNote.isPending}
                     onClick={() =>
                       addNote.mutate({
@@ -330,47 +340,53 @@ function ComplaintDetailContent() {
                       })
                     }
                   >
-                    {addNote.isPending ? "SAVING..." : "COMMIT TO RECORD"}
+                    {addNote.isPending ? "Saving..." : "Commit to Record"}
                   </Button>
                 </CardContent>
               </Card>
             </div>
             <div className="lg:col-span-2">
               {notesLoading ? (
-                <div className="flex justify-center py-12">
-                  <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent" />
+                <div className="flex justify-center py-16">
+                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
                 </div>
               ) : caseNotes.length === 0 ? (
-                <div className="border-4 border-dashed border-stone-300 p-16 text-center text-stone-500 bg-white">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-sm font-bold uppercase tracking-wider">No officer notes recorded.</p>
+                <div className="border border-dashed border-border/60 rounded-2xl p-16 text-center bg-card shadow-sm">
+                  <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <h3 className="text-lg font-medium text-foreground mb-1">No notes yet</h3>
+                  <p className="text-sm text-muted-foreground">Add notes to track investigation progress.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
                   {caseNotes.map((note) => (
-                    <Card key={note.id} className={`rounded-none border-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] ${note.isInternal ? "border-amber-400 bg-amber-50/30" : "border-stone-300 bg-white"}`}>
-                      <CardContent className="p-5">
-                        <div className="flex items-center gap-3 mb-3 border-b-2 border-stone-100 pb-3">
-                          <Badge variant="outline" className="rounded-none text-[10px] font-bold uppercase tracking-widest border-2 border-stone-300 bg-stone-100 text-stone-700">
+                    <Card key={note.id} className={`rounded-2xl overflow-hidden transition-colors ${note.isInternal ? "border-amber-200/50 bg-amber-50/10" : "border-border/50 bg-card"}`}>
+                      <CardContent className="p-0">
+                        <div className={`px-5 py-3 border-b flex items-center gap-3 ${note.isInternal ? 'bg-amber-50/50 border-amber-100' : 'bg-muted/20 border-border/40'}`}>
+                          <Badge variant="secondary" className="rounded-full text-[10px] font-medium px-2 shadow-none bg-background">
                             {NOTE_TYPE_LABELS[note.noteType] ?? note.noteType}
                           </Badge>
                           <Badge
                             variant="outline"
-                            className={`rounded-none text-[10px] font-bold uppercase tracking-widest border-2 ${note.isInternal ? "border-amber-400 bg-amber-100 text-amber-900" : "border-emerald-400 bg-emerald-100 text-emerald-900"}`}
+                            className={`rounded-full text-[10px] font-medium px-2 shadow-none border-transparent ${note.isInternal ? "bg-amber-100/50 text-amber-700" : "bg-emerald-100/50 text-emerald-700"}`}
                           >
-                            {note.isInternal ? "INTERNAL ONLY" : "PUBLIC VISIBLE"}
+                            {note.isInternal ? "Internal Only" : "Public"}
                           </Badge>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 ml-auto text-right">
-                            {new Date(note.createdAt).toLocaleString()}
+                          <span className="text-xs font-medium text-muted-foreground ml-auto">
+                            {new Date(note.createdAt).toLocaleString(undefined, {
+                              year: 'numeric', month: 'short', day: 'numeric',
+                              hour: '2-digit', minute: '2-digit'
+                            })}
                           </span>
                         </div>
-                        <div className="flex gap-4">
-                          <div className="w-10 h-10 bg-stone-200 border-2 border-stone-300 shrink-0 flex items-center justify-center font-bold text-stone-500">
+                        <div className="p-5 flex gap-4">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 text-primary shrink-0 flex items-center justify-center font-bold text-sm shadow-inner">
                             {note.authorName ? note.authorName.charAt(0).toUpperCase() : "O"}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black uppercase tracking-widest text-stone-800 mb-2">{note.authorName ?? "OFFICER"}</p>
-                            <p className="text-sm font-medium text-stone-900 whitespace-pre-wrap leading-relaxed">{note.content}</p>
+                          <div className="flex-1 min-w-0 pt-0.5">
+                            <p className="text-sm font-semibold text-foreground mb-2">{note.authorName ?? "Officer"}</p>
+                            <p className="text-sm font-normal text-foreground/80 whitespace-pre-wrap leading-relaxed">{note.content}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -382,44 +398,44 @@ function ComplaintDetailContent() {
           </div>
         </TabsContent>
 
-        <TabsContent value="workflow" className="mt-6 outline-none">
-          <Card className="rounded-none border-2 border-stone-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] max-w-2xl">
-            <CardHeader className="bg-stone-100 border-b-2 border-stone-200 py-4">
-              <CardTitle className="text-sm font-black uppercase tracking-widest">Execute State Transition</CardTitle>
+        <TabsContent value="workflow" className="mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <Card className="rounded-2xl shadow-sm border-border/50 max-w-2xl">
+            <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+              <CardTitle className="text-base font-semibold">Execute State Transition</CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6">
-              <div className="flex items-center gap-4 bg-stone-50 p-4 border border-stone-200">
-                <span className="text-[10px] font-black uppercase tracking-widest text-stone-500">Current State:</span>
-                <StatusBadge status={complaint.status} className="text-sm py-1" />
+              <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+                <span className="text-sm font-medium text-muted-foreground">Current State:</span>
+                <StatusBadge status={complaint.status} className="shadow-none text-sm px-3 py-1" />
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Target State</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Target State</label>
                 <Select value={newStatus} onValueChange={setNewStatus}>
-                  <SelectTrigger className="rounded-none border-2 h-12 font-bold uppercase tracking-wider text-sm">
-                    <SelectValue placeholder="SELECT TARGET STATE..." />
+                  <SelectTrigger className="rounded-xl h-12 font-medium">
+                    <SelectValue placeholder="Select target state..." />
                   </SelectTrigger>
-                  <SelectContent className="rounded-none border-2">
+                  <SelectContent className="rounded-xl">
                     {(ALLOWED_TRANSITIONS[complaint.status] ?? []).map((s) => (
-                      <SelectItem key={s} value={s} className="font-bold uppercase tracking-wider text-xs">{STATUS_LABELS[s] ?? s}</SelectItem>
+                      <SelectItem key={s} value={s}>{STATUS_LABELS[s] ?? s}</SelectItem>
                     ))}
                     {(ALLOWED_TRANSITIONS[complaint.status] ?? []).length === 0 && (
-                      <div className="p-4 text-xs font-bold text-stone-500 uppercase text-center">No transitions available from current state</div>
+                      <div className="p-4 text-sm font-medium text-muted-foreground text-center">No transitions available from current state</div>
                     )}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Transition Justification (Optional)</label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Transition Justification (Optional)</label>
                 <Textarea
-                  placeholder="ENTER REASONING FOR THIS TRANSITION..."
+                  placeholder="Enter reasoning for this transition..."
                   value={statusNote}
                   onChange={(e) => setStatusNote(e.target.value)}
                   rows={3}
-                  className="rounded-none border-2 resize-none font-medium text-sm focus:ring-0 focus:border-stone-900"
+                  className="rounded-xl resize-none font-normal text-sm transition-colors"
                 />
               </div>
               <Button
-                className="w-full h-12 rounded-none font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] text-sm"
+                className="w-full h-12 rounded-xl font-medium shadow-sm text-sm"
                 disabled={!newStatus || updateStatus.isPending}
                 onClick={() =>
                   updateStatus.mutate({
@@ -428,138 +444,120 @@ function ComplaintDetailContent() {
                   })
                 }
               >
-                {updateStatus.isPending ? "EXECUTING..." : "AUTHORIZE TRANSITION"}
+                {updateStatus.isPending ? "Executing..." : "Authorize Transition"}
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="report" className="mt-6 outline-none">
+        <TabsContent value="report" className="mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
           {complaint.investigationReport ? (
-            <Card className="rounded-none border-2 border-emerald-400 shadow-[4px_4px_0px_0px_rgba(16,185,129,0.15)] bg-white max-w-4xl">
-              <CardHeader className="bg-emerald-50 border-b-2 border-emerald-200 py-4 flex flex-row items-center gap-3">
-                <div className="h-10 w-10 bg-emerald-500 flex items-center justify-center border-2 border-emerald-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]">
-                  <ShieldCheck className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-black uppercase tracking-widest text-emerald-900">Official Investigation Report</CardTitle>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 mt-1">FILED ON RECORD</p>
-                </div>
+            <Card className="rounded-2xl shadow-sm border-border/50 max-w-2xl">
+              <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Submitted Investigation Report
+                </CardTitle>
               </CardHeader>
-              <CardContent className="p-0">
-                <dl className="divide-y-2 divide-stone-100">
-                  <div className="p-6 bg-emerald-50/30">
-                    <dt className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2">Final Recommendation</dt>
-                    <dd>
-                      <Badge className="rounded-none bg-stone-900 text-white hover:bg-stone-800 text-sm py-1 px-3 uppercase tracking-widest font-black border-2 border-transparent">
-                        {complaint.investigationReport.recommendation.replace(/_/g, " ")}
-                      </Badge>
-                    </dd>
+              <CardContent className="p-6 space-y-5 text-sm">
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium text-muted-foreground">Summary</div>
+                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">{complaint.investigationReport.summary}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium text-muted-foreground">Findings</div>
+                  <p className="text-foreground whitespace-pre-wrap leading-relaxed">{complaint.investigationReport.findings}</p>
+                </div>
+                <div className="space-y-1.5">
+                  <div className="text-xs font-medium text-muted-foreground">Recommendation</div>
+                  <Badge variant="outline" className="capitalize text-xs rounded-lg">
+                    {complaint.investigationReport.recommendation.replace(/_/g, " ")}
+                  </Badge>
+                </div>
+                {complaint.investigationReport.notes && (
+                  <div className="space-y-1.5">
+                    <div className="text-xs font-medium text-muted-foreground">Notes</div>
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">{complaint.investigationReport.notes}</p>
                   </div>
-                  <div className="p-6">
-                    <dt className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2">Executive Summary</dt>
-                    <dd className="text-sm font-medium text-stone-900 whitespace-pre-wrap leading-relaxed">{complaint.investigationReport.summary}</dd>
-                  </div>
-                  <div className="p-6">
-                    <dt className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2">Detailed Findings</dt>
-                    <dd className="text-sm font-medium text-stone-900 whitespace-pre-wrap leading-relaxed">{complaint.investigationReport.findings}</dd>
-                  </div>
-                  {complaint.investigationReport.notes && (
-                    <div className="p-6">
-                      <dt className="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2">Supplementary Notes</dt>
-                      <dd className="text-sm font-medium text-stone-900 whitespace-pre-wrap leading-relaxed">{complaint.investigationReport.notes}</dd>
-                    </div>
-                  )}
-                  <div className="p-4 bg-stone-100 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-stone-500">
-                    <span>Investigating Officer: {complaint.investigationReport.authorName ?? "UNKNOWN"}</span>
-                    <span>Timestamp: {new Date(complaint.investigationReport.createdAt).toLocaleString()}</span>
-                  </div>
-                </dl>
+                )}
+                <div className="text-xs text-muted-foreground pt-3 border-t border-border/40">
+                  Submitted by {complaint.investigationReport.authorName ?? "Officer"} ·{" "}
+                  {new Date(complaint.investigationReport.createdAt).toLocaleString()}
+                </div>
               </CardContent>
             </Card>
           ) : (
-            <Card className="rounded-none border-2 border-stone-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.1)] max-w-4xl">
-              <CardHeader className="bg-stone-100 border-b-2 border-stone-200 py-4 flex flex-row items-center gap-3">
-                <div className="h-10 w-10 bg-primary flex items-center justify-center border-2 border-stone-700 shadow-[2px_2px_0px_0px_rgba(255,255,255,0.1)]">
-                  <ShieldCheck className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg font-black uppercase tracking-widest text-stone-900">File Investigation Report</CardTitle>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-stone-500 mt-1">THIS ACTION IS PERMANENT</p>
-                </div>
+            <Card className="rounded-2xl shadow-sm border-border/50 max-w-2xl">
+              <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+                <CardTitle className="text-base font-semibold">Submit Investigation Report</CardTitle>
               </CardHeader>
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-6 space-y-5">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Executive Summary <span className="text-primary">*</span></label>
+                  <label className="text-sm font-medium text-foreground">Summary *</label>
                   <Textarea
-                    placeholder="PROVIDE A HIGH-LEVEL SUMMARY OF THE INVESTIGATION..."
+                    placeholder="Brief summary of the investigation (min 10 chars)..."
                     value={reportSummary}
                     onChange={(e) => setReportSummary(e.target.value)}
                     rows={3}
-                    className="rounded-none border-2 resize-none font-medium focus:ring-0 focus:border-stone-900"
+                    className="rounded-xl resize-none font-normal text-sm transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Detailed Findings <span className="text-primary">*</span></label>
+                  <label className="text-sm font-medium text-foreground">Findings *</label>
                   <Textarea
-                    placeholder="DOCUMENT ALL FACTUAL FINDINGS, EVIDENCE REVIEWED, AND WITNESS STATEMENTS..."
+                    placeholder="Detailed findings from the investigation (min 10 chars)..."
                     value={reportFindings}
                     onChange={(e) => setReportFindings(e.target.value)}
-                    rows={6}
-                    className="rounded-none border-2 resize-none font-medium focus:ring-0 focus:border-stone-900"
+                    rows={4}
+                    className="rounded-xl resize-none font-normal text-sm transition-colors"
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Official Recommendation <span className="text-primary">*</span></label>
+                  <label className="text-sm font-medium text-foreground">Recommendation *</label>
                   <Select value={reportRecommendation} onValueChange={setReportRecommendation}>
-                    <SelectTrigger className="rounded-none border-2 h-12 font-bold uppercase tracking-wider text-sm bg-stone-50">
-                      <SelectValue placeholder="SELECT FINAL RECOMMENDATION..." />
+                    <SelectTrigger className="rounded-xl h-12 font-medium">
+                      <SelectValue placeholder="Select recommendation..." />
                     </SelectTrigger>
-                    <SelectContent className="rounded-none border-2">
-                      <SelectItem value="substantiated" className="font-bold uppercase tracking-wider text-xs">Substantiated - Evidence supports claim</SelectItem>
-                      <SelectItem value="unsubstantiated" className="font-bold uppercase tracking-wider text-xs">Unsubstantiated - Insufficient evidence</SelectItem>
-                      <SelectItem value="partially_substantiated" className="font-bold uppercase tracking-wider text-xs">Partially Substantiated - Mixed findings</SelectItem>
-                      <SelectItem value="referred_to_authority" className="font-bold uppercase tracking-wider text-xs">Referred - Escalate to higher authority</SelectItem>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="substantiated">Substantiated</SelectItem>
+                      <SelectItem value="unsubstantiated">Unsubstantiated</SelectItem>
+                      <SelectItem value="partially_substantiated">Partially Substantiated</SelectItem>
+                      <SelectItem value="referred_to_authority">Referred to Authority</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-stone-500">Supplementary Notes</label>
+                  <label className="text-sm font-medium text-foreground">Additional Notes (optional)</label>
                   <Textarea
-                    placeholder="ANY ADDITIONAL CONTEXT NOT COVERED IN MAIN FINDINGS..."
+                    placeholder="Any additional notes..."
                     value={reportNotes}
                     onChange={(e) => setReportNotes(e.target.value)}
-                    rows={3}
-                    className="rounded-none border-2 resize-none font-medium focus:ring-0 focus:border-stone-900"
+                    rows={2}
+                    className="rounded-xl resize-none font-normal text-sm transition-colors"
                   />
                 </div>
-                <div className="pt-4 border-t-2 border-stone-200">
-                  <Button
-                    className="w-full h-12 rounded-none font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] text-sm"
-                    disabled={
-                      reportSummary.length < 10 ||
-                      reportFindings.length < 10 ||
-                      !reportRecommendation ||
-                      submitReport.isPending
-                    }
-                    onClick={() =>
-                      submitReport.mutate({
-                        complaintId,
-                        data: {
-                          summary: reportSummary,
-                          findings: reportFindings,
-                          recommendation: reportRecommendation as "substantiated" | "unsubstantiated" | "partially_substantiated" | "referred_to_authority",
-                          notes: reportNotes || undefined,
-                        },
-                      })
-                    }
-                  >
-                    {submitReport.isPending ? "SUBMITTING TO RECORD..." : "FINALIZE AND SUBMIT REPORT"}
-                  </Button>
-                  <p className="text-center text-[10px] font-bold text-stone-500 uppercase mt-3 tracking-widest">
-                    Report submission is final and cannot be modified.
-                  </p>
-                </div>
+                <Button
+                  className="w-full h-12 rounded-xl font-medium shadow-sm text-sm"
+                  disabled={
+                    reportSummary.length < 10 ||
+                    reportFindings.length < 10 ||
+                    !reportRecommendation ||
+                    submitReport.isPending
+                  }
+                  onClick={() =>
+                    submitReport.mutate({
+                      complaintId,
+                      data: {
+                        summary: reportSummary,
+                        findings: reportFindings,
+                        recommendation: reportRecommendation as "substantiated" | "unsubstantiated" | "partially_substantiated" | "referred_to_authority",
+                        notes: reportNotes || undefined,
+                      },
+                    })
+                  }
+                >
+                  {submitReport.isPending ? "Submitting..." : "Submit Report"}
+                </Button>
               </CardContent>
             </Card>
           )}
