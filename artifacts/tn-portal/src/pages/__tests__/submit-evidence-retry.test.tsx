@@ -3,6 +3,7 @@ import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { I18nProvider } from "@/contexts/i18n";
 import Submit from "@/pages/submit";
+import { Toaster } from "@/components/ui/toaster";
 
 const requestUploadMock = vi.fn();
 const createComplaintMock = vi.fn();
@@ -160,5 +161,70 @@ describe("evidence upload retry flow", () => {
         description: "evidence-a.png",
       }),
     });
+  });
+});
+
+describe("evidence attach rejection (server-side 422 validation)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    createComplaintMock.mockResolvedValue({ id: 43, complaintNumber: "CFT-TEST-0002" });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: true, status: 200 }),
+    );
+  });
+
+  it("shows the destructive evidence-failure toast when the API rejects an attach with 422", async () => {
+    // The API validates that the referenced object actually exists in storage
+    // and rejects fake/half-uploaded references with 422. The portal must
+    // surface this to the user instead of silently dropping the evidence.
+    requestUploadMock.mockResolvedValue({
+      uploadURL: "https://storage.example/upload-c",
+      objectPath: "/objects/uploads/c",
+    });
+    addEvidenceMock.mockRejectedValue({
+      status: 422,
+      data: {
+        error:
+          "Evidence file not found in storage. Please re-upload the file and try again.",
+      },
+    });
+
+    const user = userEvent.setup();
+    render(
+      <I18nProvider>
+        <Submit />
+        <Toaster />
+      </I18nProvider>,
+    );
+
+    await goToEvidenceStep(user);
+
+    // Upload succeeds client-side (signed URL + PUT are fine)...
+    await user.upload(getFileInput(), makeFile("evidence-c.png"));
+    const rowC = (await screen.findByText("evidence-c.png")).closest("li")!;
+    await within(rowC).findByText(/KB$/);
+
+    // ...so submit is not gated.
+    await user.click(screen.getByRole("button", { name: /next/i }));
+    const submitButton = screen.getByRole("button", { name: /submit report securely/i });
+    expect(submitButton).toBeEnabled();
+    await user.click(submitButton);
+
+    // Complaint itself is filed...
+    await screen.findByText("Report Submitted");
+    expect(addEvidenceMock).toHaveBeenCalledWith({
+      complaintId: 43,
+      data: expect.objectContaining({ fileUrl: "/objects/uploads/c" }),
+    });
+
+    // ...but the user is clearly told the evidence attach failed (422).
+    const toastTitle = await screen.findByText(
+      "Some files could not be attached. Your complaint was filed, but please re-submit evidence.",
+    );
+    // Rendered as a destructive (error) toast, not a neutral notice.
+    const toastRoot = toastTitle.closest('[role="status"], li');
+    expect(toastRoot).not.toBeNull();
+    expect(toastRoot!.className).toMatch(/destructive/);
   });
 });
