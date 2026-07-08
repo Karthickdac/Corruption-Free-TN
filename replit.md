@@ -11,13 +11,13 @@ Tamil Nadu Public Corruption Complaint & Transparency Portal — citizens report
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string; Clerk env vars are auto-managed
+- Required env: `DATABASE_URL` — Postgres connection string; optional `SUPER_ADMIN_EMAIL`/`SUPER_ADMIN_PASSWORD` override the seeded super admin login
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5 + Clerk auth (`@clerk/express`, proxy middleware)
-- Frontend: React + Vite, wouter, TanStack Query, shadcn/ui, Tailwind v4, Recharts, next-themes (dark default), Clerk (`@clerk/react`)
+- API: Express 5 + custom session auth (bcrypt password hashes, opaque session tokens in a `sessions` table; httpOnly cookie for web, Bearer token for mobile)
+- Frontend: React + Vite, wouter, TanStack Query, shadcn/ui, Tailwind v4, Recharts, next-themes (single light theme)
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
@@ -28,7 +28,7 @@ Tamil Nadu Public Corruption Complaint & Transparency Portal — citizens report
 - `lib/api-spec/openapi.yaml` — source of truth for the API contract (codegen feeds client + zod)
 - `lib/db/src/schema/` — Drizzle schema: `users.ts`, `geo.ts` (districts/taluks), `government.ts` (ministries/departments), `complaints.ts`
 - `artifacts/api-server/src/routes/` — `masterdata.ts`, `stats.ts`, `users.ts`, `complaints.ts`
-- `artifacts/api-server/src/middlewares/clerkProxyMiddleware.ts` — Clerk prod proxy (mounted before express.json)
+- `artifacts/api-server/src/routes/auth.ts` — register/login/logout; `src/middlewares/authSession.ts` — session resolution (Bearer first, then `session_token` cookie)
 - `artifacts/tn-portal/` — citizen portal frontend; `src/contexts/i18n.tsx` holds Tamil/English translations
 - Seeded data: 38 TN districts (Tamil names), ~290 taluks, 12 ministries, 39 departments, 10 complaint categories
 
@@ -36,9 +36,8 @@ Tamil Nadu Public Corruption Complaint & Transparency Portal — citizens report
 
 - Complaint numbers: `CFT-YYYY-######` random 6-digit with unique-violation retry loop on insert
 - `amountInvolved` stored as Postgres `numeric` (string in Drizzle), converted with `Number()` at the API boundary
-- Non-anonymous complaints lazily provision the local user row (Clerk → users table) inside POST /complaints
+- Auth: users sign up/in with email OR Indian mobile number (10 digits, 6-9 start; 91/0 prefixes stripped) + password (min 8 chars); sessions last 30 days; web uses SameSite=Lax httpOnly cookie, Expo stores the token in SecureStore (localStorage on web) and sends it via `setAuthTokenGetter` Bearer
 - Public complaint endpoints redact `location`, `witnesses`, `officerDesignation`, `userId`
-- Clerk client wiring follows the canonical pattern: `publishableKeyFromHost` + unconditional `proxyUrl` + `routerPush`/`routerReplace` with base-path stripping; no `UserButton` (custom header auth UI instead)
 - Design direction: "Power" — bold/commanding, crimson (#e11d48) primary, Oswald + Inter, dark mode default
 
 ## User preferences

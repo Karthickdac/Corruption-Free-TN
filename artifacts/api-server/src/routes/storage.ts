@@ -1,6 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { Readable } from "stream";
-import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db, evidenceTable, complaintsTable } from "@workspace/db";
 import {
@@ -23,8 +22,7 @@ const objectStorageService = new ObjectStorageService();
  * Then uploads the file directly to the returned presigned URL.
  */
 router.post("/storage/uploads/request-url", async (req: Request, res: Response) => {
-  const auth = getAuth(req);
-  if (!auth.userId) {
+  if (!req.localUser) {
     res.status(401).json({ error: "Authentication required to upload files" });
     return;
   }
@@ -98,8 +96,7 @@ router.get("/storage/public-objects/*filePath", async (req: Request, res: Respon
  */
 router.get("/storage/objects/*path", async (req: Request, res: Response) => {
   try {
-    const auth = getAuth(req);
-    if (!auth.userId) {
+    if (!req.localUser) {
       res.status(401).json({ error: "Authentication required to access private files" });
       return;
     }
@@ -153,7 +150,7 @@ router.get("/storage/objects/*path", async (req: Request, res: Response) => {
     } else {
       // Non-evidence objects: fall back to per-object ACL (fails closed)
       const canAccess = await objectStorageService.canAccessObjectEntity({
-        userId: auth.userId,
+        userId: String(req.localUser.id),
         objectFile,
         requestedPermission: ObjectPermission.READ,
       });

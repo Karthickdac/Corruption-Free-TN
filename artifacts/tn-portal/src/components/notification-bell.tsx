@@ -14,11 +14,11 @@ import {
   useMarkNotificationRead,
   getListNotificationsQueryKey,
 } from "@workspace/api-client-react";
-import { useUser } from "@clerk/react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function NotificationBell() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useCurrentUser();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
 

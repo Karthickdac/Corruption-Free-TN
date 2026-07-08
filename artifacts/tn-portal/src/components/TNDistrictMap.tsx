@@ -27,7 +27,7 @@ type Props = {
 const GEO_URL = "/tn-districts.geojson";
 
 function densityColor(density: number, maxDensity: number): string {
-  if (density === 0) return "#14403a";
+  if (density === 0) return "#e7e5e4";
   const pct = maxDensity > 0 ? density / maxDensity : 0;
   if (pct < 0.2) return "#fde68a";
   if (pct < 0.4) return "#fb923c";
@@ -313,14 +313,14 @@ export default function TNDistrictMap({ mapData }: Props) {
                     style={{
                       default: {
                         fill,
-                        stroke: isSelected ? "#c9a84c" : "#94a3b8",
+                        stroke: isSelected ? "#047857" : "#94a3b8",
                         strokeWidth: isSelected ? 2 : 0.6,
                         fillOpacity: 0.9,
                         outline: "none",
                       },
                       hover: {
                         fill,
-                        stroke: "#c9a84c",
+                        stroke: "#047857",
                         strokeWidth: 1.8,
                         fillOpacity: 1,
                         outline: "none",
@@ -328,7 +328,7 @@ export default function TNDistrictMap({ mapData }: Props) {
                       },
                       pressed: {
                         fill,
-                        stroke: "#c9a84c",
+                        stroke: "#047857",
                         strokeWidth: 2,
                         outline: "none",
                       },
@@ -342,7 +342,7 @@ export default function TNDistrictMap({ mapData }: Props) {
 
         <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground justify-center">
           {[
-            { label: "No complaints", color: "#14403a" },
+            { label: "No complaints", color: "#e7e5e4" },
             { label: "Very low", color: "#fde68a" },
             { label: "Low", color: "#fb923c" },
             { label: "Medium", color: "#f97316" },

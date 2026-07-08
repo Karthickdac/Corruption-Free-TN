@@ -180,9 +180,9 @@ export const GetPublicStatsResponse = zod.object({
  */
 export const GetCurrentUserResponse = zod.object({
   "id": zod.number(),
-  "clerkId": zod.string(),
   "name": zod.string().nullish(),
   "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
   "role": zod.string(),
   "departmentId": zod.number().nullish(),
   "districtId": zod.number().nullish()
@@ -769,9 +769,9 @@ export const ListAdminUsersQueryParams = zod.object({
 export const ListAdminUsersResponse = zod.object({
   "users": zod.array(zod.object({
   "id": zod.number(),
-  "clerkId": zod.string(),
   "name": zod.string().nullish(),
   "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
   "role": zod.string(),
   "departmentId": zod.number().nullish(),
   "districtId": zod.number().nullish(),
@@ -796,9 +796,9 @@ export const UpdateUserRoleBody = zod.object({
 
 export const UpdateUserRoleResponse = zod.object({
   "id": zod.number(),
-  "clerkId": zod.string(),
   "name": zod.string().nullish(),
   "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
   "role": zod.string(),
   "departmentId": zod.number().nullish(),
   "districtId": zod.number().nullish(),
@@ -1160,9 +1160,66 @@ export const AdminDeleteDepartmentResponse = zod.void()
 
 
 /**
- * @summary Record login event for the authenticated user
+ * @summary Create an account with email or mobile number + password
  */
-export const PostAuthSessionResponse = zod.object({
+export const registerBodyNameMax = 120;
+
+export const registerBodyPasswordMin = 8;
+export const registerBodyPasswordMax = 128;
+
+
+
+export const RegisterBody = zod.object({
+  "name": zod.string().max(registerBodyNameMax).optional(),
+  "email": zod.string().email().optional(),
+  "phone": zod.string().optional(),
+  "password": zod.string().min(registerBodyPasswordMin).max(registerBodyPasswordMax)
+})
+
+export const RegisterResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "role": zod.string(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish()
+})
+})
+
+
+/**
+ * @summary Sign in with email or mobile number + password
+ */
+
+
+
+
+export const LoginBody = zod.object({
+  "identifier": zod.string().min(1).describe('Email address or mobile number'),
+  "password": zod.string().min(1)
+})
+
+export const LoginResponse = zod.object({
+  "token": zod.string(),
+  "user": zod.object({
+  "id": zod.number(),
+  "name": zod.string().nullish(),
+  "email": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "role": zod.string(),
+  "departmentId": zod.number().nullish(),
+  "districtId": zod.number().nullish()
+})
+})
+
+
+/**
+ * @summary Sign out and invalidate the current session
+ */
+export const LogoutResponse = zod.object({
   "ok": zod.boolean()
 })
 

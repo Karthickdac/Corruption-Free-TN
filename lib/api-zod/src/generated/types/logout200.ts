@@ -6,6 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type PostAuthSession200 = {
+export type Logout200 = {
   ok: boolean;
 };

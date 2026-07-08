@@ -43,8 +43,10 @@ export default function Home() {
       {/* 1. Hero Section */}
       <section className="relative min-h-[90vh] flex items-center border-b border-border/40 overflow-hidden bg-background">
         {/* Background Texture & Glows */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
-        <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/15 via-background to-background" />
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-rose-500/10 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] rounded-full bg-orange-400/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-[350px] h-[350px] rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
         <div className="absolute inset-0 bg-noise opacity-[0.15] mix-blend-overlay pointer-events-none" />
 
         <div className="container relative z-10 mx-auto px-4 md:px-8 py-20 flex flex-col md:flex-row items-center justify-between gap-12">
@@ -67,7 +69,7 @@ export default function Home() {
             
             <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 pt-6 w-full">
               <Link href="/submit">
-                <Button size="lg" className="w-full sm:w-auto text-base md:text-lg h-14 px-8 font-medium tracking-wide shadow-[0_0_30px_-10px_rgba(204,163,96,0.4)] hover:shadow-[0_0_40px_-10px_rgba(204,163,96,0.6)] transition-all duration-300">
+                <Button size="lg" className="w-full sm:w-auto text-base md:text-lg h-14 px-8 font-medium tracking-wide shadow-[0_0_30px_-10px_rgba(234,88,12,0.5)] hover:shadow-[0_0_40px_-10px_rgba(234,88,12,0.7)] transition-all duration-300">
                   <Megaphone className="mr-2 h-5 w-5" />
                   {t("cta_report")}
                 </Button>
@@ -87,7 +89,7 @@ export default function Home() {
             transition={{ duration: 0.8, ease: "easeOut" }}
             className="flex-1 hidden lg:flex justify-end items-center"
           >
-            <div className="relative w-full max-w-md aspect-square rounded-full border border-primary/20 flex items-center justify-center p-12 bg-card/30 backdrop-blur-sm shadow-2xl">
+            <div className="relative w-full max-w-md aspect-square rounded-full border-2 border-primary/20 flex items-center justify-center p-12 bg-gradient-to-br from-primary/10 via-card/30 to-orange-400/10 backdrop-blur-sm shadow-2xl">
               <div className="absolute inset-0 bg-primary/5 rounded-full animate-pulse" style={{ animationDuration: '4s' }} />
               <div className="relative z-10 text-primary opacity-90 flex flex-col items-center">
                 <Landmark className="w-32 h-32 mb-6" strokeWidth={1} />
@@ -149,7 +151,7 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-16 md:gap-24 relative">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="md:pr-12 md:text-right flex flex-col md:items-end">
-              <div className="h-16 w-16 bg-muted text-foreground flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-border">01</div>
+              <div className="h-16 w-16 bg-primary/10 text-primary flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-primary/20">01</div>
               <h3 className="text-2xl font-bold uppercase tracking-tight mb-4">{t("home_step1_title")}</h3>
               <p className="text-muted-foreground text-lg">{t("home_step1_desc")}</p>
             </motion.div>
@@ -158,13 +160,13 @@ export default function Home() {
             <div className="hidden md:block" /> {/* Spacer */}
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="md:pl-12 flex flex-col items-start">
-              <div className="h-16 w-16 bg-primary/10 text-primary flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-primary/20">02</div>
+              <div className="h-16 w-16 bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-emerald-500/20">02</div>
               <h3 className="text-2xl font-bold uppercase tracking-tight mb-4">{t("home_step2_title")}</h3>
               <p className="text-muted-foreground text-lg">{t("home_step2_desc")}</p>
             </motion.div>
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="md:pr-12 md:text-right flex flex-col md:items-end">
-              <div className="h-16 w-16 bg-muted text-foreground flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-border">03</div>
+              <div className="h-16 w-16 bg-orange-500/10 text-orange-600 flex items-center justify-center font-black font-serif text-2xl rounded-sm mb-6 border border-orange-500/20">03</div>
               <h3 className="text-2xl font-bold uppercase tracking-tight mb-4">{t("home_step3_title")}</h3>
               <p className="text-muted-foreground text-lg">{t("home_step3_desc")}</p>
             </motion.div>
@@ -260,19 +262,19 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card p-8 border border-border/50 hover:border-primary/50 transition-colors">
-              <EyeOff className="h-10 w-10 text-primary mb-6" />
+              <EyeOff className="h-10 w-10 text-pink-600 mb-6" />
               <h3 className="text-xl font-bold uppercase mb-3">{t("home_feature1_title")}</h3>
               <p className="text-muted-foreground">{t("home_feature1_desc")}</p>
             </motion.div>
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card p-8 border border-border/50 hover:border-primary/50 transition-colors">
-              <Activity className="h-10 w-10 text-primary mb-6" />
+              <Activity className="h-10 w-10 text-emerald-600 mb-6" />
               <h3 className="text-xl font-bold uppercase mb-3">{t("home_feature3_title")}</h3>
               <p className="text-muted-foreground">{t("home_feature3_desc")}</p>
             </motion.div>
 
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-card p-8 border border-border/50 hover:border-primary/50 transition-colors">
-              <Database className="h-10 w-10 text-primary mb-6" />
+              <Database className="h-10 w-10 text-orange-600 mb-6" />
               <h3 className="text-xl font-bold uppercase mb-3">{t("home_feature4_title")}</h3>
               <p className="text-muted-foreground">{t("home_feature4_desc")}</p>
             </motion.div>
@@ -298,8 +300,9 @@ export default function Home() {
       </section>
 
       {/* 6. CTA Section */}
-      <section className="py-32 bg-primary relative overflow-hidden text-primary-foreground">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-black/40 via-transparent to-transparent pointer-events-none" />
+      <section className="py-32 bg-gradient-to-br from-orange-600 via-rose-600 to-red-700 relative overflow-hidden text-primary-foreground">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,_var(--tw-gradient-stops))] from-black/30 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute -top-20 right-10 w-[300px] h-[300px] rounded-full bg-orange-400/20 blur-3xl pointer-events-none" />
         
         <div className="container mx-auto px-4 md:px-8 relative z-10 text-center">
           <motion.div 

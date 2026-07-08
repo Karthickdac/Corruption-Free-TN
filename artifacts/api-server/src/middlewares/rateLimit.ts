@@ -11,6 +11,16 @@ export const complaintSubmitLimiter = rateLimit({
   },
 });
 
+export const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    error: "Too many sign-in attempts. Please try again later.",
+  },
+});
+
 export const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 20,

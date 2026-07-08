@@ -1,13 +1,19 @@
-import { useUser } from "@clerk/react";
-import { useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
+import {
+  useGetCurrentUser,
+  getGetCurrentUserQueryKey,
+} from "@workspace/api-client-react";
 
 export function useCurrentUser() {
-  const { isSignedIn, isLoaded } = useUser();
-  const { data, isLoading } = useGetCurrentUser({
-    query: { enabled: !!isSignedIn, queryKey: getGetCurrentUserQueryKey() },
+  const { data, isLoading, isError } = useGetCurrentUser({
+    query: {
+      queryKey: getGetCurrentUserQueryKey(),
+      retry: false,
+      staleTime: 60 * 1000,
+    },
   });
 
-  const role = data?.role ?? "citizen";
+  const isSignedIn = !!data && !isError;
+  const role = (isSignedIn && data?.role) || "citizen";
 
   const isOfficer = [
     "village_officer", "taluk_officer", "district_officer",
@@ -19,14 +25,14 @@ export function useCurrentUser() {
   const isSuperAdmin = role === "super_admin";
 
   return {
-    user: data,
+    user: isSignedIn ? data : undefined,
     role,
     isOfficer,
     isAdmin,
     isSuperAdmin,
-    isLoaded: isLoaded && !isLoading,
-    isSignedIn: !!isSignedIn,
-    departmentId: data?.departmentId ?? null,
-    districtId: data?.districtId ?? null,
+    isLoaded: !isLoading,
+    isSignedIn,
+    departmentId: (isSignedIn && data?.departmentId) || null,
+    districtId: (isSignedIn && data?.districtId) || null,
   };
 }

@@ -119,11 +119,12 @@ export interface PublicStats {
 
 export interface UserProfile {
   id: number;
-  clerkId: string;
   /** @nullable */
   name?: string | null;
   /** @nullable */
   email?: string | null;
+  /** @nullable */
+  phone?: string | null;
   role: string;
   /** @nullable */
   departmentId?: number | null;
@@ -131,13 +132,41 @@ export interface UserProfile {
   districtId?: number | null;
 }
 
+export interface RegisterInput {
+  /** @maxLength 120 */
+  name?: string;
+  email?: string;
+  phone?: string;
+  /**
+     * @minLength 8
+     * @maxLength 128
+     */
+  password: string;
+}
+
+export interface LoginInput {
+  /**
+     * Email address or mobile number
+     * @minLength 1
+     */
+  identifier: string;
+  /** @minLength 1 */
+  password: string;
+}
+
+export interface AuthResponse {
+  token: string;
+  user: UserProfile;
+}
+
 export interface AdminUser {
   id: number;
-  clerkId: string;
   /** @nullable */
   name?: string | null;
   /** @nullable */
   email?: string | null;
+  /** @nullable */
+  phone?: string | null;
   role: string;
   /** @nullable */
   departmentId?: number | null;
@@ -671,7 +700,7 @@ limit?: number;
 offset?: number;
 };
 
-export type PostAuthSession200 = {
+export type Logout200 = {
   ok: boolean;
 };
 

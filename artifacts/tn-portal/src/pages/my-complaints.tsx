@@ -1,5 +1,5 @@
 import { useI18n } from "@/contexts/i18n";
-import { useUser } from "@clerk/react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,9 +10,9 @@ import {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "submitted": return "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    case "submitted": return "bg-orange-500/10 text-orange-500 border-orange-500/20";
     case "under_review": return "bg-amber-500/10 text-amber-500 border-amber-500/20";
-    case "under_investigation": return "bg-purple-500/10 text-purple-500 border-purple-500/20";
+    case "under_investigation": return "bg-rose-500/10 text-rose-500 border-rose-500/20";
     case "action_taken": return "bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
     case "resolved": return "bg-green-500/10 text-green-500 border-green-500/20";
     case "rejected": return "bg-red-500/10 text-red-500 border-red-500/20";
@@ -31,7 +31,7 @@ function getPriorityStyle(priority: string) {
 
 export default function MyComplaints() {
   const { t } = useI18n();
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn, isLoaded } = useCurrentUser();
   const [, setLocation] = useLocation();
   const { data: complaints, isLoading } = useListMyComplaints({
     query: { enabled: !!isSignedIn, queryKey: getListMyComplaintsQueryKey() },

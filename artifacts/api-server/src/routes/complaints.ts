@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import { getAuth, clerkClient } from "@clerk/express";
 import { eq, desc, and, sql, type SQL } from "drizzle-orm";
 import { complaintSubmitLimiter } from "../middlewares/rateLimit";
 import { logger } from "../lib/logger";
@@ -166,32 +165,6 @@ router.get("/complaints", async (req, res, next) => {
   }
 });
 
-async function ensureLocalUser(clerkUserId: string): Promise<number | null> {
-  const existing = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(eq(usersTable.clerkId, clerkUserId));
-  if (existing[0]) return existing[0].id;
-
-  const clerkUser = await clerkClient.users.getUser(clerkUserId);
-  const name =
-    [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(" ") || null;
-  const email = clerkUser.primaryEmailAddress?.emailAddress ?? null;
-
-  const inserted = await db
-    .insert(usersTable)
-    .values({ clerkId: clerkUserId, name, email })
-    .onConflictDoNothing({ target: usersTable.clerkId })
-    .returning({ id: usersTable.id });
-  if (inserted[0]) return inserted[0].id;
-
-  const refetched = await db
-    .select({ id: usersTable.id })
-    .from(usersTable)
-    .where(eq(usersTable.clerkId, clerkUserId));
-  return refetched[0]?.id ?? null;
-}
-
 function isUniqueViolation(err: unknown): boolean {
   const code =
     (err as { code?: string })?.code ??
@@ -263,11 +236,8 @@ router.post("/complaints", complaintSubmitLimiter, async (req, res, next) => {
     }
 
     let userId: number | null = null;
-    if (!body.isAnonymous) {
-      const auth = getAuth(req);
-      if (auth.userId) {
-        userId = await ensureLocalUser(auth.userId);
-      }
+    if (!body.isAnonymous && req.localUser) {
+      userId = req.localUser.id;
     }
 
     const year = new Date().getFullYear();
@@ -344,20 +314,11 @@ router.post("/complaints", complaintSubmitLimiter, async (req, res, next) => {
 
 router.get("/complaints/mine", async (req, res, next) => {
   try {
-    const auth = getAuth(req);
-    if (!auth.userId) {
+    if (!req.localUser) {
       res.status(401).json({ error: "Not authenticated" });
       return;
     }
-    const localUser = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(eq(usersTable.clerkId, auth.userId));
-    if (!localUser[0]) {
-      res.json(ListMyComplaintsResponse.parse([]));
-      return;
-    }
-    const userId = localUser[0].id;
+    const userId = req.localUser.id;
     const rows = await complaintSelection()
       .where(eq(complaintsTable.userId, userId))
       .orderBy(desc(complaintsTable.createdAt));
@@ -369,8 +330,7 @@ router.get("/complaints/mine", async (req, res, next) => {
 
 router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
   try {
-    const auth = getAuth(req);
-    if (!auth.userId) {
+    if (!req.localUser) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
@@ -390,16 +350,12 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
       return;
     }
 
-    const localUser = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(eq(usersTable.clerkId, auth.userId));
-    const localUserId = localUser[0]?.id;
+    const localUserId = req.localUser.id;
 
-    const isOfficerUser = req.localUser && req.localUser.role !== "citizen";
+    const isOfficerUser = req.localUser.role !== "citizen";
     if (isOfficerUser) {
       // Officer path: enforce jurisdiction
-      if (!canAccessComplaint(req.localUser!, complaint[0])) {
+      if (!canAccessComplaint(req.localUser, complaint[0])) {
         res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
         return;
       }
@@ -442,8 +398,7 @@ router.get("/complaints/:complaintId/evidence", async (req, res, next) => {
 
 router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
   try {
-    const auth = getAuth(req);
-    if (!auth.userId) {
+    if (!req.localUser) {
       res.status(401).json({ error: "Authentication required" });
       return;
     }
@@ -476,16 +431,12 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
       return;
     }
 
-    const localUser = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(eq(usersTable.clerkId, auth.userId));
-    const localUserId = localUser[0]?.id;
+    const localUserId = req.localUser.id;
 
-    const isOfficerUser = req.localUser && req.localUser.role !== "citizen";
+    const isOfficerUser = req.localUser.role !== "citizen";
     if (isOfficerUser) {
       // Officer path: enforce jurisdiction
-      if (!canAccessComplaint(req.localUser!, complaint[0])) {
+      if (!canAccessComplaint(req.localUser, complaint[0])) {
         res.status(403).json({ error: "You do not have jurisdiction over this complaint" });
         return;
       }
@@ -543,7 +494,7 @@ router.post("/complaints/:complaintId/evidence", async (req, res, next) => {
     // (owner + jurisdiction-authorized officers), which takes precedence.
     try {
       await objectStorageService.trySetObjectEntityAclPolicy(fileUrl, {
-        owner: auth.userId,
+        owner: String(localUserId),
         visibility: "private",
       });
     } catch (aclErr) {

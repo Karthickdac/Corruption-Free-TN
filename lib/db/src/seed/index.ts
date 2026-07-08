@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { db, pool } from "../index";
 import {
@@ -120,25 +121,37 @@ async function seedRoles(): Promise<void> {
 }
 
 async function seedSuperAdmin(): Promise<void> {
-  const clerkId = process.env["SUPER_ADMIN_CLERK_ID"];
-  const email = process.env["SUPER_ADMIN_EMAIL"] ?? null;
-  if (!clerkId) {
-    console.log("  super_admin: skipped (SUPER_ADMIN_CLERK_ID not set)");
-    return;
+  const email = (
+    process.env["SUPER_ADMIN_EMAIL"] ?? "admin@corruptionfreetn.gov.in"
+  ).toLowerCase();
+  const password = process.env["SUPER_ADMIN_PASSWORD"] ?? "Admin@2026";
+  if (
+    !process.env["SUPER_ADMIN_PASSWORD"] &&
+    process.env["NODE_ENV"] === "production"
+  ) {
+    throw new Error(
+      "Refusing to seed the super admin with the default dev password in production. Set SUPER_ADMIN_PASSWORD and re-run the seed.",
+    );
   }
+  const passwordHash = await bcrypt.hash(password, 10);
   await db
     .insert(usersTable)
     .values({
-      clerkId,
       email,
+      passwordHash,
       name: "Super Administrator",
       role: "super_admin",
     })
     .onConflictDoUpdate({
-      target: usersTable.clerkId,
-      set: { role: "super_admin", email },
+      target: usersTable.email,
+      set: { role: "super_admin", passwordHash },
     });
-  console.log(`  super_admin: seeded (${email ?? clerkId})`);
+  console.log(`  super_admin: seeded (${email})`);
+  if (!process.env["SUPER_ADMIN_PASSWORD"]) {
+    console.log(
+      "  super_admin: using default dev password Admin@2026 (set SUPER_ADMIN_PASSWORD to override)",
+    );
+  }
 }
 
 async function main(): Promise<void> {

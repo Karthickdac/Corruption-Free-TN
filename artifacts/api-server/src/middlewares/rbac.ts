@@ -1,7 +1,4 @@
 import type { Request, Response, NextFunction } from "express";
-import { getAuth } from "@clerk/express";
-import { eq } from "drizzle-orm";
-import { db, usersTable } from "@workspace/db";
 import type { RoleName } from "@workspace/db";
 
 export { type RoleName };
@@ -55,76 +52,26 @@ declare global {
         role: string;
         departmentId: number | null;
         districtId: number | null;
-        clerkId: string;
         name: string | null;
         email: string | null;
+        phone: string | null;
       };
     }
   }
 }
 
-export async function loadLocalUser(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  const auth = getAuth(req);
-  if (!auth.userId) {
-    next();
-    return;
-  }
-  try {
-    const rows = await db
-      .select()
-      .from(usersTable)
-      .where(eq(usersTable.clerkId, auth.userId));
-    if (rows[0]) {
-      req.localUser = {
-        id: rows[0].id,
-        role: rows[0].role,
-        departmentId: rows[0].departmentId,
-        districtId: rows[0].districtId,
-        clerkId: rows[0].clerkId,
-        name: rows[0].name,
-        email: rows[0].email,
-      };
-    }
-  } catch (_err) {
-  }
-  next();
-}
-
-export function requireRole(roles: string[]) {
-  return async (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> => {
-    const auth = getAuth(req);
-    if (!auth.userId) {
+export function requireAuth() {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    if (!req.localUser) {
       res.status(401).json({ error: "Not authenticated" });
       return;
     }
-    if (!req.localUser) {
-      try {
-        const rows = await db
-          .select()
-          .from(usersTable)
-          .where(eq(usersTable.clerkId, auth.userId));
-        if (rows[0]) {
-          req.localUser = {
-            id: rows[0].id,
-            role: rows[0].role,
-            departmentId: rows[0].departmentId,
-            districtId: rows[0].districtId,
-            clerkId: rows[0].clerkId,
-            name: rows[0].name,
-            email: rows[0].email,
-          };
-        }
-      } catch (_err) {
-      }
-    }
+    next();
+  };
+}
+
+export function requireRole(roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.localUser) {
       res.status(401).json({ error: "Not authenticated" });
       return;

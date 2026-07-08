@@ -1,4 +1,4 @@
-@layer theme, base, clerk, components, utilities;
+@layer theme, base, components, utilities;
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -96,7 +96,7 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
-/* LIGHT MODE */
+/* SINGLE VIBRANT THEME */
 :root {
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
@@ -106,50 +106,50 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 42 33% 97%;
-  --foreground: 170 30% 9%;
+  --background: 33 80% 93%;
+  --foreground: 20 40% 12%;
 
-  --border: 42 16% 86%;
-  --input: 42 16% 86%;
-  --ring: 163 42% 30%;
+  --border: 30 30% 84%;
+  --input: 30 30% 84%;
+  --ring: 21 90% 48%;
 
   --card: 0 0% 100%;
-  --card-foreground: 170 30% 9%;
-  --card-border: 42 16% 86%;
+  --card-foreground: 20 40% 12%;
+  --card-border: 30 25% 90%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 170 30% 9%;
-  --popover-border: 42 16% 86%;
+  --popover-foreground: 20 40% 12%;
+  --popover-border: 30 25% 87%;
 
-  --primary: 163 45% 24%;
-  --primary-foreground: 42 40% 97%;
+  --primary: 21 90% 48%;
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 42 22% 92%;
-  --secondary-foreground: 170 30% 9%;
+  --secondary: 33 60% 88%;
+  --secondary-foreground: 20 40% 15%;
 
-  --muted: 42 22% 92%;
-  --muted-foreground: 170 10% 40%;
+  --muted: 33 45% 89%;
+  --muted-foreground: 25 15% 38%;
 
-  --accent: 43 50% 48%;
-  --accent-foreground: 170 30% 9%;
+  --accent: 152 60% 36%;
+  --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 30 40% 98%;
 
-  --chart-1: 163 45% 32%;
-  --chart-2: 43 55% 48%;
-  --chart-3: 190 42% 38%;
-  --chart-4: 20 45% 50%;
-  --chart-5: 280 25% 52%;
+  --chart-1: 21 90% 50%;
+  --chart-2: 152 60% 36%;
+  --chart-3: 42 95% 48%;
+  --chart-4: 340 75% 50%;
+  --chart-5: 355 65% 45%;
 
-  --sidebar: 42 33% 97%;
-  --sidebar-foreground: 170 30% 9%;
-  --sidebar-border: 42 16% 86%;
-  --sidebar-primary: 163 45% 28%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 20 40% 12%;
+  --sidebar-border: 30 25% 87%;
+  --sidebar-primary: 21 90% 48%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 42 22% 92%;
-  --sidebar-accent-foreground: 170 30% 9%;
-  --sidebar-ring: 163 42% 30%;
+  --sidebar-accent: 33 50% 92%;
+  --sidebar-accent-foreground: 20 40% 15%;
+  --sidebar-ring: 21 90% 48%;
 
   --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: 'Oswald', sans-serif;
@@ -164,61 +164,6 @@
   --shadow-lg: 0px 2px 0px 0px rgba(0,0,0,0.05), 0px 4px 6px -1px rgba(0,0,0,0.05);
   --shadow-xl: 0px 2px 0px 0px rgba(0,0,0,0.05), 0px 8px 10px -1px rgba(0,0,0,0.05);
   --shadow-2xl: 0px 2px 0px 0px rgba(0,0,0,0.05);
-}
-
-.dark {
-  --button-outline: rgba(255,255,255, .10);
-  --badge-outline: rgba(255,255,255, .05);
-
-  --opaque-button-border-intensity: 9;
-
-  --elevate-1: rgba(255,255,255, .04);
-  --elevate-2: rgba(255,255,255, .09);
-
-  --background: 170 25% 8%;
-  --foreground: 42 25% 95%;
-
-  --border: 168 18% 15%;
-  --input: 168 18% 15%;
-  --ring: 158 40% 55%;
-
-  --card: 170 22% 10%;
-  --card-foreground: 42 25% 95%;
-  --card-border: 168 18% 15%;
-
-  --popover: 170 22% 10%;
-  --popover-foreground: 42 25% 95%;
-  --popover-border: 168 18% 15%;
-
-  --primary: 158 42% 52%;
-  --primary-foreground: 170 30% 8%;
-
-  --secondary: 168 18% 15%;
-  --secondary-foreground: 42 25% 95%;
-
-  --muted: 168 18% 15%;
-  --muted-foreground: 160 10% 65%;
-
-  --accent: 43 55% 62%;
-  --accent-foreground: 170 30% 8%;
-
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-
-  --chart-1: 158 42% 55%;
-  --chart-2: 43 55% 62%;
-  --chart-3: 190 42% 60%;
-  --chart-4: 20 45% 62%;
-  --chart-5: 280 25% 65%;
-
-  --sidebar: 170 25% 8%;
-  --sidebar-foreground: 42 25% 95%;
-  --sidebar-border: 168 18% 15%;
-  --sidebar-primary: 158 42% 52%;
-  --sidebar-primary-foreground: 170 30% 8%;
-  --sidebar-accent: 168 18% 15%;
-  --sidebar-accent-foreground: 42 25% 95%;
-  --sidebar-ring: 158 40% 55%;
 }
 
 @layer base {

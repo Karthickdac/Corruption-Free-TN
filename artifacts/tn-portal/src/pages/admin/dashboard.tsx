@@ -38,16 +38,16 @@ import {
 import { OFFICER_ROLES } from "@/constants/roles";
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  submitted: "bg-orange-500/10 text-orange-500 border-orange-500/20",
   under_review: "bg-amber-500/10 text-amber-500 border-amber-500/20",
   evidence_verification: "bg-orange-500/10 text-orange-500 border-orange-500/20",
-  forwarded: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
-  department_response: "bg-violet-500/10 text-violet-500 border-violet-500/20",
-  investigation: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  forwarded: "bg-lime-600/10 text-lime-600 border-lime-600/20",
+  department_response: "bg-pink-500/10 text-pink-500 border-pink-500/20",
+  investigation: "bg-rose-500/10 text-rose-500 border-rose-500/20",
   action_taken: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   closed: "bg-green-500/10 text-green-500 border-green-500/20",
   rejected: "bg-red-500/10 text-red-500 border-red-500/20",
-  reopened: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
+  reopened: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -167,9 +167,9 @@ function DashboardContent() {
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
-            { label: "Submitted", value: stats.submitted, icon: <FileText className="h-4 w-4" />, color: "text-blue-500" },
+            { label: "Submitted", value: stats.submitted, icon: <FileText className="h-4 w-4" />, color: "text-orange-500" },
             { label: "Under Review", value: stats.under_review, icon: <Clock className="h-4 w-4" />, color: "text-amber-500" },
-            { label: "Investigation", value: stats.investigation, icon: <Search className="h-4 w-4" />, color: "text-purple-500" },
+            { label: "Investigation", value: stats.investigation, icon: <Search className="h-4 w-4" />, color: "text-rose-500" },
             { label: "Action Taken", value: stats.action_taken, icon: <CheckCircle className="h-4 w-4" />, color: "text-emerald-500" },
             { label: "Closed", value: stats.closed, icon: <CheckCircle className="h-4 w-4" />, color: "text-green-500" },
             { label: "Rejected", value: stats.rejected, icon: <XCircle className="h-4 w-4" />, color: "text-red-500" },

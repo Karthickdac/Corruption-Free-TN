@@ -81,9 +81,9 @@ router.get(
         ListAdminUsersResponse.parse({
           users: usersResult.map((u) => ({
             id: u.id,
-            clerkId: u.clerkId,
             name: u.name,
             email: u.email,
+            phone: u.phone,
             role: u.role,
             departmentId: u.departmentId,
             districtId: u.districtId,
@@ -135,9 +135,9 @@ router.patch(
       res.json(
         UpdateUserRoleResponse.parse({
           id: u.id,
-          clerkId: u.clerkId,
           name: u.name,
           email: u.email,
+          phone: u.phone,
           role: u.role,
           departmentId: u.departmentId,
           districtId: u.districtId,

@@ -41,12 +41,21 @@ export const ADMIN_ROLES: RoleName[] = [
 
 export const usersTable = pgTable("users", {
   id: serial("id").primaryKey(),
-  clerkId: text("clerk_id").notNull().unique(),
   name: text("name"),
-  email: text("email"),
+  email: text("email").unique(),
+  phone: text("phone").unique(),
+  passwordHash: text("password_hash"),
   role: text("role").notNull().default("citizen"),
   departmentId: integer("department_id"),
   districtId: integer("district_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const sessionsTable = pgTable("sessions", {
+  id: serial("id").primaryKey(),
+  token: text("token").notNull().unique(),
+  userId: integer("user_id").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -56,3 +65,4 @@ export const insertUserSchema = createInsertSchema(usersTable).omit({
 });
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof usersTable.$inferSelect;
+export type Session = typeof sessionsTable.$inferSelect;

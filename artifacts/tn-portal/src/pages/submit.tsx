@@ -21,7 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useUser } from "@clerk/react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { useListDistricts, useListTaluks, useListDepartments, useListComplaintCategories, getListTaluksQueryKey } from "@workspace/api-client-react";
 import {
   ChevronRight, ChevronLeft, Building, MapPin, User, Tag, FileText, CheckCircle, Paperclip, X, Upload, Sparkles,
@@ -257,7 +257,7 @@ export default function Submit() {
   const { t, isTa } = useI18n();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const { isSignedIn } = useUser();
+  const { isSignedIn } = useCurrentUser();
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(empty);
   const [evidenceItems, setEvidenceItems] = useState<EvidenceItem[]>([]);

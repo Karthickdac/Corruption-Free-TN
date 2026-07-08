@@ -3,14 +3,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
-import { ClerkProvider, useAuth } from "@clerk/react";
-import { publishableKeyFromHost } from "@clerk/react/internal";
-import { dark } from "@clerk/themes";
 import { I18nProvider } from "@/contexts/i18n";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/layout";
-import { useEffect, useRef } from "react";
-import { usePostAuthSession, useGetCurrentUser, getGetCurrentUserQueryKey } from "@workspace/api-client-react";
+import { useEffect } from "react";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
 
 // Pages
 import Home from "@/pages/home";
@@ -36,28 +33,6 @@ const queryClient = new QueryClient();
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-// REQUIRED — resolves the key from window.location.hostname so the same
-// build serves multiple Clerk custom domains.
-const clerkPubKey = publishableKeyFromHost(
-  window.location.hostname,
-  import.meta.env.VITE_CLERK_PUBLISHABLE_KEY,
-);
-
-// Empty in dev (Clerk hits dev FAPI directly), auto-set in prod.
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
-
-if (!clerkPubKey) {
-  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
-}
-
-// Clerk passes full paths to routerPush/routerReplace, but wouter's
-// setLocation prepends the base — strip it to avoid doubling.
-function stripBase(path: string): string {
-  return basePath && path.startsWith(basePath)
-    ? path.slice(basePath.length) || "/"
-    : path;
-}
-
 function Router() {
   return (
     <Switch>
@@ -79,8 +54,8 @@ function Router() {
             <Route path="/directory" component={Directory} />
             <Route path="/my-complaints" component={MyComplaints} />
             <Route path="/search" component={SearchPage} />
-            <Route path="/sign-in/*?" component={SignInPage} />
-            <Route path="/sign-up/*?" component={SignUpPage} />
+            <Route path="/sign-in" component={SignInPage} />
+            <Route path="/sign-up" component={SignUpPage} />
             <Route component={NotFound} />
           </Switch>
         </Layout>
@@ -89,77 +64,37 @@ function Router() {
   );
 }
 
-/**
- * Fires POST /auth/session exactly once per Clerk session (survives page
- * reloads within the same session) to record the login event in the audit log.
- * Dedupes via sessionStorage keyed on the Clerk session ID.
- */
-function AuthSessionLogger() {
-  const { isSignedIn, sessionId } = useAuth();
-  const { mutate: recordSession } = usePostAuthSession();
-  const firedRef = useRef(false);
-
-  useEffect(() => {
-    if (!isSignedIn || !sessionId || firedRef.current) return;
-    const storageKey = `auth_session_logged_${sessionId}`;
-    if (sessionStorage.getItem(storageKey)) return;
-    firedRef.current = true;
-    sessionStorage.setItem(storageKey, "1");
-    recordSession();
-  }, [isSignedIn, sessionId, recordSession]);
-
-  return null;
-}
-
 const CITIZEN_ROLE = "citizen";
 
 /**
- * After sign-in, redirects the user to the role-appropriate dashboard:
- * - Officers/admins (any non-citizen role) → /admin/dashboard
- * - Citizens → stay on current route (citizen portal)
- * Only fires once per mount when the user is signed in and on a non-admin path.
+ * After sign-in, redirects officers/admins (any non-citizen role) to the
+ * officer dashboard when they land on a non-admin route.
  */
 function RoleRedirect() {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, role } = useCurrentUser();
   const [location, setLocation] = useLocation();
-  const { data: profile } = useGetCurrentUser({
-    query: { enabled: !!isSignedIn, queryKey: getGetCurrentUserQueryKey() },
-  });
 
   useEffect(() => {
-    if (!isSignedIn || !profile) return;
-    const isOfficer = profile.role && profile.role !== CITIZEN_ROLE;
+    if (!isSignedIn) return;
+    const isOfficer = role && role !== CITIZEN_ROLE;
     const onAdminRoute = location.startsWith("/admin");
-    if (isOfficer && !onAdminRoute) {
+    const onAuthRoute =
+      location.startsWith("/sign-in") || location.startsWith("/sign-up");
+    if (isOfficer && !onAdminRoute && !onAuthRoute) {
       setLocation("/admin/dashboard");
     }
-  }, [isSignedIn, profile, location, setLocation]);
+  }, [isSignedIn, role, location, setLocation]);
 
   return null;
 }
 
-function ClerkProviderWithRoutes() {
-  const [, setLocation] = useLocation();
-
+function App() {
   return (
-    <ClerkProvider
-      publishableKey={clerkPubKey}
-      proxyUrl={clerkProxyUrl}
-      signInUrl={`${basePath}/sign-in`}
-      signUpUrl={`${basePath}/sign-up`}
-      appearance={{
-        theme: dark,
-        cssLayerName: "clerk",
-        variables: { colorPrimary: "#cca360" }
-      }}
-      routerPush={(to) => setLocation(stripBase(to))}
-      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
-    >
+    <WouterRouter base={basePath}>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+        <ThemeProvider attribute="class" forcedTheme="light" defaultTheme="light" enableSystem={false}>
           <I18nProvider>
             <TooltipProvider>
-              <AuthSessionLogger />
               <RoleRedirect />
               <Router />
               <Toaster />
@@ -167,14 +102,6 @@ function ClerkProviderWithRoutes() {
           </I18nProvider>
         </ThemeProvider>
       </QueryClientProvider>
-    </ClerkProvider>
-  );
-}
-
-function App() {
-  return (
-    <WouterRouter base={basePath}>
-      <ClerkProviderWithRoutes />
     </WouterRouter>
   );
 }

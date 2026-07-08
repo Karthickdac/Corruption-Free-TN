@@ -8,8 +8,18 @@ const requestUploadMock = vi.fn();
 const createComplaintMock = vi.fn();
 const addEvidenceMock = vi.fn();
 
-vi.mock("@clerk/react", () => ({
-  useUser: () => ({ isSignedIn: true, user: { id: "user_test" } }),
+vi.mock("@/hooks/useCurrentUser", () => ({
+  useCurrentUser: () => ({
+    isSignedIn: true,
+    isLoaded: true,
+    user: { id: 1, role: "citizen" },
+    role: "citizen",
+    isOfficer: false,
+    isAdmin: false,
+    isSuperAdmin: false,
+    departmentId: null,
+    districtId: null,
+  }),
 }));
 
 vi.mock("@workspace/api-client-react", () => ({

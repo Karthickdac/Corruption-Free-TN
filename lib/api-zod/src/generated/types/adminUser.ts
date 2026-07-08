@@ -8,11 +8,12 @@
 
 export interface AdminUser {
   id: number;
-  clerkId: string;
   /** @nullable */
   name?: string | null;
   /** @nullable */
   email?: string | null;
+  /** @nullable */
+  phone?: string | null;
   role: string;
   /** @nullable */
   departmentId?: number | null;

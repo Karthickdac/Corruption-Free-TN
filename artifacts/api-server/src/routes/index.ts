@@ -12,11 +12,11 @@ import authRouter from "./auth";
 import analyticsRouter from "./analytics";
 import searchRouter from "./search";
 import aiRouter from "./ai";
-import { loadLocalUser } from "../middlewares/rbac";
+import { sessionAuth } from "../middlewares/authSession";
 
 const router: IRouter = Router();
 
-router.use(loadLocalUser);
+router.use(sessionAuth);
 router.use(healthRouter);
 router.use(masterdataRouter);
 router.use(statsRouter);

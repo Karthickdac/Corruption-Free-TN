@@ -29,6 +29,10 @@ function NativeTabLayout() {
         <Icon sf={{ default: "magnifyingglass", selected: "magnifyingglass" }} />
         <Label>Track</Label>
       </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="my-reports">
+        <Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
+        <Label>My Reports</Label>
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
@@ -108,6 +112,18 @@ function ClassicTabLayout() {
               <SymbolView name="magnifyingglass" tintColor={color} size={24} />
             ) : (
               <Feather name="search" size={22} color={color} />
+            ),
+        }}
+      />
+      <Tabs.Screen
+        name="my-reports"
+        options={{
+          title: "My Reports",
+          tabBarIcon: ({ color }) =>
+            isIOS ? (
+              <SymbolView name="doc.text" tintColor={color} size={24} />
+            ) : (
+              <Feather name="file-text" size={22} color={color} />
             ),
         }}
       />

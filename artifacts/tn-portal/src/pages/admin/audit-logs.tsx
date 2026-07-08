@@ -15,13 +15,13 @@ import { ClipboardList, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Keys must match audit `action` values written by the API server
 const ACTION_COLORS: Record<string, string> = {
-  status_change: "bg-blue-500/10 text-blue-400",
-  assignment: "bg-purple-500/10 text-purple-400",
+  status_change: "bg-orange-500/10 text-orange-400",
+  assignment: "bg-rose-500/10 text-rose-400",
   case_note_added: "bg-green-500/10 text-green-400",
   role_update: "bg-orange-500/10 text-orange-400",
-  evidence_upload: "bg-indigo-500/10 text-indigo-400",
-  evidence_download: "bg-indigo-500/10 text-indigo-400",
-  investigation_report_submitted: "bg-teal-500/10 text-teal-400",
+  evidence_upload: "bg-lime-600/10 text-lime-500",
+  evidence_download: "bg-lime-600/10 text-lime-500",
+  investigation_report_submitted: "bg-emerald-500/10 text-emerald-400",
   login: "bg-slate-500/10 text-slate-400",
 };
 

@@ -20,11 +20,11 @@ import { ShieldAlert, CheckCircle2, Clock, AlertTriangle, Map } from "lucide-rea
 import { Link } from "wouter";
 import TNDistrictMap from "@/components/TNDistrictMap";
 
-const PIE_COLORS = ["#cca360","#475569","#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#14b8a6","#ef4444","#6b7280"];
+const PIE_COLORS = ["#cca360","#78716c","#f43f5e","#10b981","#f59e0b","#db2777","#ec4899","#059669","#ef4444","#6b7280"];
 
 const STATUS_COLORS: Record<string, string> = {
-  submitted:"#6366f1", under_review:"#f59e0b", evidence_verification:"#8b5cf6",
-  forwarded:"#3b82f6", department_response:"#0ea5e9", investigation:"#f97316",
+  submitted:"#ea580c", under_review:"#f59e0b", evidence_verification:"#db2777",
+  forwarded:"#f43f5e", department_response:"#eab308", investigation:"#f97316",
   action_taken:"#10b981", closed:"#22c55e", reopened:"#ef4444", rejected:"#6b7280",
 };
 
@@ -96,7 +96,7 @@ export default function Transparency() {
           { icon: ShieldAlert, label: "Total Reports", value: (overview?.totalComplaints ?? stats.totalComplaints).toLocaleString(), color: "text-primary", bg: "bg-primary/5 border-primary/20" },
           { icon: CheckCircle2, label: "Resolved", value: (overview?.resolved ?? stats.resolved).toLocaleString(), color: "text-emerald-500", bg: "bg-emerald-500/5 border-emerald-500/20" },
           { icon: Clock, label: "Avg Resolution", value: overview?.avgResolutionDays != null ? `${overview.avgResolutionDays.toFixed(1)}d` : "—", color: "text-amber-500", bg: "bg-amber-500/5 border-amber-500/20" },
-          { icon: AlertTriangle, label: "Pending", value: (overview?.pending ?? stats.pending).toLocaleString(), color: "text-blue-500", bg: "bg-blue-500/5 border-blue-500/20" },
+          { icon: AlertTriangle, label: "Pending", value: (overview?.pending ?? stats.pending).toLocaleString(), color: "text-orange-500", bg: "bg-orange-500/5 border-orange-500/20" },
         ].map(({ icon: Icon, label, value, color, bg }) => (
           <Card key={label} className={bg}>
             <CardContent className="p-6 flex flex-col items-center text-center">
@@ -195,7 +195,7 @@ export default function Transparency() {
                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={11} />
                 <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" fontSize={11} />
                 <RechartsTooltip contentStyle={{ backgroundColor:"hsl(var(--background))", borderColor:"hsl(var(--border))", borderRadius:"8px", fontSize:"12px" }} />
-                <Bar dataKey="count" fill="#3b82f6" radius={[0,4,4,0]} />
+                <Bar dataKey="count" fill="#f43f5e" radius={[0,4,4,0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -210,7 +210,7 @@ export default function Transparency() {
                 <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
                 <RechartsTooltip contentStyle={{ backgroundColor:"hsl(var(--background))", borderColor:"hsl(var(--border))", borderRadius:"8px", fontSize:"12px" }} />
-                <Bar dataKey="count" fill="#8b5cf6" radius={[4,4,0,0]} />
+                <Bar dataKey="count" fill="#db2777" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
