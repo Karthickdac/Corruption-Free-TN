@@ -13,4 +13,5 @@ export interface DashboardStats {
   action_taken: number;
   closed: number;
   rejected: number;
+  overdue?: number;
 }

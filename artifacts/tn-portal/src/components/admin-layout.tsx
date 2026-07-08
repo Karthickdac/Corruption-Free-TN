@@ -6,17 +6,18 @@ import {
   Users,
   ClipboardList,
   Settings,
-  ChevronRight,
   Shield,
   AlertCircle,
   BarChart2,
 } from "lucide-react";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
+import { ROLE_LABELS } from "@/constants/complaint-workflow";
 
 interface NavItem {
   href: string;
   label: string;
+  shortLabel?: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
   superAdminOnly?: boolean;
@@ -31,111 +32,143 @@ const navItems: NavItem[] = [
   {
     href: "/admin/complaints",
     label: "All Complaints",
+    shortLabel: "Complaints",
     icon: <FileText className="h-4 w-4" />,
-  },
-  {
-    href: "/admin/users",
-    label: "User Management",
-    icon: <Users className="h-4 w-4" />,
-    adminOnly: true,
-  },
-  {
-    href: "/admin/audit-logs",
-    label: "Audit Logs",
-    icon: <ClipboardList className="h-4 w-4" />,
-    adminOnly: true,
-  },
-  {
-    href: "/admin/master-data",
-    label: "Master Data",
-    icon: <Settings className="h-4 w-4" />,
-    superAdminOnly: true,
   },
   {
     href: "/admin/analytics",
     label: "Analytics",
     icon: <BarChart2 className="h-4 w-4" />,
   },
+  {
+    href: "/admin/users",
+    label: "User Management",
+    shortLabel: "Users",
+    icon: <Users className="h-4 w-4" />,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/audit-logs",
+    label: "Audit Logs",
+    shortLabel: "Audit",
+    icon: <ClipboardList className="h-4 w-4" />,
+    adminOnly: true,
+  },
+  {
+    href: "/admin/master-data",
+    label: "Master Data",
+    shortLabel: "Master",
+    icon: <Settings className="h-4 w-4" />,
+    superAdminOnly: true,
+  },
 ];
 
-const ROLE_LABELS: Record<string, string> = {
-  citizen: "Citizen",
-  village_officer: "Village Officer",
-  taluk_officer: "Taluk Officer",
-  district_officer: "District Officer",
-  department_officer: "Department Officer",
-  ministry_officer: "Ministry Officer",
-  state_administrator: "State Administrator",
-  super_admin: "Super Admin",
-  investigation_officer: "Investigation Officer",
-  moderator: "Moderator",
-  auditor: "Auditor",
-  legal_officer: "Legal Officer",
-};
+function useVisibleNavItems() {
+  const { isAdmin, isSuperAdmin } = useCurrentUser();
+  return navItems.filter((item) => {
+    if (item.superAdminOnly) return isSuperAdmin;
+    if (item.adminOnly) return isAdmin;
+    return true;
+  });
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
-  const { user, role, isAdmin, isSuperAdmin } = useCurrentUser();
+  const { user, role } = useCurrentUser();
+  const visibleItems = useVisibleNavItems();
+
+  const isActive = (href: string) =>
+    location === href || location.startsWith(href + "/");
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
-      <aside className="w-56 shrink-0 border-r border-border/40 bg-muted/20 flex flex-col py-4">
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex w-60 shrink-0 border-r border-border/60 bg-card/60 flex-col py-4">
         <div className="px-4 mb-4">
-          <div className="flex items-center gap-2 mb-1">
-            <Shield className="h-4 w-4 text-primary" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Officer Portal
-            </span>
-          </div>
-          <div className="text-xs text-primary font-medium">
-            {ROLE_LABELS[role] ?? role}
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center">
+              <Shield className="h-4 w-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-semibold uppercase tracking-wider text-foreground">
+                Officer Portal
+              </div>
+              <div className="text-[11px] text-primary font-medium truncate">
+                {ROLE_LABELS[role] ?? role}
+              </div>
+            </div>
           </div>
           {user?.email && (
-            <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+            <div className="text-[11px] text-muted-foreground truncate px-0.5">
+              {user.email}
+            </div>
           )}
         </div>
 
         <nav className="flex-1 px-2 space-y-0.5">
-          {navItems
-            .filter((item) => {
-              if (item.superAdminOnly) return isSuperAdmin;
-              if (item.adminOnly) return isAdmin;
-              return true;
-            })
-            .map((item) => {
-              const active =
-                location === item.href || location.startsWith(item.href + "/");
-              return (
-                <Link key={item.href} href={item.href}>
-                  <Button
-                    variant={active ? "secondary" : "ghost"}
-                    className={cn(
-                      "w-full justify-start gap-2 h-9 text-sm font-medium",
-                      active && "text-foreground",
-                      !active && "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {item.icon}
-                    {item.label}
-                    {active && <ChevronRight className="h-3 w-3 ml-auto" />}
-                  </Button>
-                </Link>
-              );
-            })}
+          {visibleItems.map((item) => {
+            const active = isActive(item.href);
+            return (
+              <Link key={item.href} href={item.href}>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start gap-2.5 h-9 text-sm font-medium rounded-md",
+                    active
+                      ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {item.icon}
+                  {item.label}
+                </Button>
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="px-4 pt-4 border-t border-border/40">
+        <div className="px-4 pt-4 border-t border-border/60">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="w-full justify-start text-xs text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start text-xs text-muted-foreground"
+            >
               ← Back to Portal
             </Button>
           </Link>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto bg-background">
-        {children}
-      </main>
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Mobile top nav */}
+        <div className="md:hidden sticky top-0 z-20 border-b border-border/60 bg-background/95 backdrop-blur px-2 py-1.5 overflow-x-auto">
+          <div className="flex items-center gap-1 min-w-max">
+            {visibleItems.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link key={item.href} href={item.href}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "h-8 gap-1.5 text-xs whitespace-nowrap",
+                      active
+                        ? "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    {item.icon}
+                    {item.shortLabel ?? item.label}
+                  </Button>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        <main className="flex-1 overflow-auto bg-background">{children}</main>
+      </div>
     </div>
   );
 }

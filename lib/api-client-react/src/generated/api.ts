@@ -34,6 +34,8 @@ import type {
   AuthResponse,
   BadRequestResponse,
   Block,
+  BulkActionOutcome,
+  BulkActionRequest,
   CaseNote,
   CaseNoteInput,
   CategoryInput,
@@ -2525,6 +2527,76 @@ export function useGetOfficerDashboard<TData = Awaited<ReturnType<typeof getOffi
 
 
 
+
+export const getBulkComplaintActionUrl = () => {
+
+
+
+
+  return `/api/dashboard/complaints/bulk`
+}
+
+/**
+ * @summary Apply a status change or assignment to multiple complaints (per-row RBAC and workflow validation; returns per-row results)
+ */
+export const bulkComplaintAction = async (bulkActionRequest: BulkActionRequest, options?: RequestInit): Promise<BulkActionOutcome> => {
+
+  return customFetch<BulkActionOutcome>(getBulkComplaintActionUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bulkActionRequest)
+  }
+);}
+
+
+
+
+export const getBulkComplaintActionMutationOptions = <TError = ErrorType<ErrorResponse | ForbiddenResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkComplaintAction>>, TError,{data: BodyType<BulkActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof bulkComplaintAction>>, TError,{data: BodyType<BulkActionRequest>}, TContext> => {
+
+const mutationKey = ['bulkComplaintAction'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof bulkComplaintAction>>, {data: BodyType<BulkActionRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  bulkComplaintAction(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BulkComplaintActionMutationResult = NonNullable<Awaited<ReturnType<typeof bulkComplaintAction>>>
+    export type BulkComplaintActionMutationBody = BodyType<BulkActionRequest>
+    export type BulkComplaintActionMutationError = ErrorType<ErrorResponse | ForbiddenResponse>
+
+    /**
+ * @summary Apply a status change or assignment to multiple complaints (per-row RBAC and workflow validation; returns per-row results)
+ */
+export const useBulkComplaintAction = <TError = ErrorType<ErrorResponse | ForbiddenResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof bulkComplaintAction>>, TError,{data: BodyType<BulkActionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof bulkComplaintAction>>,
+        TError,
+        {data: BodyType<BulkActionRequest>},
+        TContext
+      > => {
+      return useMutation(getBulkComplaintActionMutationOptions(options));
+    }
 
 export const getListAssignableOfficersUrl = () => {
 

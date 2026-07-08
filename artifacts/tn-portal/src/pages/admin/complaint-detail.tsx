@@ -26,42 +26,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, MessageSquare, Eye, EyeOff, Clock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, FileText, MessageSquare, Eye, EyeOff, Clock, ShieldCheck, Paperclip } from "lucide-react";
 import { Link } from "wouter";
-
-const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-stone-500/10 text-stone-600 border-stone-500/20",
-  under_review: "bg-amber-600/10 text-amber-600 border-amber-600/20",
-  evidence_verification: "bg-pink-600/10 text-pink-600 border-pink-600/20",
-  forwarded: "bg-lime-600/10 text-lime-600 border-lime-600/20",
-  department_response: "bg-emerald-600/10 text-emerald-600 border-emerald-600/20",
-  investigation: "bg-orange-600/10 text-orange-600 border-orange-600/20",
-  action_taken: "bg-green-500/10 text-green-600 border-green-500/20",
-  closed: "bg-stone-600/10 text-stone-600 border-stone-600/20",
-  rejected: "bg-red-600/10 text-red-600 border-red-600/20",
-  reopened: "bg-rose-600/10 text-rose-600 border-rose-600/20",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  submitted: "Submitted", under_review: "Under Review",
-  evidence_verification: "Evidence Verification", forwarded: "Forwarded",
-  department_response: "Dept. Response", investigation: "Investigation",
-  action_taken: "Action Taken", closed: "Closed", rejected: "Rejected", reopened: "Reopened",
-};
-
-// Keep in sync with WORKFLOW_TRANSITIONS in artifacts/api-server/src/middlewares/rbac.ts
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  submitted: ["under_review", "rejected"],
-  under_review: ["evidence_verification", "forwarded", "rejected", "closed"],
-  evidence_verification: ["forwarded", "under_review", "rejected"],
-  forwarded: ["department_response", "investigation", "rejected"],
-  department_response: ["investigation", "action_taken", "closed"],
-  investigation: ["action_taken", "closed"],
-  action_taken: ["closed"],
-  closed: ["reopened"],
-  reopened: ["under_review"],
-  rejected: ["reopened"],
-};
+import {
+  STATUS_COLORS,
+  STATUS_LABELS,
+  ALLOWED_TRANSITIONS,
+} from "@/constants/complaint-workflow";
+import { StatusBadge, PriorityBadge } from "@/components/admin/status-badge";
+import { EvidenceGallery } from "@/components/admin/evidence-gallery";
 
 const NOTE_TYPE_LABELS: Record<string, string> = {
   case_note: "Case Note",
@@ -177,10 +150,8 @@ function ComplaintDetailContent() {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-mono text-muted-foreground">{complaint.complaintNumber}</span>
-            <Badge className={`text-xs ${STATUS_COLORS[complaint.status]}`}>
-              {STATUS_LABELS[complaint.status] ?? complaint.status}
-            </Badge>
-            <Badge variant="outline" className="text-xs capitalize">{complaint.priority}</Badge>
+            <StatusBadge status={complaint.status} className="text-xs" />
+            <PriorityBadge priority={complaint.priority} className="text-xs" />
           </div>
           <h1 className="text-xl font-bold text-foreground mt-0.5">{complaint.title}</h1>
         </div>
@@ -190,6 +161,9 @@ function ComplaintDetailContent() {
         <TabsList>
           <TabsTrigger value="details" className="gap-1">
             <FileText className="h-3.5 w-3.5" /> Details
+          </TabsTrigger>
+          <TabsTrigger value="evidence" className="gap-1" data-testid="tab-evidence">
+            <Paperclip className="h-3.5 w-3.5" /> Evidence
           </TabsTrigger>
           <TabsTrigger value="notes" className="gap-1">
             <MessageSquare className="h-3.5 w-3.5" />
@@ -258,6 +232,10 @@ function ComplaintDetailContent() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="evidence" className="mt-4">
+          <EvidenceGallery complaintId={complaintId} />
         </TabsContent>
 
         <TabsContent value="notes" className="space-y-4 mt-4">

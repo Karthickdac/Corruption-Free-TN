@@ -33,56 +33,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import {
   FileText, Users, CheckCircle, Clock, XCircle, Search, RefreshCw,
-  AlertTriangle, ChevronRight, UserCheck,
+  AlertTriangle, ChevronRight, UserCheck, AlarmClock,
 } from "lucide-react";
 import { OFFICER_ROLES } from "@/constants/roles";
-
-const STATUS_COLORS: Record<string, string> = {
-  submitted: "bg-stone-500/10 text-stone-600 border-stone-500/20",
-  under_review: "bg-amber-600/10 text-amber-600 border-amber-600/20",
-  evidence_verification: "bg-pink-600/10 text-pink-600 border-pink-600/20",
-  forwarded: "bg-lime-600/10 text-lime-600 border-lime-600/20",
-  department_response: "bg-emerald-600/10 text-emerald-600 border-emerald-600/20",
-  investigation: "bg-orange-600/10 text-orange-600 border-orange-600/20",
-  action_taken: "bg-green-500/10 text-green-600 border-green-500/20",
-  closed: "bg-stone-600/10 text-stone-600 border-stone-600/20",
-  rejected: "bg-red-600/10 text-red-600 border-red-600/20",
-  reopened: "bg-rose-600/10 text-rose-600 border-rose-600/20",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-  submitted: "Submitted",
-  under_review: "Under Review",
-  evidence_verification: "Evidence Verification",
-  forwarded: "Forwarded",
-  department_response: "Dept. Response",
-  investigation: "Investigation",
-  action_taken: "Action Taken",
-  closed: "Closed",
-  rejected: "Rejected",
-  reopened: "Reopened",
-};
-
-const PRIORITY_COLORS: Record<string, string> = {
-  critical: "bg-red-500 text-white",
-  high: "bg-orange-500 text-white",
-  medium: "bg-yellow-500/20 text-yellow-600",
-  low: "bg-green-500/20 text-green-600",
-};
-
-// Keep in sync with WORKFLOW_TRANSITIONS in artifacts/api-server/src/middlewares/rbac.ts
-const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  submitted: ["under_review", "rejected"],
-  under_review: ["evidence_verification", "forwarded", "rejected", "closed"],
-  evidence_verification: ["forwarded", "under_review", "rejected"],
-  forwarded: ["department_response", "investigation", "rejected"],
-  department_response: ["investigation", "action_taken", "closed"],
-  investigation: ["action_taken", "closed"],
-  action_taken: ["closed"],
-  closed: ["reopened"],
-  reopened: ["under_review"],
-  rejected: ["reopened"],
-};
+import {
+  STATUS_COLORS,
+  STATUS_LABELS,
+  ALLOWED_TRANSITIONS,
+} from "@/constants/complaint-workflow";
+import { StatusBadge, PriorityBadge } from "@/components/admin/status-badge";
+import { PageHeader } from "@/components/admin/page-header";
 
 export default function AdminDashboard() {
   return (
@@ -157,24 +117,27 @@ function DashboardContent() {
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Officer Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Welcome back, {user?.name ?? "Officer"}
-        </p>
-      </div>
+      <PageHeader
+        title="Officer Dashboard"
+        description={`Welcome back, ${user?.name ?? "Officer"}`}
+      />
 
       {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { label: "Submitted", value: stats.submitted, icon: <FileText className="h-4 w-4" />, color: "text-stone-600" },
-            { label: "Under Review", value: stats.under_review, icon: <Clock className="h-4 w-4" />, color: "text-amber-600" },
-            { label: "Investigation", value: stats.investigation, icon: <Search className="h-4 w-4" />, color: "text-orange-600" },
-            { label: "Action Taken", value: stats.action_taken, icon: <CheckCircle className="h-4 w-4" />, color: "text-green-600" },
-            { label: "Closed", value: stats.closed, icon: <CheckCircle className="h-4 w-4" />, color: "text-stone-500" },
-            { label: "Rejected", value: stats.rejected, icon: <XCircle className="h-4 w-4" />, color: "text-red-600" },
+            { label: "Submitted", value: stats.submitted, icon: <FileText className="h-4 w-4" />, color: "text-stone-600", highlight: false },
+            { label: "Under Review", value: stats.under_review, icon: <Clock className="h-4 w-4" />, color: "text-amber-600", highlight: false },
+            { label: "Investigation", value: stats.investigation, icon: <Search className="h-4 w-4" />, color: "text-orange-600", highlight: false },
+            { label: "Action Taken", value: stats.action_taken, icon: <CheckCircle className="h-4 w-4" />, color: "text-green-600", highlight: false },
+            { label: "Closed", value: stats.closed, icon: <CheckCircle className="h-4 w-4" />, color: "text-stone-500", highlight: false },
+            { label: "Rejected", value: stats.rejected, icon: <XCircle className="h-4 w-4" />, color: "text-red-600", highlight: false },
+            { label: "Overdue", value: stats.overdue ?? 0, icon: <AlarmClock className="h-4 w-4" />, color: "text-red-700", highlight: (stats.overdue ?? 0) > 0 },
           ].map((stat) => (
-            <Card key={stat.label} className="bg-muted/30">
+            <Card
+              key={stat.label}
+              className={stat.highlight ? "bg-red-600/5 border-red-600/30" : "bg-muted/30"}
+              data-testid={`stat-${stat.label.toLowerCase().replace(/\s/g, "-")}`}
+            >
               <CardContent className="p-3">
                 <div className={`flex items-center gap-1.5 mb-1 ${stat.color}`}>
                   {stat.icon}
@@ -251,12 +214,8 @@ function DashboardContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <span className="text-xs font-mono text-muted-foreground">{c.complaintNumber}</span>
-                      <Badge className={`text-[10px] px-1.5 py-0 ${STATUS_COLORS[c.status]}`}>
-                        {STATUS_LABELS[c.status] ?? c.status}
-                      </Badge>
-                      <Badge className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[c.priority]}`}>
-                        {c.priority}
-                      </Badge>
+                      <StatusBadge status={c.status} />
+                      <PriorityBadge priority={c.priority} />
                     </div>
                     <h3 className="font-semibold text-sm text-foreground truncate">{c.title}</h3>
                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">

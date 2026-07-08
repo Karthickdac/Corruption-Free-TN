@@ -10,6 +10,7 @@ export type GetDepartmentDashboardParams = {
 status?: string;
 priority?: string;
 assignedToMe?: boolean;
+overdue?: boolean;
 limit?: number;
 offset?: number;
 };

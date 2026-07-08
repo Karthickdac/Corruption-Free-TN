@@ -9,6 +9,7 @@ import {
   complaintCategoriesTable,
   rolesTable,
   usersTable,
+  settingsTable,
 } from "../schema";
 import {
   districtSeeds,
@@ -120,6 +121,21 @@ async function seedRoles(): Promise<void> {
   }
 }
 
+const settingSeeds: { key: string; value: string }[] = [
+  { key: "sla_days_critical", value: "3" },
+  { key: "sla_days_high", value: "7" },
+  { key: "sla_days_medium", value: "14" },
+  { key: "sla_days_low", value: "30" },
+];
+
+async function seedSettings(): Promise<void> {
+  for (const s of settingSeeds) {
+    await db.insert(settingsTable).values(s).onConflictDoNothing({
+      target: settingsTable.key,
+    });
+  }
+}
+
 async function seedSuperAdmin(): Promise<void> {
   const email = (
     process.env["SUPER_ADMIN_EMAIL"] ?? "admin@corruptionfreetn.gov.in"
@@ -168,6 +184,8 @@ async function main(): Promise<void> {
   console.log(`  complaint categories: ${categorySeeds.length}`);
   await seedRoles();
   console.log(`  roles: ${roleSeeds.length}`);
+  await seedSettings();
+  console.log(`  settings: ${settingSeeds.length} (SLA defaults)`);
   await seedSuperAdmin();
   console.log("Seed complete.");
 }

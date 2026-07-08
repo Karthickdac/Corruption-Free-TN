@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, desc, and, count, inArray, type SQL } from "drizzle-orm";
+import { eq, desc, and, count, inArray, sql, type SQL } from "drizzle-orm";
 import {
   db,
   complaintsTable,
@@ -8,14 +8,24 @@ import {
   departmentsTable,
   complaintCategoriesTable,
   usersTable,
+  settingsTable,
+  notificationsTable,
 } from "@workspace/db";
 import {
   GetDashboardComplaintsQueryParams,
   GetDashboardComplaintsResponse,
   GetOfficerDashboardResponse,
   ListAssignableOfficersResponse,
+  BulkComplaintActionBody,
+  BulkComplaintActionResponse,
 } from "@workspace/api-zod";
-import { requireAnyOfficer } from "../middlewares/rbac";
+import {
+  requireAnyOfficer,
+  requireWriteOfficer,
+  canAccessComplaint,
+  isAllowedTransition,
+} from "../middlewares/rbac";
+import { logAudit } from "../lib/audit";
 
 const router: IRouter = Router();
 
@@ -37,16 +47,64 @@ function complaintSelection() {
     .leftJoin(usersTable, eq(complaintsTable.assignedOfficerId, usersTable.id));
 }
 
-function toApiComplaint(row: {
-  complaint: typeof complaintsTable.$inferSelect;
-  districtName: string | null;
-  talukName: string | null;
-  departmentName: string | null;
-  categoryName: string | null;
-  assignedOfficerName: string | null;
-}) {
+// Default SLA windows (days) per priority; overridable via settings keys
+// sla_days_critical / sla_days_high / sla_days_medium / sla_days_low.
+const DEFAULT_SLA_DAYS: Record<string, number> = {
+  critical: 3,
+  high: 7,
+  medium: 14,
+  low: 30,
+};
+
+// Statuses that stop the SLA clock — complaints in these states are never overdue.
+const SLA_EXEMPT_STATUSES = ["closed", "rejected"];
+
+async function getSlaDays(): Promise<Record<string, number>> {
+  const keys = Object.keys(DEFAULT_SLA_DAYS).map((p) => `sla_days_${p}`);
+  const rows = await db
+    .select({ key: settingsTable.key, value: settingsTable.value })
+    .from(settingsTable)
+    .where(inArray(settingsTable.key, keys));
+  const result = { ...DEFAULT_SLA_DAYS };
+  for (const r of rows) {
+    const priority = r.key.replace("sla_days_", "");
+    const n = Number(r.value);
+    if (priority in result && Number.isFinite(n) && n > 0) {
+      result[priority] = Math.floor(n);
+    }
+  }
+  return result;
+}
+
+function overdueSqlCondition(slaDays: Record<string, number>): SQL {
+  return sql`(${complaintsTable.status} NOT IN ('closed', 'rejected') AND ${complaintsTable.createdAt} < NOW() - make_interval(days => CASE ${complaintsTable.priority} WHEN 'critical' THEN ${slaDays["critical"]}::int WHEN 'high' THEN ${slaDays["high"]}::int WHEN 'medium' THEN ${slaDays["medium"]}::int ELSE ${slaDays["low"]}::int END))`;
+}
+
+function computeSlaFields(
+  c: typeof complaintsTable.$inferSelect,
+  slaDays: Record<string, number>,
+): { isOverdue: boolean; slaDeadline: string | null } {
+  const days = slaDays[c.priority] ?? slaDays["low"] ?? 30;
+  const deadline = new Date(c.createdAt.getTime() + days * 86_400_000);
+  const isOverdue =
+    !SLA_EXEMPT_STATUSES.includes(c.status) && deadline.getTime() < Date.now();
+  return { isOverdue, slaDeadline: deadline.toISOString() };
+}
+
+function toApiComplaint(
+  row: {
+    complaint: typeof complaintsTable.$inferSelect;
+    districtName: string | null;
+    talukName: string | null;
+    departmentName: string | null;
+    categoryName: string | null;
+    assignedOfficerName: string | null;
+  },
+  slaDays?: Record<string, number>,
+) {
   const c = row.complaint;
   return {
+    ...(slaDays ? computeSlaFields(c, slaDays) : {}),
     id: c.id,
     complaintNumber: c.complaintNumber,
     title: c.title,
@@ -140,8 +198,12 @@ router.get(
       const status = params.success ? params.data.status : undefined;
       const priority = params.success ? params.data.priority : undefined;
       const assignedToMe = params.success ? params.data.assignedToMe : undefined;
+      const overdueOnly = params.success ? params.data.overdue : undefined;
       const limit = params.success ? (params.data.limit ?? 50) : 50;
       const offset = params.success ? (params.data.offset ?? 0) : 0;
+
+      const slaDays = await getSlaDays();
+      const overdueCond = overdueSqlCondition(slaDays);
 
       const filterConditions: SQL[] = [...jurisdictionConditions];
       if (status) filterConditions.push(eq(complaintsTable.status, status));
@@ -149,13 +211,16 @@ router.get(
       if (assignedToMe === true) {
         filterConditions.push(eq(complaintsTable.assignedOfficerId, user.id));
       }
+      if (overdueOnly === true) {
+        filterConditions.push(overdueCond);
+      }
 
       const whereClause = filterConditions.length ? and(...filterConditions) : undefined;
       const statsWhereClause = jurisdictionConditions.length
         ? and(...jurisdictionConditions)
         : undefined;
 
-      const [rows, totalResult, allForStats] = await Promise.all([
+      const [rows, totalResult, allForStats, overdueResult] = await Promise.all([
         complaintSelection()
           .where(whereClause)
           .orderBy(desc(complaintsTable.createdAt))
@@ -166,6 +231,12 @@ router.get(
           .select({ status: complaintsTable.status })
           .from(complaintsTable)
           .where(statsWhereClause),
+        db
+          .select({ count: count() })
+          .from(complaintsTable)
+          .where(
+            statsWhereClause ? and(statsWhereClause, overdueCond) : overdueCond,
+          ),
       ]);
 
       const statuses = ["submitted", "under_review", "investigation", "action_taken", "closed", "rejected"];
@@ -179,7 +250,7 @@ router.get(
       const total = totalResult[0]?.count ?? 0;
       res.json(
         GetDashboardComplaintsResponse.parse({
-          complaints: rows.map(toApiComplaint),
+          complaints: rows.map((r) => toApiComplaint(r, slaDays)),
           total,
           stats: {
             submitted: stats["submitted"] ?? 0,
@@ -188,6 +259,7 @@ router.get(
             action_taken: stats["action_taken"] ?? 0,
             closed: stats["closed"] ?? 0,
             rejected: stats["rejected"] ?? 0,
+            overdue: overdueResult[0]?.count ?? 0,
           },
         }),
       );
@@ -249,7 +321,7 @@ router.get(
           totalAssigned: totalResult[0]?.count ?? 0,
           openCount: openResult[0]?.count ?? 0,
           closedCount: closedResult[0]?.count ?? 0,
-          recentComplaints: recent.map(toApiComplaint),
+          recentComplaints: recent.map((r) => toApiComplaint(r)),
         }),
       );
     } catch (err) {
@@ -273,6 +345,161 @@ router.get(
         .where(eq(usersTable.role, "investigation_officer"))
         .orderBy(usersTable.name);
       res.json(ListAssignableOfficersResponse.parse(rows));
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.post(
+  "/dashboard/complaints/bulk",
+  requireWriteOfficer(),
+  async (req, res, next) => {
+    try {
+      const body = BulkComplaintActionBody.safeParse(req.body);
+      if (!body.success) {
+        res.status(400).json({ error: body.error.issues[0]?.message ?? "Invalid input" });
+        return;
+      }
+      const { action, ids, status: newStatus, note, officerUserId } = body.data;
+      const uniqueIds = [...new Set(ids)];
+
+      const user = req.localUser;
+      if (!user) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      if (action === "status" && !newStatus) {
+        res.status(400).json({ error: "status is required for a status action" });
+        return;
+      }
+      if (action === "assign" && !officerUserId) {
+        res.status(400).json({ error: "officerUserId is required for an assign action" });
+        return;
+      }
+
+      // For assign actions, validate the target officer once up front
+      let officerName: string | null = null;
+      if (action === "assign" && officerUserId) {
+        const officer = await db
+          .select({ id: usersTable.id, name: usersTable.name, role: usersTable.role })
+          .from(usersTable)
+          .where(eq(usersTable.id, officerUserId));
+        if (!officer[0]) {
+          res.status(400).json({ error: "Officer not found" });
+          return;
+        }
+        if (officer[0].role !== "investigation_officer") {
+          res.status(400).json({ error: "Only investigation officers may be assigned to complaints" });
+          return;
+        }
+        officerName = officer[0].name;
+      }
+
+      const complaints = await db
+        .select({
+          id: complaintsTable.id,
+          status: complaintsTable.status,
+          userId: complaintsTable.userId,
+          departmentId: complaintsTable.departmentId,
+          districtId: complaintsTable.districtId,
+          assignedOfficerId: complaintsTable.assignedOfficerId,
+        })
+        .from(complaintsTable)
+        .where(inArray(complaintsTable.id, uniqueIds));
+      const byId = new Map(complaints.map((c) => [c.id, c]));
+
+      const results: { id: number; ok: boolean; error: string | null }[] = [];
+
+      for (const id of uniqueIds) {
+        const current = byId.get(id);
+        if (!current) {
+          results.push({ id, ok: false, error: "Complaint not found" });
+          continue;
+        }
+        // Per-row jurisdiction enforcement — never skip this check
+        if (!canAccessComplaint(user, current)) {
+          results.push({ id, ok: false, error: "No jurisdiction over this complaint" });
+          continue;
+        }
+
+        if (action === "status" && newStatus && !isAllowedTransition(current.status, newStatus)) {
+          results.push({
+            id,
+            ok: false,
+            error: `Invalid transition: ${current.status} → ${newStatus}`,
+          });
+          continue;
+        }
+
+        try {
+          // Atomic per row: the mutation must never persist without its audit record
+          await db.transaction(async (tx) => {
+            if (action === "status" && newStatus) {
+              await tx
+                .update(complaintsTable)
+                .set({ status: newStatus, updatedAt: new Date() })
+                .where(eq(complaintsTable.id, id));
+              await logAudit({
+                req,
+                userId: user.id,
+                action: "status_change",
+                entityType: "complaint",
+                entityId: id,
+                details: {
+                  status: newStatus,
+                  previousStatus: current.status,
+                  note: note ?? "Bulk status update",
+                },
+                executor: tx,
+              });
+              if (current.userId) {
+                await tx.insert(notificationsTable).values({
+                  userId: current.userId,
+                  title: "Complaint status updated",
+                  message: note ?? `Your complaint status has been updated to "${newStatus}".`,
+                });
+              }
+            } else if (action === "assign" && officerUserId) {
+              await tx
+                .update(complaintsTable)
+                .set({ assignedOfficerId: officerUserId, updatedAt: new Date() })
+                .where(eq(complaintsTable.id, id));
+              await logAudit({
+                req,
+                userId: user.id,
+                action: "assignment",
+                entityType: "complaint",
+                entityId: id,
+                details: {
+                  assignedTo: officerUserId,
+                  assignedOfficerName: officerName,
+                  note: note ?? "Bulk assignment",
+                },
+                executor: tx,
+              });
+              await tx.insert(notificationsTable).values({
+                userId: officerUserId,
+                title: "New complaint assigned to you",
+                message: note ?? "A complaint has been assigned to you for investigation.",
+              });
+            }
+          });
+          results.push({ id, ok: true, error: null });
+        } catch {
+          results.push({ id, ok: false, error: "Update failed" });
+        }
+      }
+
+      const succeeded = results.filter((r) => r.ok).length;
+      res.json(
+        BulkComplaintActionResponse.parse({
+          results,
+          succeeded,
+          failed: results.length - succeeded,
+        }),
+      );
     } catch (err) {
       next(err);
     }

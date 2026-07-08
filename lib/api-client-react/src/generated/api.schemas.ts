@@ -313,6 +313,9 @@ export interface Complaint {
   statusHistory?: StatusHistoryItem[];
   departmentResponses?: PublicDepartmentResponse[];
   investigationReport?: InvestigationReport | null;
+  isOverdue?: boolean;
+  /** @nullable */
+  slaDeadline?: string | null;
   createdAt: string;
 }
 
@@ -323,12 +326,50 @@ export interface DashboardStats {
   action_taken: number;
   closed: number;
   rejected: number;
+  overdue?: number;
 }
 
 export interface DashboardComplaintsResponse {
   complaints: Complaint[];
   total: number;
   stats?: DashboardStats;
+}
+
+export type BulkActionRequestAction = typeof BulkActionRequestAction[keyof typeof BulkActionRequestAction];
+
+
+export const BulkActionRequestAction = {
+  status: 'status',
+  assign: 'assign',
+} as const;
+
+export interface BulkActionRequest {
+  action: BulkActionRequestAction;
+  /**
+     * @minItems 1
+     * @maxItems 100
+     */
+  ids: number[];
+  status?: string;
+  /**
+     * @maxLength 500
+     * @nullable
+     */
+  note?: string | null;
+  officerUserId?: number;
+}
+
+export interface BulkActionItemResult {
+  id: number;
+  ok: boolean;
+  /** @nullable */
+  error?: string | null;
+}
+
+export interface BulkActionOutcome {
+  results: BulkActionItemResult[];
+  succeeded: number;
+  failed: number;
 }
 
 export interface UpdateStatusInput {
@@ -688,6 +729,7 @@ export type GetDashboardComplaintsParams = {
 status?: string;
 priority?: string;
 assignedToMe?: boolean;
+overdue?: boolean;
 limit?: number;
 offset?: number;
 };
@@ -696,6 +738,7 @@ export type GetDepartmentDashboardParams = {
 status?: string;
 priority?: string;
 assignedToMe?: boolean;
+overdue?: boolean;
 limit?: number;
 offset?: number;
 };

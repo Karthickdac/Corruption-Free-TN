@@ -244,6 +244,8 @@ export const ListComplaintsResponseItem = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListComplaintsResponse = zod.array(ListComplaintsResponseItem)
@@ -322,6 +324,8 @@ export const CreateComplaintResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -374,6 +378,8 @@ export const ListMyComplaintsResponseItem = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 export const ListMyComplaintsResponse = zod.array(ListMyComplaintsResponseItem)
@@ -431,6 +437,8 @@ export const GetComplaintByIdResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -537,6 +545,8 @@ export const UpdateComplaintStatusResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -598,6 +608,8 @@ export const AssignComplaintResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -703,6 +715,8 @@ export const TrackComplaintResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })
 
@@ -842,6 +856,7 @@ export const GetDashboardComplaintsQueryParams = zod.object({
   "status": zod.coerce.string().optional(),
   "priority": zod.coerce.string().optional(),
   "assignedToMe": zod.coerce.boolean().optional(),
+  "overdue": zod.coerce.boolean().optional(),
   "limit": zod.coerce.number().optional(),
   "offset": zod.coerce.number().optional()
 })
@@ -892,6 +907,8 @@ export const GetDashboardComplaintsResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })),
   "total": zod.number(),
@@ -901,7 +918,8 @@ export const GetDashboardComplaintsResponse = zod.object({
   "investigation": zod.number(),
   "action_taken": zod.number(),
   "closed": zod.number(),
-  "rejected": zod.number()
+  "rejected": zod.number(),
+  "overdue": zod.number().optional()
 }).optional()
 })
 
@@ -913,6 +931,7 @@ export const GetDepartmentDashboardQueryParams = zod.object({
   "status": zod.coerce.string().optional(),
   "priority": zod.coerce.string().optional(),
   "assignedToMe": zod.coerce.boolean().optional(),
+  "overdue": zod.coerce.boolean().optional(),
   "limit": zod.coerce.number().optional(),
   "offset": zod.coerce.number().optional()
 })
@@ -963,6 +982,8 @@ export const GetDepartmentDashboardResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })),
   "total": zod.number(),
@@ -972,7 +993,8 @@ export const GetDepartmentDashboardResponse = zod.object({
   "investigation": zod.number(),
   "action_taken": zod.number(),
   "closed": zod.number(),
-  "rejected": zod.number()
+  "rejected": zod.number(),
+  "overdue": zod.number().optional()
 }).optional()
 })
 
@@ -1029,8 +1051,38 @@ export const GetOfficerDashboardResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 }))
+})
+
+
+/**
+ * @summary Apply a status change or assignment to multiple complaints (per-row RBAC and workflow validation; returns per-row results)
+ */
+export const bulkComplaintActionBodyIdsMax = 100;
+
+export const bulkComplaintActionBodyNoteMax = 500;
+
+
+
+export const BulkComplaintActionBody = zod.object({
+  "action": zod.enum(['status', 'assign']),
+  "ids": zod.array(zod.number()).min(1).max(bulkComplaintActionBodyIdsMax),
+  "status": zod.string().optional(),
+  "note": zod.string().max(bulkComplaintActionBodyNoteMax).nullish(),
+  "officerUserId": zod.number().optional()
+})
+
+export const BulkComplaintActionResponse = zod.object({
+  "results": zod.array(zod.object({
+  "id": zod.number(),
+  "ok": zod.boolean(),
+  "error": zod.string().nullish()
+})),
+  "succeeded": zod.number(),
+  "failed": zod.number()
 })
 
 
@@ -1605,6 +1657,8 @@ export const SearchComplaintsResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "isOverdue": zod.boolean().optional(),
+  "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
 })),
   "total": zod.number(),

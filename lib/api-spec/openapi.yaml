@@ -748,6 +748,11 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: overdue
+          in: query
+          required: false
+          schema:
+            type: boolean
         - name: limit
           in: query
           required: false
@@ -792,6 +797,11 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: overdue
+          in: query
+          required: false
+          schema:
+            type: boolean
         - name: limit
           in: query
           required: false
@@ -827,6 +837,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OfficerDashboardResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /dashboard/complaints/bulk:
+    post:
+      operationId: bulkComplaintAction
+      tags: [dashboard]
+      summary: Apply a status change or assignment to multiple complaints (per-row RBAC and workflow validation; returns per-row results)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkActionRequest"
+      responses:
+        "200":
+          description: Per-row results (partial success possible)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkActionOutcome"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "403":
           $ref: "#/components/responses/Forbidden"
   /dashboard/assignable-officers:
@@ -1948,7 +1984,51 @@ components:
           type: integer
         rejected:
           type: integer
+        overdue:
+          type: integer
       required: [submitted, under_review, investigation, action_taken, closed, rejected]
+    BulkActionRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [status, assign]
+        ids:
+          type: array
+          items:
+            type: integer
+          minItems: 1
+          maxItems: 100
+        status:
+          type: string
+        note:
+          type: ["string", "null"]
+          maxLength: 500
+        officerUserId:
+          type: integer
+      required: [action, ids]
+    BulkActionItemResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        ok:
+          type: boolean
+        error:
+          type: ["string", "null"]
+      required: [id, ok]
+    BulkActionOutcome:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/BulkActionItemResult"
+        succeeded:
+          type: integer
+        failed:
+          type: integer
+      required: [results, succeeded, failed]
     UpdateStatusInput:
       type: object
       properties:
@@ -2074,6 +2154,10 @@ components:
           nullable: true
           allOf:
             - $ref: "#/components/schemas/InvestigationReport"
+        isOverdue:
+          type: boolean
+        slaDeadline:
+          type: ["string", "null"]
         createdAt:
           type: string
       required:

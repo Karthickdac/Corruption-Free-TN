@@ -52,5 +52,8 @@ export interface Complaint {
   statusHistory?: StatusHistoryItem[];
   departmentResponses?: PublicDepartmentResponse[];
   investigationReport?: InvestigationReport | null;
+  isOverdue?: boolean;
+  /** @nullable */
+  slaDeadline?: string | null;
   createdAt: string;
 }
