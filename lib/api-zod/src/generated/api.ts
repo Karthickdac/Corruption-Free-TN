@@ -196,7 +196,8 @@ export const ListComplaintsQueryParams = zod.object({
   "districtId": zod.coerce.number().optional(),
   "departmentId": zod.coerce.number().optional(),
   "status": zod.coerce.string().optional(),
-  "limit": zod.coerce.number().optional()
+  "limit": zod.coerce.number().optional(),
+  "offset": zod.coerce.number().optional()
 })
 
 export const ListComplaintsResponseItem = zod.object({

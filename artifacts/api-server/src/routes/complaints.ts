@@ -151,13 +151,15 @@ router.get("/complaints", async (req, res, next) => {
       conditions.push(eq(complaintsTable.status, params.status));
     }
     const limit = Math.min(Math.max(params.limit ?? 50, 1), 200);
+    const offset = Math.max(params.offset ?? 0, 0);
 
     const base = complaintSelection();
     const filtered =
       conditions.length > 0 ? base.where(and(...conditions)) : base;
     const rows = await filtered
       .orderBy(desc(complaintsTable.createdAt))
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
     res.json(ListComplaintsResponse.parse(rows.map((r) => toApiComplaint(r))));
   } catch (err) {

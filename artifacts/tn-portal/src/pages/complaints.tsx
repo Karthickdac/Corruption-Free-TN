@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/contexts/i18n";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListComplaints, useListDistricts, useListDepartments } from "@workspace/api-client-react";
-import { Search, MapPin, Building, Calendar, Filter } from "lucide-react";
+import { Search, MapPin, Building, Calendar, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Complaints() {
@@ -13,6 +13,12 @@ export default function Complaints() {
   const [districtId, setDistrictId] = useState<string>("");
   const [departmentId, setDepartmentId] = useState<string>("");
   const [status, setStatus] = useState<string>("");
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
+
+  useEffect(() => {
+    setPage(0);
+  }, [districtId, departmentId, status]);
 
   const { data: districts } = useListDistricts();
   const { data: departments } = useListDepartments();
@@ -20,7 +26,10 @@ export default function Complaints() {
     districtId: districtId && districtId !== "all" ? parseInt(districtId) : undefined,
     departmentId: departmentId && departmentId !== "all" ? parseInt(departmentId) : undefined,
     status: status && status !== "all" ? status : undefined,
+    limit: pageSize,
+    offset: page * pageSize,
   });
+  const hasNextPage = (complaints?.length ?? 0) === pageSize;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -104,7 +113,14 @@ export default function Complaints() {
         </div>
       ) : complaints?.length === 0 ? (
         <div className="text-center py-20 bg-muted/10 rounded-lg border border-border/40 border-dashed">
-          <p className="text-muted-foreground text-lg">No complaints found matching your criteria.</p>
+          <p className="text-muted-foreground text-lg">
+            {page > 0 ? "No more complaints to show." : "No complaints found matching your criteria."}
+          </p>
+          {page > 0 && (
+            <Button variant="outline" className="mt-4" onClick={() => setPage((p) => Math.max(0, p - 1))} data-testid="button-prev-page-empty">
+              <ChevronLeft className="h-4 w-4 mr-1" /> Previous Page
+            </Button>
+          )}
         </div>
       ) : (
         <div className="space-y-4">
@@ -148,6 +164,34 @@ export default function Complaints() {
               </div>
             </Card>
           ))}
+
+          {(page > 0 || hasNextPage) && (
+            <div className="flex items-center justify-center gap-4 pt-6">
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full h-10 w-10 border-border/60 hover:bg-muted"
+                onClick={() => setPage((p) => Math.max(0, p - 1))}
+                disabled={page === 0}
+                data-testid="button-prev-page"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <span className="text-sm font-medium text-muted-foreground" data-testid="text-page-info">
+                Page {page + 1}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                className="rounded-full h-10 w-10 border-border/60 hover:bg-muted"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!hasNextPage}
+                data-testid="button-next-page"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

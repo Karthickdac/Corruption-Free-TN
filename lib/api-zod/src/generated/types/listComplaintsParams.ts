@@ -11,4 +11,5 @@ districtId?: number;
 departmentId?: number;
 status?: string;
 limit?: number;
+offset?: number;
 };

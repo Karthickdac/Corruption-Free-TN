@@ -30,7 +30,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronRight, FileText, AlarmClock, X, UserCheck, RefreshCw, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, AlarmClock, X, UserCheck, RefreshCw, Settings2 } from "lucide-react";
 import { StatusBadge, PriorityBadge } from "@/components/admin/status-badge";
 import { PageHeader } from "@/components/admin/page-header";
 import {
@@ -58,15 +58,24 @@ function ComplaintsListContent() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkStatus, setBulkStatus] = useState<string>("");
   const [bulkOfficer, setBulkOfficer] = useState<string>("");
+  const [page, setPage] = useState(0);
+  const pageSize = 50;
 
   useEffect(() => {
     setSelectedIds(new Set());
+    setPage(0);
   }, [statusFilter, priorityFilter, overdueOnly]);
+
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [page]);
 
   const params: GetDashboardComplaintsParams = {
     ...(statusFilter !== "all" ? { status: statusFilter } : {}),
     ...(priorityFilter !== "all" ? { priority: priorityFilter } : {}),
     ...(overdueOnly ? { overdue: true } : {}),
+    limit: pageSize,
+    offset: page * pageSize,
   };
 
   const { data, isLoading } = useGetDashboardComplaints(params, {
@@ -77,6 +86,14 @@ function ComplaintsListContent() {
   });
   const complaints = data?.complaints ?? [];
   const overdueCount = data?.stats?.overdue ?? 0;
+  const total = data?.total ?? 0;
+  const totalPages = Math.ceil(total / pageSize);
+
+  useEffect(() => {
+    if (!isLoading && page > 0 && page * pageSize >= total) {
+      setPage(Math.max(0, Math.ceil(total / pageSize) - 1));
+    }
+  }, [isLoading, page, total]);
 
   const { data: officers } = useListAssignableOfficers({
     query: {
@@ -371,6 +388,34 @@ function ComplaintsListContent() {
               ))}
             </TableBody>
           </Table>
+        </div>
+      )}
+
+      {!isLoading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 pt-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full h-10 w-10 border-border/60 hover:bg-muted"
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            data-testid="button-prev-page"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-medium text-muted-foreground" data-testid="text-page-info">
+            Page {page + 1} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            className="rounded-full h-10 w-10 border-border/60 hover:bg-muted"
+            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+            disabled={page >= totalPages - 1}
+            data-testid="button-next-page"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
     </div>
