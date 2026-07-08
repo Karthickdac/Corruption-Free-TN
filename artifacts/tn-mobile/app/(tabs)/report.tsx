@@ -280,6 +280,12 @@ export default function ReportScreen() {
       setFormError("Please wait for photos to finish uploading.");
       return;
     }
+    if (attachments.some((a) => a.status === "error")) {
+      setFormError(
+        "Some photos failed to upload. Retry or remove them before submitting.",
+      );
+      return;
+    }
 
     createComplaint.mutate(
       {
