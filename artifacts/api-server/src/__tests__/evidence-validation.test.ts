@@ -18,8 +18,9 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
  * officers with broken evidence links.
  *
  * NOTE: Complaint submission is rate-limited to 5/hour/IP (and registration
- * to 20/15min). Running this suite more than ~5 times within an hour will
- * fail with 429 in beforeAll — that is the rate limiter, not a regression.
+ * to 20/15min) in production, but both limiters are skipped when
+ * NODE_ENV=development (which the dev workflow sets), so repeated runs of
+ * this suite against the local dev server no longer fail with 429.
  */
 
 const API = process.env.API_BASE_URL ?? "http://localhost:8080/api";
