@@ -80,6 +80,7 @@ export * from './office';
 export * from './officerDashboardResponse';
 export * from './officerPerformance';
 export * from './publicDepartmentResponse';
+export * from './publicInvestigationOutcome';
 export * from './publicStats';
 export * from './registerInput';
 export * from './searchComplaintsFormat';

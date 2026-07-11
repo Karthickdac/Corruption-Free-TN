@@ -530,7 +530,7 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
       res.status(404).json({ error: "Complaint not found" });
       return;
     }
-    const [statusHistory, publicNotes] = await Promise.all([
+    const [statusHistory, publicNotes, reportRows] = await Promise.all([
       getStatusHistory(row.complaint.id),
       db
         .select({ id: caseNotesTable.id, content: caseNotesTable.content, createdAt: caseNotesTable.createdAt })
@@ -543,7 +543,21 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
           ),
         )
         .orderBy(caseNotesTable.createdAt),
+      db
+        .select({
+          summary: investigationReportsTable.summary,
+          recommendation: investigationReportsTable.recommendation,
+          createdAt: investigationReportsTable.createdAt,
+        })
+        .from(investigationReportsTable)
+        .where(eq(investigationReportsTable.complaintId, row.complaint.id))
+        .orderBy(desc(investigationReportsTable.createdAt))
+        .limit(1),
     ]);
+    // Only a redacted outcome (recommendation + summary) is exposed on the
+    // public track endpoint. Detailed findings, internal notes, and the
+    // investigating officer's identity are intentionally withheld.
+    const outcome = reportRows[0] ?? null;
     res.json(
       TrackComplaintResponse.parse({
         ...toApiComplaint(row, statusHistory),
@@ -552,6 +566,13 @@ router.get("/complaints/track/:complaintNumber", async (req, res, next) => {
           content: n.content,
           createdAt: n.createdAt.toISOString(),
         })),
+        investigationOutcome: outcome
+          ? {
+              recommendation: outcome.recommendation,
+              summary: outcome.summary,
+              createdAt: outcome.createdAt.toISOString(),
+            }
+          : null,
       }),
     );
   } catch (err) {
@@ -604,11 +625,25 @@ router.get(
         .from(investigationReportsTable)
         .leftJoin(usersTable, eq(investigationReportsTable.authorId, usersTable.id))
         .where(eq(investigationReportsTable.complaintId, params.data.complaintId))
+        .orderBy(desc(investigationReportsTable.createdAt))
         .limit(1);
       const report = reportRows[0] ?? null;
+      // Assigned officer name is surfaced only on this officer-gated detail
+      // endpoint — never via the shared helper that feeds public routes.
+      let assignedOfficerName: string | null = null;
+      if (complaint.assignedOfficerId !== null) {
+        const officerRows = await db
+          .select({ name: usersTable.name })
+          .from(usersTable)
+          .where(eq(usersTable.id, complaint.assignedOfficerId))
+          .limit(1);
+        assignedOfficerName = officerRows[0]?.name ?? null;
+      }
       res.json(
         GetComplaintByIdResponse.parse({
           ...toApiComplaint(row, statusHistory),
+          assignedOfficerId: complaint.assignedOfficerId,
+          assignedOfficerName,
           investigationReport: report
             ? {
                 id: report.id,

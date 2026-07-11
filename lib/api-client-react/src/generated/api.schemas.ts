@@ -270,6 +270,12 @@ export interface InvestigationReport {
   createdAt: string;
 }
 
+export interface PublicInvestigationOutcome {
+  recommendation: string;
+  summary: string;
+  createdAt: string;
+}
+
 export interface Complaint {
   id: number;
   complaintNumber: string;
@@ -313,6 +319,7 @@ export interface Complaint {
   statusHistory?: StatusHistoryItem[];
   departmentResponses?: PublicDepartmentResponse[];
   investigationReport?: InvestigationReport | null;
+  investigationOutcome?: PublicInvestigationOutcome | null;
   isOverdue?: boolean;
   /** @nullable */
   slaDeadline?: string | null;

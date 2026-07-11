@@ -8,8 +8,11 @@ import {
   useAddCaseNote,
   useUpdateComplaintStatus,
   useSubmitInvestigationReport,
+  useAssignComplaint,
+  useListAssignableOfficers,
   getListCaseNotesQueryKey,
   getGetComplaintByIdQueryKey,
+  getListAssignableOfficersQueryKey,
 } from "@workspace/api-client-react";
 import { CaseNoteInputNoteType } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -68,6 +71,8 @@ function ComplaintDetailContent() {
   const [reportFindings, setReportFindings] = useState("");
   const [reportRecommendation, setReportRecommendation] = useState("");
   const [reportNotes, setReportNotes] = useState("");
+  const [assignOfficer, setAssignOfficer] = useState("");
+  const [assignNote, setAssignNote] = useState("");
 
   const { data: complaint, isLoading: complaintLoading } = useGetComplaintById(
     complaintId,
@@ -118,6 +123,24 @@ function ComplaintDetailContent() {
       },
       onError: (err: { message?: string }) => {
         toast({ title: "Update failed", description: err?.message, variant: "destructive" });
+      },
+    },
+  });
+
+  const { data: officers = [] } = useListAssignableOfficers({
+    query: { queryKey: getListAssignableOfficersQueryKey() },
+  });
+
+  const assignOfficerMutation = useAssignComplaint({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getGetComplaintByIdQueryKey(complaintId) });
+        toast({ title: "Investigating officer assigned" });
+        setAssignOfficer("");
+        setAssignNote("");
+      },
+      onError: (err: { message?: string }) => {
+        toast({ title: "Assignment failed", description: err?.message, variant: "destructive" });
       },
     },
   });
@@ -399,7 +422,8 @@ function ComplaintDetailContent() {
         </TabsContent>
 
         <TabsContent value="workflow" className="mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">
-          <Card className="rounded-2xl shadow-sm border-border/50 max-w-2xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl items-start">
+          <Card className="rounded-2xl shadow-sm border-border/50">
             <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
               <CardTitle className="text-base font-semibold">Execute State Transition</CardTitle>
             </CardHeader>
@@ -448,6 +472,60 @@ function ComplaintDetailContent() {
               </Button>
             </CardContent>
           </Card>
+
+          <Card className="rounded-2xl shadow-sm border-border/50">
+            <CardHeader className="border-b border-border/40 py-4 px-6 bg-muted/20">
+              <CardTitle className="text-base font-semibold">Assign Investigating Officer</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+              <div className="flex items-center gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+                <span className="text-sm font-medium text-muted-foreground">Currently Assigned:</span>
+                <span className="text-sm font-semibold text-foreground" data-testid="text-current-assignee">
+                  {complaint.assignedOfficerName ?? "Unassigned"}
+                </span>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Investigating Officer</label>
+                <Select value={assignOfficer} onValueChange={setAssignOfficer}>
+                  <SelectTrigger className="rounded-xl h-12 font-medium" data-testid="select-assign-officer">
+                    <SelectValue placeholder="Select an officer..." />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    {officers.length === 0 && (
+                      <div className="p-4 text-sm font-medium text-muted-foreground text-center">No assignable officers available</div>
+                    )}
+                    {officers.map((o) => (
+                      <SelectItem key={o.id} value={String(o.id)}>{o.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Assignment Note (Optional)</label>
+                <Textarea
+                  placeholder="Instructions for the assigned officer..."
+                  value={assignNote}
+                  onChange={(e) => setAssignNote(e.target.value)}
+                  rows={3}
+                  className="rounded-xl resize-none font-normal text-sm transition-colors"
+                />
+              </div>
+              <Button
+                className="w-full h-12 rounded-xl font-medium shadow-sm text-sm"
+                disabled={!assignOfficer || assignOfficerMutation.isPending}
+                data-testid="button-assign-officer"
+                onClick={() =>
+                  assignOfficerMutation.mutate({
+                    complaintId,
+                    data: { officerUserId: Number(assignOfficer), note: assignNote || undefined },
+                  })
+                }
+              >
+                {assignOfficerMutation.isPending ? "Assigning..." : "Assign Officer"}
+              </Button>
+            </CardContent>
+          </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="report" className="mt-6 outline-none animate-in fade-in slide-in-from-bottom-2 duration-500">

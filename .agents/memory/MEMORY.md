@@ -6,3 +6,4 @@
 - [TN district geojson matching](tn-district-geojson.md) — map joins by exact district name; 2011-source names were normalized and Mayiladuthurai is an approximate carve-out
 - [Expo web e2e testing quirks](expo-web-e2e-testing.md) — reload through transient 404/blank while the dev bundle warms; log in by setting localStorage session_token; testID → data-testid.
 - [Live-server integration test idempotency](live-server-integration-tests.md) — complaint-creating tests need confirmDuplicate:true or they 409 on rerun; 5/hour/IP submit limit can 429 repeated runs.
+- [Complaint API shared serializer](complaint-api-shared-helper.md) — toApiComplaint/complaintSelection feed public + gated routes; never add officer/assignee identity there or it leaks publicly (tsc/zod won't catch it).

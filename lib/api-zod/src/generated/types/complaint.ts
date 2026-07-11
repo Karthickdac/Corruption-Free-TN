@@ -7,6 +7,7 @@
  */
 import type { InvestigationReport } from './investigationReport';
 import type { PublicDepartmentResponse } from './publicDepartmentResponse';
+import type { PublicInvestigationOutcome } from './publicInvestigationOutcome';
 import type { StatusHistoryItem } from './statusHistoryItem';
 
 export interface Complaint {
@@ -52,6 +53,7 @@ export interface Complaint {
   statusHistory?: StatusHistoryItem[];
   departmentResponses?: PublicDepartmentResponse[];
   investigationReport?: InvestigationReport | null;
+  investigationOutcome?: PublicInvestigationOutcome | null;
   isOverdue?: boolean;
   /** @nullable */
   slaDeadline?: string | null;

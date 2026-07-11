@@ -245,6 +245,11 @@ export const ListComplaintsResponseItem = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
+  "createdAt": zod.string()
+}).nullish(),
   "isOverdue": zod.boolean().optional(),
   "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
@@ -325,6 +330,11 @@ export const CreateComplaintResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
+  "createdAt": zod.string()
+}).nullish(),
   "isOverdue": zod.boolean().optional(),
   "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
@@ -377,6 +387,11 @@ export const ListMyComplaintsResponseItem = zod.object({
   "findings": zod.string(),
   "recommendation": zod.string(),
   "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
   "createdAt": zod.string()
 }).nullish(),
   "isOverdue": zod.boolean().optional(),
@@ -436,6 +451,11 @@ export const GetComplaintByIdResponse = zod.object({
   "findings": zod.string(),
   "recommendation": zod.string(),
   "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
   "createdAt": zod.string()
 }).nullish(),
   "isOverdue": zod.boolean().optional(),
@@ -546,6 +566,11 @@ export const UpdateComplaintStatusResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
+  "createdAt": zod.string()
+}).nullish(),
   "isOverdue": zod.boolean().optional(),
   "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
@@ -607,6 +632,11 @@ export const AssignComplaintResponse = zod.object({
   "findings": zod.string(),
   "recommendation": zod.string(),
   "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
   "createdAt": zod.string()
 }).nullish(),
   "isOverdue": zod.boolean().optional(),
@@ -714,6 +744,11 @@ export const TrackComplaintResponse = zod.object({
   "findings": zod.string(),
   "recommendation": zod.string(),
   "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
   "createdAt": zod.string()
 }).nullish(),
   "isOverdue": zod.boolean().optional(),
@@ -908,6 +943,11 @@ export const GetDashboardComplaintsResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
+  "createdAt": zod.string()
+}).nullish(),
   "isOverdue": zod.boolean().optional(),
   "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
@@ -983,6 +1023,11 @@ export const GetDepartmentDashboardResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string()
 }).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
+  "createdAt": zod.string()
+}).nullish(),
   "isOverdue": zod.boolean().optional(),
   "slaDeadline": zod.string().nullish(),
   "createdAt": zod.string()
@@ -1050,6 +1095,11 @@ export const GetOfficerDashboardResponse = zod.object({
   "findings": zod.string(),
   "recommendation": zod.string(),
   "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
   "createdAt": zod.string()
 }).nullish(),
   "isOverdue": zod.boolean().optional(),
@@ -1656,6 +1706,11 @@ export const SearchComplaintsResponse = zod.object({
   "findings": zod.string(),
   "recommendation": zod.string(),
   "notes": zod.string().nullish(),
+  "createdAt": zod.string()
+}).nullish(),
+  "investigationOutcome": zod.object({
+  "recommendation": zod.string(),
+  "summary": zod.string(),
   "createdAt": zod.string()
 }).nullish(),
   "isOverdue": zod.boolean().optional(),

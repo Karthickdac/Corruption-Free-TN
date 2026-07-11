@@ -3,7 +3,7 @@ import { useI18n } from "@/contexts/i18n";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Clock, MapPin, Building, Info, AlertTriangle, CheckCircle, RotateCcw, Eye, Gavel, XCircle, Languages, Loader2 } from "lucide-react";
+import { Search, Clock, MapPin, Building, Info, AlertTriangle, CheckCircle, RotateCcw, Eye, Gavel, XCircle, Languages, Loader2, ShieldCheck } from "lucide-react";
 import {
   useTrackComplaint as useTrackComplaintQuery,
   getTrackComplaintQueryKey,
@@ -19,6 +19,23 @@ function useTrackComplaint(complaintNumber: string) {
     },
   });
 }
+
+const OUTCOME_LABELS: Record<string, string> = {
+  substantiated: "Substantiated",
+  unsubstantiated: "Unsubstantiated",
+  partially_substantiated: "Partially Substantiated",
+  referred_to_authority: "Referred to Authority",
+};
+
+const getOutcomeColor = (recommendation: string) => {
+  switch (recommendation) {
+    case "substantiated": return "bg-red-600/10 text-red-600 border-red-600/20";
+    case "partially_substantiated": return "bg-amber-600/10 text-amber-600 border-amber-600/20";
+    case "referred_to_authority": return "bg-orange-600/10 text-orange-600 border-orange-600/20";
+    case "unsubstantiated": return "bg-emerald-600/10 text-emerald-600 border-emerald-600/20";
+    default: return "bg-stone-500/10 text-stone-600 border-stone-500/20";
+  }
+};
 
 export default function Track() {
   const { t, isTa } = useI18n();
@@ -175,6 +192,25 @@ export default function Track() {
                     <div className="bg-destructive/5 border border-destructive/10 rounded-lg p-4">
                       <h4 className="text-sm uppercase font-bold tracking-wider text-destructive mb-1">Amount Involved</h4>
                       <p className="text-2xl font-mono font-bold text-foreground">₹{complaint.amountInvolved.toLocaleString('en-IN')}</p>
+                    </div>
+                  )}
+
+                  {complaint.investigationOutcome && (
+                    <div className="border border-border/60 rounded-lg p-5 bg-muted/20" data-testid="section-investigation-outcome">
+                      <h4 className="text-sm uppercase font-bold tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
+                        <ShieldCheck className="h-4 w-4" /> Investigation Outcome
+                      </h4>
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getOutcomeColor(complaint.investigationOutcome.recommendation)}`}>
+                          {OUTCOME_LABELS[complaint.investigationOutcome.recommendation] ?? complaint.investigationOutcome.recommendation}
+                        </span>
+                        <time className="text-xs text-muted-foreground">
+                          {new Date(complaint.investigationOutcome.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        </time>
+                      </div>
+                      <p className="text-foreground leading-relaxed whitespace-pre-wrap text-sm">
+                        {complaint.investigationOutcome.summary}
+                      </p>
                     </div>
                   )}
 

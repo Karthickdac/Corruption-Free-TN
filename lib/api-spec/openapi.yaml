@@ -2159,6 +2159,10 @@ components:
           nullable: true
           allOf:
             - $ref: "#/components/schemas/InvestigationReport"
+        investigationOutcome:
+          nullable: true
+          allOf:
+            - $ref: "#/components/schemas/PublicInvestigationOutcome"
         isOverdue:
           type: boolean
         slaDeadline:
@@ -2328,6 +2332,16 @@ components:
           type: string
         notes:
           type: ["string", "null"]
+        createdAt:
+          type: string
+    PublicInvestigationOutcome:
+      type: object
+      required: [recommendation, summary, createdAt]
+      properties:
+        recommendation:
+          type: string
+        summary:
+          type: string
         createdAt:
           type: string
     DepartmentInput:
